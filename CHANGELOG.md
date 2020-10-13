@@ -1,3 +1,9 @@
+# 1.0.0-beta.2 (2020-10-13)
+
+### Fixes
+
+- **make sure unsubscribed behaviors get a current value**
+
 # 1.0.0-beta.1 (2020-10-07)
 
 ### Features

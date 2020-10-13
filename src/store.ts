@@ -40,7 +40,10 @@ export class Store {
     this.assertTypeExists(identifier?.symbol);
     const subscription = observable.subscribe(
       (next) => {
-        this.getBehaviorData(identifier).subject.next(next);
+        const behaviorData = this.getBehaviorData(identifier);
+        const tempSubscription = behaviorData.behavior.subscribe();
+        behaviorData.subject.next(next);
+        tempSubscription.unsubscribe();
       },
       (error) => {
         console.error(
@@ -50,9 +53,6 @@ export class Store {
         this.getBehaviorData(identifier).subject.error(error);
       },
       () => {
-        console.warn(
-          'A behavior has completed. This is unexpected, because behaviors should always have a current value. For subscribers, this has the same effect as removeBehavior.',
-        );
         this.removeBehavior(identifier);
       },
     );

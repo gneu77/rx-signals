@@ -1,4 +1,5 @@
-import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { BehaviorSubject, combineLatest, Observable, of, Subject } from 'rxjs';
+import { debounceTime, filter, startWith, switchMap, take } from 'rxjs/operators';
 import { Store, TypeIdentifier } from './store';
 
 describe('Store', () => {
@@ -183,6 +184,56 @@ describe('Store', () => {
         done();
       });
       store.dispatchEvent(identifier, 'Hello');
+    });
+
+    describe('lazy behaviors and effects: adding query behavior', () => {
+      const QUERY_BEHAVIOR: TypeIdentifier<string> = { symbol: Symbol('QueryBehavior') };
+      interface ResultType {
+        result: number[];
+        resultQuery: string | null;
+      }
+      const RESULT_BEHAVIOR: TypeIdentifier<ResultType> = { symbol: Symbol('ResultBehavior') };
+      const QUERY_EVENT: TypeIdentifier<string> = { symbol: Symbol('QueryEvent') };
+      const RESULT_EVENT: TypeIdentifier<ResultType> = { symbol: Symbol('ResultEvent') };
+
+      beforeEach(() => {
+        store.addBehavior(QUERY_BEHAVIOR, store.getEventStream(QUERY_EVENT).pipe(startWith(null)));
+      });
+
+      describe('lazy behaviors and effects: adding result behavior', () => {
+        beforeEach(() => {
+          store.addBehavior(
+            RESULT_BEHAVIOR,
+            store.getEventStream(RESULT_EVENT).pipe(startWith({ result: [], resultQuery: null })),
+          );
+        });
+
+        describe('lazy behaviors and effects: adding query effect as event source', () => {
+          beforeEach(() => {
+            const eventSource = combineLatest([
+              store.getBehavior(QUERY_BEHAVIOR),
+              store.getBehavior(RESULT_BEHAVIOR),
+            ]).pipe(
+              filter((pair) => pair[0] !== pair[1].resultQuery),
+              debounceTime(150),
+              switchMap((pair) => of({ result: [1, 2, 3], resultQuery: pair[0] })),
+            );
+            store.addEventSource(RESULT_EVENT, eventSource);
+          });
+
+          it('should have a current value for the result behavior', (done) => {
+            store
+              .getBehavior(RESULT_BEHAVIOR)
+              .pipe(take(1))
+              .subscribe((result) => {
+                expect(result.resultQuery).toBe(null);
+                expect(Array.isArray(result.result)).toBe(true);
+                expect(result.result.length).toBe(0);
+                done();
+              });
+          });
+        });
+      });
     });
   });
 });
