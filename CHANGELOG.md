@@ -1,3 +1,9 @@
+# 1.0.0-beta.3 (2020-10-13)
+
+### Breaking changes
+
+- **replaced addBehavior by addStatelessBehavior and addStatefulBehavior:** This explicit distinction makes also determines if the source will be subscribed lazily (for stateless) or not.
+
 # 1.0.0-beta.2 (2020-10-13)
 
 ### Fixes
