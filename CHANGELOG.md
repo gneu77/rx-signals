@@ -1,4 +1,10 @@
-# 1.0.0-beta.3 (2020-10-13)
+# 1.0.0-beta.4 (2020-10-14)
+
+### Fixes
+
+- **fixed possible subscription loop (for circular dependencies)**
+
+# 1.0.0-beta.3 (2020-10-14)
 
 ### Breaking changes
 

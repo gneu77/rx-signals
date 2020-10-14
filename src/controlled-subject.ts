@@ -29,19 +29,28 @@ export const getControlledSubject = <T>(
   let subscribeLazy = true;
   let sourceSubscription: Subscription | null = null;
   let latestNext: T | undefined;
+  let subscriptionPending = false;
   const subscribe = (theSource: Observable<T>) => {
-    sourceSubscription = theSource.subscribe(
-      (next) => {
-        latestNext = next;
-        subject.next(next);
-      },
-      (error) => {
-        onSourceError(error);
-      },
-      () => {
-        onSourceCompleted();
-      },
-    );
+    if (subscriptionPending) {
+      return;
+    }
+    subscriptionPending = true;
+    try {
+      sourceSubscription = theSource.subscribe(
+        (next) => {
+          latestNext = next;
+          subject.next(next);
+        },
+        (error) => {
+          onSourceError(error);
+        },
+        () => {
+          onSourceCompleted();
+        },
+      );
+    } finally {
+      subscriptionPending = false;
+    }
   };
   const setIsSubscribed = (newIsSubscribed: boolean) => {
     isSubscribed = newIsSubscribed;
