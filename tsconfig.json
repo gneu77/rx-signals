@@ -1,13 +1,15 @@
 {
   "compilerOptions": {
-    "target": "es2016",
+    "target": "es2015",
+    "module": "es2015",
     "moduleResolution": "node",
-    "lib": ["es2016"],
+    "esModuleInterop": true,
+    "lib": ["es2015"],
     "removeComments": true,
     "sourceMap": true,
     "stripInternal": true,
     "declaration": true,
-    "outDir": "./dist",
+    "outDir": "./dist/esm",
     "strict": true,
     "alwaysStrict": true,
     "noImplicitAny": true,

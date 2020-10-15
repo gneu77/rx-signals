@@ -1,6 +1,6 @@
 import { BehaviorSubject, combineLatest, Observable, of, Subject } from 'rxjs';
 import { debounceTime, filter, scan, switchMap, take } from 'rxjs/operators';
-import { Store, TypeIdentifier } from './store';
+import { Store, TypeIdentifier } from '../src/store';
 
 describe('Store', () => {
   let store: Store;

@@ -1,3 +1,9 @@
+# 1.0.0-beta.8 (2020-10-15)
+
+### Features
+
+- **now providing commonjs and es modules**
+
 # 1.0.0-beta.7 (2020-10-15)
 
 ### Fixes
