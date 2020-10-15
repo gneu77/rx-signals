@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
-    "target": "es6",
-    "module": "commonjs",
+    "target": "es2016",
+    "moduleResolution": "node",
+    "lib": ["es2016"],
     "removeComments": true,
     "sourceMap": true,
     "stripInternal": true,

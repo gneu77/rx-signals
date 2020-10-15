@@ -1,3 +1,15 @@
+# 1.0.0-beta.5 (2020-10-15)
+
+### Breaking changes
+
+- **changed lib target to es2016**
+
+### Features
+
+- **addBehavior:** as lower level API for addStatelessBehavior and addStatefulBehavior (has a subscribeLazy parameter)
+- **isAdded:** return true, if a corresponding behavior or event source has been added
+- **isSubscribed:** return true, if a corresponding behavior or event has been subscribed
+
 # 1.0.0-beta.4 (2020-10-14)
 
 ### Fixes

@@ -12,14 +12,42 @@ export class Store {
 
   private eventStreams = new Map<symbol, ControlledSubject<any>>();
 
-  addStatelessBehavior<T>(identifier: TypeIdentifier<T>, observable: Observable<T>, initialValue?: T): void {
+  isAdded<T>(identifier: TypeIdentifier<T>): boolean {
+    if (!identifier?.symbol) {
+      throw new Error('identifier.symbol is mandatory');
+    }
+    return (
+      this.behaviors.get(identifier.symbol)?.hasSource() === true ||
+      this.eventStreams.get(identifier.symbol)?.hasSource() === true
+    );
+  }
+
+  isSubscribed<T>(identifier: TypeIdentifier<T>): boolean {
+    if (!identifier?.symbol) {
+      throw new Error('identifier.symbol is mandatory');
+    }
+    return (
+      this.behaviors.get(identifier.symbol)?.isSubscribed() === true ||
+      this.eventStreams.get(identifier.symbol)?.isSubscribed() === true
+    );
+  }
+
+  addBehavior<T>(
+    identifier: TypeIdentifier<T>,
+    observable: Observable<T>,
+    subscribeLazy: boolean,
+    initialValue?: T,
+  ): void {
     this.assertTypeExists(identifier?.symbol, observable);
-    this.getBehaviorControlledSubject(identifier, initialValue).addSource(observable, true);
+    this.getBehaviorControlledSubject(identifier, initialValue).addSource(observable, subscribeLazy);
+  }
+
+  addStatelessBehavior<T>(identifier: TypeIdentifier<T>, observable: Observable<T>, initialValue?: T): void {
+    this.addBehavior(identifier, observable, true, initialValue);
   }
 
   addStatefulBehavior<T>(identifier: TypeIdentifier<T>, observable: Observable<T>, initialValue?: T): void {
-    this.assertTypeExists(identifier?.symbol, observable);
-    this.getBehaviorControlledSubject(identifier, initialValue).addSource(observable, false);
+    this.addBehavior(identifier, observable, false, initialValue);
   }
 
   removeBehavior<T>(identifier: TypeIdentifier<T>): void {
