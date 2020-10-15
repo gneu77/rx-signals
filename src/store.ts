@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs';
-import { distinctUntilChanged, share, shareReplay, startWith } from 'rxjs/operators';
+import { distinctUntilChanged, share, shareReplay } from 'rxjs/operators';
 import { ControlledSubject, getControlledSubject } from './controlled-subject';
 
 export interface TypeIdentifier<T> {
@@ -32,6 +32,17 @@ export class Store {
     );
   }
 
+  getUnsubscribedIdentifiers(): symbol[] {
+    return [
+      ...[...this.behaviors.entries()].filter((tuple) => tuple[1].isSubscribed() === false).map((tuple) => tuple[0]),
+      ...[...this.eventStreams.entries()].filter((tuple) => tuple[1].isSubscribed() === false).map((tuple) => tuple[0]),
+    ];
+  }
+
+  getNoSourceBehaviorIdentifiers(): symbol[] {
+    return [...this.behaviors.entries()].filter((tuple) => tuple[1].hasSource() === false).map((tuple) => tuple[0]);
+  }
+
   addBehavior<T>(
     identifier: TypeIdentifier<T>,
     observable: Observable<T>,
@@ -39,7 +50,7 @@ export class Store {
     initialValue?: T,
   ): void {
     this.assertTypeExists(identifier?.symbol, observable);
-    this.getBehaviorControlledSubject(identifier, initialValue).addSource(observable, subscribeLazy);
+    this.getBehaviorControlledSubject(identifier).addSource(observable, subscribeLazy, initialValue);
   }
 
   addStatelessBehavior<T>(identifier: TypeIdentifier<T>, observable: Observable<T>, initialValue?: T): void {
@@ -81,16 +92,13 @@ export class Store {
     return this.getEventStreamControlledSubject(identifier).observable as Observable<T>;
   }
 
-  private createBehaviorControlledSubject<T>(identifier: TypeIdentifier<T>, initialValue?: T): ControlledSubject<T> {
+  private createBehaviorControlledSubject<T>(identifier: TypeIdentifier<T>): ControlledSubject<T> {
     const controlledSubject = getControlledSubject<T>(
-      (subject) => {
-        return typeof initialValue === 'undefined'
-          ? subject.pipe(
-              distinctUntilChanged(), // behaviors represent a current value, hence pushing the same value twice makes no sense
-              shareReplay(1), // for the same reason, multiple evaluation makes no sense and we ensure that there always is a value
-            )
-          : subject.pipe(startWith(initialValue), distinctUntilChanged(), shareReplay(1));
-      },
+      (subject) =>
+        subject.pipe(
+          distinctUntilChanged(), // behaviors represent a current value, hence pushing the same value twice makes no sense
+          shareReplay(1), // for the same reason, multiple evaluation makes no sense and we ensure that there always is a value
+        ),
       (error) => {
         // If the source errors, remove it from the behavior and complete for the target.
         // (It is up to the target to just add a new source or remove and add the complete behavior, or even do nothing)
@@ -108,11 +116,11 @@ export class Store {
     return controlledSubject;
   }
 
-  private getBehaviorControlledSubject<T>(identifier: TypeIdentifier<T>, initialValue?: T): ControlledSubject<T> {
+  private getBehaviorControlledSubject<T>(identifier: TypeIdentifier<T>): ControlledSubject<T> {
     if (!identifier?.symbol) {
       throw new Error('identifier.symbol is mandatory');
     }
-    return this.behaviors.get(identifier.symbol) ?? this.createBehaviorControlledSubject(identifier, initialValue);
+    return this.behaviors.get(identifier.symbol) ?? this.createBehaviorControlledSubject(identifier);
   }
 
   private createEventStreamControlledSubject<T>(identifier: TypeIdentifier<T>): ControlledSubject<T> {

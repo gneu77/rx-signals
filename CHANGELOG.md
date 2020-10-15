@@ -1,3 +1,14 @@
+# 1.0.0-beta.6 (2020-10-15)
+
+### Fixes
+
+- **initial value must be added with source and not upon subject creation**
+
+### Features
+
+- **getUnsubscribedIdentifiers:** returns an array with identifier symbols of unsubscribed sources and behaviors (for debugging purposes)
+- **getNoSourceBehaviorIdentifiers:** return an array of behaviors that were requested from the store but have no source (for debugging too)
+
 # 1.0.0-beta.5 (2020-10-15)
 
 ### Breaking changes

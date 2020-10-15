@@ -2,7 +2,7 @@ import { Observable, Subject, Subscription } from 'rxjs';
 
 export interface ControlledSubject<T> {
   observable: Observable<T>;
-  addSource(sourceObservable: Observable<T>, lazySubscription: boolean): void;
+  addSource(sourceObservable: Observable<T>, lazySubscription: boolean, initialValue?: T): void;
   removeSource(): void;
   next(next: T): void;
   error(error: any, replay: boolean): void;
@@ -19,6 +19,7 @@ export const getControlledSubject = <T>(
 ): ControlledSubject<T> => {
   let subject: Subject<T>;
   let pipe: Observable<T>;
+  let initialValue: T | undefined;
   const newSubject = () => {
     subject = new Subject<T>();
     pipe = getTargetPipe(subject.asObservable());
@@ -48,6 +49,10 @@ export const getControlledSubject = <T>(
           onSourceCompleted();
         },
       );
+      if (initialValue !== undefined) {
+        subject.next(initialValue);
+        initialValue = undefined;
+      }
     } finally {
       subscriptionPending = false;
     }
@@ -80,16 +85,18 @@ export const getControlledSubject = <T>(
   });
   return {
     observable,
-    addSource: (sourceObservable: Observable<T>, lazySubscription) => {
+    addSource: (sourceObservable: Observable<T>, lazySubscription, initialVal?) => {
       if (source !== null) {
         throw new Error('A source has already been added. Remove it first, if you want to add a new one.');
       }
       source = sourceObservable;
       subscribeLazy = lazySubscription;
+      initialValue = initialVal;
       setIsSubscribed(isSubscribed);
     },
     removeSource: () => {
       source = null;
+      initialValue = undefined;
       if (sourceSubscription !== null) {
         sourceSubscription.unsubscribe();
         sourceSubscription = null;
