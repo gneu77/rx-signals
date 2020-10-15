@@ -1,3 +1,9 @@
+# 1.0.0-beta.7 (2020-10-15)
+
+### Fixes
+
+- **initial value for stateful behavior is no dispatched lazily**
+
 # 1.0.0-beta.6 (2020-10-15)
 
 ### Fixes

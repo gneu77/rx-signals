@@ -30,7 +30,19 @@ export const getControlledSubject = <T>(
   let subscribeLazy = true;
   let sourceSubscription: Subscription | null = null;
   let latestNext: T | undefined;
+  let replayNext: T | undefined;
   let subscriptionPending = false;
+  const handleInitialValue = () => {
+    const replayValue = replayNext;
+    const nextValue = initialValue;
+    if (replayValue !== undefined && subject.observers.length > 0) {
+      replayNext = undefined;
+      subject.next(replayValue);
+    } else if (nextValue !== undefined && subject.observers.length > 0) {
+      initialValue = undefined;
+      subject.next(nextValue);
+    }
+  };
   const subscribe = (theSource: Observable<T>) => {
     if (subscriptionPending) {
       return;
@@ -49,10 +61,7 @@ export const getControlledSubject = <T>(
           onSourceCompleted();
         },
       );
-      if (initialValue !== undefined) {
-        subject.next(initialValue);
-        initialValue = undefined;
-      }
+      handleInitialValue();
     } finally {
       subscriptionPending = false;
     }
@@ -63,6 +72,8 @@ export const getControlledSubject = <T>(
       // always subscribe (needed for stateful behaviors)
       if (source !== null && sourceSubscription === null) {
         subscribe(source);
+      } else {
+        handleInitialValue();
       }
       return;
     }
@@ -104,18 +115,20 @@ export const getControlledSubject = <T>(
     },
     next: (next: T) => subject.next(next),
     error: (error, replay) => {
-      subject.error(error);
+      const errorSubject = subject;
       newSubject();
       if (replay && latestNext !== undefined) {
-        subject.next(latestNext);
+        replayNext = latestNext;
       }
+      errorSubject.error(error);
     },
     complete: (replay) => {
-      subject.complete();
+      const completeSubject = subject;
       newSubject();
       if (replay && latestNext !== undefined) {
-        subject.next(latestNext);
+        replayNext = latestNext;
       }
+      completeSubject.complete();
     },
     isSubscribed: () => isSubscribed,
     hasSource: () => source !== null,
