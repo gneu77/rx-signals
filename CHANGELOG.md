@@ -1,3 +1,9 @@
+# 1.0.0-beta.10 (2020-10-20)
+
+### Fixes
+
+- **fixed packaging**
+
 # 1.0.0-beta.9 (2020-10-20)
 
 ### Breaking changes
