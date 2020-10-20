@@ -1,3 +1,7 @@
+# 1.0.0-rc.1 (2020-10-20)
+
+- **first release candidate**
+
 # 1.0.0-beta.10 (2020-10-20)
 
 ### Fixes
