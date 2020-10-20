@@ -46,16 +46,6 @@ describe('Store', () => {
       );
     });
 
-    it('should throw, if event source with given identifier already exists', () => {
-      const id = { symbol: Symbol('TEST') };
-      store.addEventSource(id, stringEventSource.asObservable());
-      expect(() => {
-        store.addStatelessBehavior(id, stringBehavior.asObservable());
-      }).toThrowError(
-        'A behavior or event source with the given identifier was already added with a source: Symbol(TEST)',
-      );
-    });
-
     it('should work', () => {
       expect(() => {
         store.addStatelessBehavior({ symbol: Symbol('TEST') }, stringBehavior.asObservable());
@@ -85,16 +75,6 @@ describe('Store', () => {
     it('should throw, if behavior with given identifier already exists', () => {
       const id = { symbol: Symbol('TEST') };
       store.addStatefulBehavior(id, stringBehavior.asObservable());
-      expect(() => {
-        store.addStatefulBehavior(id, stringBehavior.asObservable());
-      }).toThrowError(
-        'A behavior or event source with the given identifier was already added with a source: Symbol(TEST)',
-      );
-    });
-
-    it('should throw, if event source with given identifier already exists', () => {
-      const id = { symbol: Symbol('TEST') };
-      store.addEventSource(id, stringEventSource.asObservable());
       expect(() => {
         store.addStatefulBehavior(id, stringBehavior.asObservable());
       }).toThrowError(
@@ -178,59 +158,53 @@ describe('Store', () => {
   describe('addEventSource', () => {
     it('should throw, if no valid identifier', () => {
       expect(() => {
-        store.addEventSource((undefined as unknown) as TypeIdentifier<string>, stringEventSource.asObservable());
+        const sourceId = Symbol('testSource');
+        store.addEventSource(
+          sourceId,
+          (undefined as unknown) as TypeIdentifier<string>,
+          stringEventSource.asObservable(),
+        );
       }).toThrowError('identifier.symbol is mandatory');
       expect(() => {
-        store.addEventSource(({ symbol: null } as unknown) as TypeIdentifier<string>, stringEventSource.asObservable());
+        const sourceId = Symbol('testSource');
+        store.addEventSource(
+          sourceId,
+          ({ symbol: null } as unknown) as TypeIdentifier<string>,
+          stringEventSource.asObservable(),
+        );
       }).toThrowError('identifier.symbol is mandatory');
     });
 
     it('should throw, if no valid observable', () => {
       expect(() => {
-        store.addEventSource({ symbol: Symbol('TEST') }, (null as unknown) as Observable<any>);
+        const sourceId = Symbol('testSource');
+        store.addEventSource(sourceId, { symbol: Symbol('TEST') }, (null as unknown) as Observable<any>);
       }).toThrowError('observable is mandatory');
-    });
-
-    it('should throw, if behavior with given identifier already exists', () => {
-      const id = { symbol: Symbol('TEST') };
-      store.addStatelessBehavior(id, stringBehavior.asObservable());
-      expect(() => {
-        store.addEventSource(id, stringEventSource.asObservable());
-      }).toThrowError(
-        'A behavior or event source with the given identifier was already added with a source: Symbol(TEST)',
-      );
     });
 
     it('should throw, if event source with given identifier already exists', () => {
       const id = { symbol: Symbol('TEST') };
-      store.addEventSource(id, stringEventSource.asObservable());
+      const sourceId = Symbol('testSource');
+      store.addEventSource(sourceId, id, stringEventSource.asObservable());
       expect(() => {
-        store.addEventSource(id, stringEventSource.asObservable());
+        store.addEventSource(sourceId, id, stringEventSource.asObservable());
       }).toThrowError(
-        'A behavior or event source with the given identifier was already added with a source: Symbol(TEST)',
+        'A source with the given ID has already been added. Remove it first, if you want to add a new one.: Symbol(testSource)',
       );
     });
 
     it('should work', () => {
       expect(() => {
-        store.addEventSource({ symbol: Symbol('TEST') }, stringEventSource.asObservable());
+        const sourceId = Symbol('testSource');
+        store.addEventSource(sourceId, { symbol: Symbol('TEST') }, stringEventSource.asObservable());
       }).not.toThrow();
     });
   });
 
   describe('removeEventSource', () => {
-    it('should throw, if no valid identifier', () => {
-      expect(() => {
-        store.removeEventSource((undefined as unknown) as TypeIdentifier<string>);
-      }).toThrowError('identifier.symbol is mandatory');
-      expect(() => {
-        store.removeEventSource(({ symbol: null } as unknown) as TypeIdentifier<string>);
-      }).toThrowError('identifier.symbol is mandatory');
-    });
-
     it('should work', () => {
       expect(() => {
-        store.removeEventSource({ symbol: Symbol('TEST') });
+        store.removeEventSource(Symbol('testSource'));
       }).not.toThrow();
     });
   });
@@ -279,7 +253,7 @@ describe('Store', () => {
               debounceTime(150),
               switchMap((pair) => of({ result: [1, 2, 3], resultQuery: pair[0] })),
             );
-            store.addEventSource(RESULT_EVENT, eventSource);
+            store.addEventSource(Symbol('RESULT_EVENT_SOURCE'), RESULT_EVENT, eventSource);
           });
 
           it('should have a current value for the result behavior', (done) => {

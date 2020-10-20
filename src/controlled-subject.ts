@@ -1,137 +1,174 @@
 import { Observable, Subject, Subscription } from 'rxjs';
 
-export interface ControlledSubject<T> {
+export interface SourceObservable<T> {
+  id: symbol;
   observable: Observable<T>;
-  addSource(sourceObservable: Observable<T>, lazySubscription: boolean, initialValue?: T): void;
-  removeSource(): void;
-  next(next: T): void;
-  error(error: any, replay: boolean): void;
-  complete(replay: boolean): void;
-  isSubscribed(): boolean;
-  hasSource(): boolean;
-  hasLazySource(): boolean;
+  subscribeLazy: boolean;
+  initialValue: T | undefined;
+  subscription: Subscription | null;
+  subscriptionPending: boolean;
 }
 
-export const getControlledSubject = <T>(
-  getTargetPipe: (targetSubject: Observable<T>) => Observable<T>, // share or shareReplay and optional startWith
-  onSourceError: (error: any) => void,
-  onSourceCompleted: () => void,
-): ControlledSubject<T> => {
-  let subject: Subject<T>;
-  let pipe: Observable<T>;
-  let initialValue: T | undefined;
-  const newSubject = () => {
-    subject = new Subject<T>();
-    pipe = getTargetPipe(subject.asObservable());
-  };
-  newSubject();
-  let isSubscribed = false;
-  let source: Observable<T> | null = null;
-  let subscribeLazy = true;
-  let sourceSubscription: Subscription | null = null;
-  let latestNext: T | undefined;
-  let replayNext: T | undefined;
-  let subscriptionPending = false;
-  const handleInitialValue = () => {
-    const replayValue = replayNext;
-    const nextValue = initialValue;
-    if (replayValue !== undefined && subject.observers.length > 0) {
-      replayNext = undefined;
-      subject.next(replayValue);
-    } else if (nextValue !== undefined && subject.observers.length > 0) {
-      initialValue = undefined;
-      subject.next(nextValue);
+export class ControlledSubject<T> {
+  private subject: Subject<T>;
+
+  private pipe: Observable<T>;
+
+  private sources: Map<symbol, SourceObservable<T>> = new Map<symbol, SourceObservable<T>>();
+
+  private observable: Observable<T>;
+
+  private isSubscribed: boolean = false;
+
+  constructor(
+    private getTargetPipe: (targetSubject: Observable<T>) => Observable<T>, // share or shareReplay
+    private onSourceError: (id: symbol, error: any) => void,
+    private onSourceCompleted: (id: symbol) => void,
+  ) {
+    this.subject = new Subject<T>();
+    this.pipe = this.getTargetPipe(this.subject.asObservable());
+    this.observable = new Observable<T>((subscriber) => {
+      const subscription = this.pipe.subscribe(subscriber);
+      this.setIsSubscribed(true);
+      return () => {
+        subscription.unsubscribe();
+        if (this.subject.observers.length === 0) {
+          this.setIsSubscribed(false);
+        }
+      };
+    });
+  }
+
+  getObservable(): Observable<T> {
+    return this.observable;
+  }
+
+  addSource(sourceId: symbol, sourceObservable: Observable<T>, lazySubscription: boolean, initialValue?: T): void {
+    if (this.sources.has(sourceId)) {
+      throw new Error(
+        `A source with the given ID has already been added. Remove it first, if you want to add a new one.: ${sourceId.toString()}`,
+      );
     }
-  };
-  const subscribe = (theSource: Observable<T>) => {
-    if (subscriptionPending) {
+    this.sources.set(sourceId, {
+      id: sourceId,
+      observable: sourceObservable,
+      subscribeLazy: lazySubscription,
+      initialValue,
+      subscription: null,
+      subscriptionPending: false,
+    });
+    this.setIsSubscribed(this.isSubscribed);
+  }
+
+  removeSource(sourceId: symbol): void {
+    this.unsubscribe(sourceId);
+    this.sources.delete(sourceId);
+  }
+
+  next(next: T): void {
+    this.subject.next(next);
+  }
+
+  error(error: any): void {
+    const errorSubject = this.subject;
+    this.newSubject();
+    errorSubject.error(error);
+  }
+
+  complete(): void {
+    const completeSubject = this.subject;
+    this.newSubject();
+    completeSubject.complete();
+  }
+
+  isObservableSubscribed(): boolean {
+    return this.isSubscribed;
+  }
+
+  hasSource(sourceId: symbol): boolean {
+    return this.sources.has(sourceId);
+  }
+
+  hasAnySource(): boolean {
+    return this.sources.size > 0;
+  }
+
+  isLazySource(sourceId: symbol): boolean {
+    return this.sources.get(sourceId)?.subscribeLazy ?? false;
+  }
+
+  private newSubject(): void {
+    this.subject = new Subject<T>();
+    this.pipe = this.getTargetPipe(this.subject.asObservable());
+  }
+
+  private setIsSubscribed(newIsSubscribed: boolean): void {
+    this.isSubscribed = newIsSubscribed;
+    this.sources.forEach((source) => {
+      if (!source.subscribeLazy) {
+        // always subscribe (needed for stateful behaviors)
+        if (source.subscription === null) {
+          this.subscribe(source.id);
+        } else {
+          this.handleInitialValue(source.id);
+        }
+        return;
+      }
+      if (!this.isSubscribed) {
+        this.unsubscribe(source.id);
+      } else if (this.isSubscribed && source.subscription === null) {
+        this.subscribe(source.id);
+      }
+    });
+  }
+
+  private unsubscribe(sourceId: symbol): void {
+    const source = this.sources.get(sourceId) ?? null;
+    if (source === null) {
       return;
     }
-    subscriptionPending = true;
+    if (source.subscription !== null) {
+      source.subscription.unsubscribe();
+      source.subscription = null;
+    }
+  }
+
+  private subscribe(sourceId: symbol): void {
+    const source = this.sources.get(sourceId) ?? null;
+    if (source === null) {
+      return;
+    }
+    if (source.subscriptionPending) {
+      return;
+    }
+    source.subscriptionPending = true;
     try {
-      sourceSubscription = theSource.subscribe(
+      source.subscription = source.observable.subscribe(
         (next) => {
-          latestNext = next;
-          subject.next(next);
+          this.subject.next(next);
         },
         (error) => {
-          onSourceError(error);
+          this.onSourceError(source.id, error);
         },
         () => {
-          onSourceCompleted();
+          this.onSourceCompleted(source.id);
         },
       );
-      handleInitialValue();
+      this.handleInitialValue(sourceId);
     } finally {
-      subscriptionPending = false;
+      source.subscriptionPending = false;
     }
-  };
-  const setIsSubscribed = (newIsSubscribed: boolean) => {
-    isSubscribed = newIsSubscribed;
-    if (!subscribeLazy) {
-      // always subscribe (needed for stateful behaviors)
-      if (source !== null && sourceSubscription === null) {
-        subscribe(source);
-      } else {
-        handleInitialValue();
-      }
+  }
+
+  private handleInitialValue(sourceId: symbol): void {
+    const source = this.sources.get(sourceId) ?? null;
+    if (source === null) {
       return;
     }
-    if (!isSubscribed && sourceSubscription !== null) {
-      sourceSubscription.unsubscribe();
-      sourceSubscription = null;
-    } else if (isSubscribed && sourceSubscription === null && source !== null) {
-      subscribe(source);
+    const nextValue = source.initialValue;
+    if (nextValue !== undefined && this.subject.observers.length > 0) {
+      source.initialValue = undefined;
+      this.subject.next(nextValue);
     }
-  };
-  const observable = new Observable<T>((subscriber) => {
-    const subscription = pipe.subscribe(subscriber);
-    setIsSubscribed(true);
-    return () => {
-      subscription.unsubscribe();
-      if (subject.observers.length === 0) {
-        setIsSubscribed(false);
-      }
-    };
-  });
-  return {
-    observable,
-    addSource: (sourceObservable: Observable<T>, lazySubscription, initialVal?) => {
-      if (source !== null) {
-        throw new Error('A source has already been added. Remove it first, if you want to add a new one.');
-      }
-      source = sourceObservable;
-      subscribeLazy = lazySubscription;
-      initialValue = initialVal;
-      setIsSubscribed(isSubscribed);
-    },
-    removeSource: () => {
-      source = null;
-      initialValue = undefined;
-      if (sourceSubscription !== null) {
-        sourceSubscription.unsubscribe();
-        sourceSubscription = null;
-      }
-    },
-    next: (next: T) => subject.next(next),
-    error: (error, replay) => {
-      const errorSubject = subject;
-      newSubject();
-      if (replay && latestNext !== undefined) {
-        replayNext = latestNext;
-      }
-      errorSubject.error(error);
-    },
-    complete: (replay) => {
-      const completeSubject = subject;
-      newSubject();
-      if (replay && latestNext !== undefined) {
-        replayNext = latestNext;
-      }
-      completeSubject.complete();
-    },
-    isSubscribed: () => isSubscribed,
-    hasSource: () => source !== null,
-    hasLazySource: () => source !== null && subscribeLazy,
-  };
-};
+  }
+}

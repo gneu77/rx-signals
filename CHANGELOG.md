@@ -1,3 +1,9 @@
+# 1.0.0-beta.9 (2020-10-20)
+
+### Breaking changes
+
+- **it is now possible to add multiple event sources for the same event type**
+
 # 1.0.0-beta.8 (2020-10-15)
 
 ### Features

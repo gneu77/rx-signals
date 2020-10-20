@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs';
 import { distinctUntilChanged, share, shareReplay } from 'rxjs/operators';
-import { ControlledSubject, getControlledSubject } from './controlled-subject';
+import { ControlledSubject } from './controlled-subject';
 
 export interface TypeIdentifier<T> {
   _typeTemplate?: T | undefined; // should always be undefined (just here to make TS happy)
@@ -12,14 +12,11 @@ export class Store {
 
   private eventStreams = new Map<symbol, ControlledSubject<any>>();
 
-  isAdded<T>(identifier: TypeIdentifier<T>): boolean {
+  isBehaviorAdded<T>(identifier: TypeIdentifier<T>): boolean {
     if (!identifier?.symbol) {
       throw new Error('identifier.symbol is mandatory');
     }
-    return (
-      this.behaviors.get(identifier.symbol)?.hasSource() === true ||
-      this.eventStreams.get(identifier.symbol)?.hasSource() === true
-    );
+    return this.behaviors.get(identifier.symbol)?.hasAnySource() === true;
   }
 
   isSubscribed<T>(identifier: TypeIdentifier<T>): boolean {
@@ -27,20 +24,24 @@ export class Store {
       throw new Error('identifier.symbol is mandatory');
     }
     return (
-      this.behaviors.get(identifier.symbol)?.isSubscribed() === true ||
-      this.eventStreams.get(identifier.symbol)?.isSubscribed() === true
+      this.behaviors.get(identifier.symbol)?.isObservableSubscribed() === true ||
+      this.eventStreams.get(identifier.symbol)?.isObservableSubscribed() === true
     );
   }
 
   getUnsubscribedIdentifiers(): symbol[] {
     return [
-      ...[...this.behaviors.entries()].filter((tuple) => tuple[1].isSubscribed() === false).map((tuple) => tuple[0]),
-      ...[...this.eventStreams.entries()].filter((tuple) => tuple[1].isSubscribed() === false).map((tuple) => tuple[0]),
+      ...[...this.behaviors.entries()]
+        .filter((tuple) => tuple[1].isObservableSubscribed() === false)
+        .map((tuple) => tuple[0]),
+      ...[...this.eventStreams.entries()]
+        .filter((tuple) => tuple[1].isObservableSubscribed() === false)
+        .map((tuple) => tuple[0]),
     ];
   }
 
   getNoSourceBehaviorIdentifiers(): symbol[] {
-    return [...this.behaviors.entries()].filter((tuple) => tuple[1].hasSource() === false).map((tuple) => tuple[0]);
+    return [...this.behaviors.entries()].filter((tuple) => tuple[1].hasAnySource() === false).map((tuple) => tuple[0]);
   }
 
   addBehavior<T>(
@@ -49,8 +50,8 @@ export class Store {
     subscribeLazy: boolean,
     initialValue?: T,
   ): void {
-    this.assertTypeExists(identifier?.symbol, observable);
-    this.getBehaviorControlledSubject(identifier).addSource(observable, subscribeLazy, initialValue);
+    this.assertTypeExists(identifier?.symbol, observable, identifier?.symbol);
+    this.getBehaviorControlledSubject(identifier).addSource(identifier.symbol, observable, subscribeLazy, initialValue);
   }
 
   addStatelessBehavior<T>(identifier: TypeIdentifier<T>, observable: Observable<T>, initialValue?: T): void {
@@ -63,53 +64,53 @@ export class Store {
 
   removeBehavior<T>(identifier: TypeIdentifier<T>): void {
     const behavior = this.getBehaviorControlledSubject(identifier);
-    behavior.removeSource();
-    behavior.complete(false);
+    behavior.removeSource(identifier.symbol);
+    behavior.complete();
     this.behaviors.delete(identifier.symbol);
   }
 
   getBehavior<T>(identifier: TypeIdentifier<T>): Observable<T> {
-    return this.getBehaviorControlledSubject(identifier).observable as Observable<T>;
+    return this.getBehaviorControlledSubject(identifier).getObservable();
   }
 
   dispatchEvent<T>(identifier: TypeIdentifier<T>, event: T): void {
     const controlledSubject = this.getEventStreamControlledSubject(identifier);
-    if (controlledSubject.isSubscribed()) {
+    if (controlledSubject.isObservableSubscribed()) {
       controlledSubject.next(event);
     }
   }
 
-  addEventSource<T>(identifier: TypeIdentifier<T>, observable: Observable<T>): void {
-    this.assertTypeExists(identifier?.symbol, observable);
-    this.getEventStreamControlledSubject(identifier).addSource(observable, true);
+  addEventSource<T>(sourceIdentifier: symbol, eventIdentifier: TypeIdentifier<T>, observable: Observable<T>): void {
+    this.assertTypeExists(sourceIdentifier, observable, sourceIdentifier);
+    this.getEventStreamControlledSubject(eventIdentifier).addSource(sourceIdentifier, observable, true);
   }
 
-  removeEventSource<T>(identifier: TypeIdentifier<T>): void {
-    this.getEventStreamControlledSubject(identifier).removeSource();
+  removeEventSource(sourceIdentifier: symbol): void {
+    this.eventStreams.forEach((cs) => cs.removeSource(sourceIdentifier));
   }
 
   getEventStream<T>(identifier: TypeIdentifier<T>): Observable<T> {
-    return this.getEventStreamControlledSubject(identifier).observable as Observable<T>;
+    return this.getEventStreamControlledSubject(identifier).getObservable();
   }
 
   private createBehaviorControlledSubject<T>(identifier: TypeIdentifier<T>): ControlledSubject<T> {
-    const controlledSubject = getControlledSubject<T>(
+    const controlledSubject = new ControlledSubject<T>(
       (subject) =>
         subject.pipe(
           distinctUntilChanged(), // behaviors represent a current value, hence pushing the same value twice makes no sense
           shareReplay(1), // for the same reason, multiple evaluation makes no sense and we ensure that there always is a value
         ),
-      (error) => {
+      (id, error) => {
         // If the source errors, remove it from the behavior and complete for the target.
         // (It is up to the target to just add a new source or remove and add the complete behavior, or even do nothing)
-        controlledSubject.removeSource();
-        controlledSubject.error(error, true); // replay the latest value with the new subject
+        controlledSubject.removeSource(id);
+        controlledSubject.error(error);
       },
-      () => {
+      (id) => {
         // If the source completes, remove it from the behavior and complete for the target.
         // (It is up to the target to just add a new source or remove and add the complete behavior, or even do nothing)
-        controlledSubject.removeSource();
-        controlledSubject.complete(true); // replay the latest value with the new subject
+        controlledSubject.removeSource(id);
+        controlledSubject.complete();
       },
     );
     this.behaviors.set(identifier.symbol, controlledSubject);
@@ -124,19 +125,19 @@ export class Store {
   }
 
   private createEventStreamControlledSubject<T>(identifier: TypeIdentifier<T>): ControlledSubject<T> {
-    const controlledSubject = getControlledSubject<T>(
+    const controlledSubject = new ControlledSubject<T>(
       (subject) => subject.pipe(share()),
-      (error) => {
+      (id, error) => {
         // If the source errors, remove it and error for the target.
         // (It is up to the target to just add a new source or remove and add the complete event stream, or even do nothing)
-        controlledSubject.removeSource();
-        controlledSubject.error(error, false);
+        controlledSubject.removeSource(id);
+        controlledSubject.error(error);
       },
-      () => {
+      (id) => {
         // If the source comples, remove it and complete for the target.
         // (It is up to the target to just add a new source or remove and add the complete event stream, or even do nothing)
-        controlledSubject.removeSource();
-        controlledSubject.complete(false);
+        controlledSubject.removeSource(id);
+        controlledSubject.complete();
       },
     );
     this.eventStreams.set(identifier.symbol, controlledSubject);
@@ -150,7 +151,7 @@ export class Store {
     return this.eventStreams.get(identifier.symbol) ?? this.createEventStreamControlledSubject(identifier);
   }
 
-  private assertTypeExists(symbol: symbol, observable: Observable<any>): void {
+  private assertTypeExists(symbol: symbol, observable: Observable<any>, sourceIdentifier: symbol): void {
     if (!symbol) {
       throw new Error('identifier.symbol is mandatory');
     }
@@ -158,8 +159,8 @@ export class Store {
       throw new Error('observable is mandatory');
     }
     if (
-      (this.behaviors.has(symbol) && this.behaviors.get(symbol)?.hasSource()) ||
-      (this.eventStreams.has(symbol) && this.eventStreams.get(symbol)?.hasSource())
+      (this.behaviors.has(symbol) && this.behaviors.get(symbol)?.hasSource(sourceIdentifier)) ||
+      (this.eventStreams.has(symbol) && this.eventStreams.get(symbol)?.hasSource(sourceIdentifier))
     ) {
       throw new Error(
         `A behavior or event source with the given identifier was already added with a source: ${symbol.toString()}`,
