@@ -1,10 +1,16 @@
 import { Observable } from 'rxjs';
-import { distinctUntilChanged, share, shareReplay } from 'rxjs/operators';
+import { distinctUntilChanged, map, share, shareReplay } from 'rxjs/operators';
 import { ControlledSubject } from './controlled-subject';
+import { SourceObservable } from './source-observable';
 
 export interface TypeIdentifier<T> {
   _typeTemplate?: T | undefined; // should always be undefined (just here to make TS happy)
   readonly symbol: symbol;
+}
+
+export interface TypedEvent<T> {
+  type: TypeIdentifier<T>;
+  event: T;
 }
 
 export class Store {
@@ -51,7 +57,9 @@ export class Store {
     initialValue?: T,
   ): void {
     this.assertTypeExists(identifier?.symbol, observable, identifier?.symbol);
-    this.getBehaviorControlledSubject(identifier).addSource(identifier.symbol, observable, subscribeLazy, initialValue);
+    this.getBehaviorControlledSubject(identifier).addSource(
+      new SourceObservable<T>(identifier.symbol, observable, subscribeLazy, initialValue),
+    );
   }
 
   addStatelessBehavior<T>(identifier: TypeIdentifier<T>, observable: Observable<T>, initialValue?: T): void {
@@ -73,6 +81,12 @@ export class Store {
     return this.getBehaviorControlledSubject(identifier).getObservable();
   }
 
+  resetBehaviors() {
+    const resetHandles = [...this.behaviors.values()].map((behavior) => behavior.getResetHandle());
+    resetHandles.forEach((handle) => handle.removeSources());
+    resetHandles.forEach((handle) => handle.readdSources());
+  }
+
   dispatchEvent<T>(identifier: TypeIdentifier<T>, event: T): void {
     const controlledSubject = this.getEventStreamControlledSubject(identifier);
     if (controlledSubject.isObservableSubscribed()) {
@@ -82,7 +96,9 @@ export class Store {
 
   addEventSource<T>(sourceIdentifier: symbol, eventIdentifier: TypeIdentifier<T>, observable: Observable<T>): void {
     this.assertTypeExists(sourceIdentifier, observable, sourceIdentifier);
-    this.getEventStreamControlledSubject(eventIdentifier).addSource(sourceIdentifier, observable, true);
+    this.getEventStreamControlledSubject(eventIdentifier).addSource(
+      new SourceObservable<T>(sourceIdentifier, observable, true),
+    );
   }
 
   removeEventSource(sourceIdentifier: symbol): void {
@@ -91,6 +107,17 @@ export class Store {
 
   getEventStream<T>(identifier: TypeIdentifier<T>): Observable<T> {
     return this.getEventStreamControlledSubject(identifier).getObservable();
+  }
+
+  getTypedEventStream<T>(identifier: TypeIdentifier<T>): Observable<TypedEvent<T>> {
+    return this.getEventStreamControlledSubject(identifier)
+      .getObservable()
+      .pipe(
+        map((event) => ({
+          type: identifier,
+          event,
+        })),
+      );
   }
 
   private createBehaviorControlledSubject<T>(identifier: TypeIdentifier<T>): ControlledSubject<T> {

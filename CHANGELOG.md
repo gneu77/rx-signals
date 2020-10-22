@@ -1,3 +1,12 @@
+# 1.0.0-rc.2 (2020-10-22)
+
+- **some cleanup work**
+
+### Features
+
+- **getTypedEventStream:** get observable for events of given type, bundled with the type (handy for reducers)
+- **resetBehaviors** reset all behaviors of the store
+
 # 1.0.0-rc.1 (2020-10-20)
 
 - **first release candidate**
@@ -74,6 +83,7 @@
 - **addBehavior:** add a behavior to the store
 - **removeBehavior:** remove a behavior from the store
 - **getBehavior:** get a behavior observable from the store
+- **getEventStream:** get observable for events of given type
 - **dispatchEvent:** dispatch an event to the store
 - **addEventSource:** add an event source to the store
 - **removeEventSource:** remove an event source from the store

@@ -1,5 +1,5 @@
 import { BehaviorSubject, combineLatest, Observable, of, Subject } from 'rxjs';
-import { debounceTime, filter, scan, switchMap, take } from 'rxjs/operators';
+import { debounceTime, filter, map, scan, skip, switchMap, take, withLatestFrom } from 'rxjs/operators';
 import { Store, TypeIdentifier } from '../src/store';
 
 describe('Store', () => {
@@ -268,6 +268,185 @@ describe('Store', () => {
               });
           });
         });
+      });
+    });
+
+    describe('reduce and reset', () => {
+      interface Query {
+        firstName: string | null;
+        lastName: string | null;
+      }
+      interface ResultType {
+        result: number[];
+        resultQuery: Query | null;
+      }
+      const QUERY_BEHAVIOR: TypeIdentifier<Query> = { symbol: Symbol('QUERY_BEHAVIOR') };
+      const QUERY_EVENT: TypeIdentifier<Partial<Query>> = { symbol: Symbol('QUERY_EVENT') };
+      const RESULT_EFFECT = Symbol('RESULT_EFFECT');
+      const RESULT_EVENT: TypeIdentifier<ResultType> = { symbol: Symbol('RESULT_EVENT') };
+      const RESULT_BEHAVIOR: TypeIdentifier<ResultType> = { symbol: Symbol('RESULT_BEHAVIOR') };
+
+      beforeEach(() => {
+        store.addStatefulBehavior(
+          QUERY_BEHAVIOR,
+          store.getTypedEventStream(QUERY_EVENT).pipe(
+            withLatestFrom(store.getBehavior(QUERY_BEHAVIOR)),
+            map(([queryEvent, currentQuery]) => ({
+              ...currentQuery,
+              ...queryEvent.event,
+            })),
+          ),
+          {
+            firstName: null,
+            lastName: null,
+          },
+        );
+
+        store.addStatelessBehavior(RESULT_BEHAVIOR, store.getEventStream(RESULT_EVENT), {
+          result: [],
+          resultQuery: null,
+        });
+
+        const eventSource = combineLatest([store.getBehavior(QUERY_BEHAVIOR), store.getBehavior(RESULT_BEHAVIOR)]).pipe(
+          filter((pair) => pair[0] !== pair[1].resultQuery),
+          switchMap((pair) => of({ result: [1, 2, 3], resultQuery: pair[0] })),
+        );
+        store.addEventSource(RESULT_EFFECT, RESULT_EVENT, eventSource);
+      });
+
+      it('should have correct initial state for query', (done) => {
+        store
+          .getBehavior(QUERY_BEHAVIOR)
+          .pipe(take(1))
+          .subscribe((query) => {
+            expect(query.firstName).toBe(null);
+            expect(query.lastName).toBe(null);
+            done();
+          });
+      });
+
+      it('should have correct initial state for result', (done) => {
+        store
+          .getBehavior(RESULT_BEHAVIOR)
+          .pipe(take(1))
+          .subscribe((result) => {
+            expect(result.resultQuery).toBe(null);
+            expect(Array.isArray(result.result)).toBe(true);
+            expect(result.result.length).toBe(0);
+            done();
+          });
+      });
+
+      it('should automatically perform result effect', (done) => {
+        store
+          .getBehavior(RESULT_BEHAVIOR)
+          .pipe(skip(1), take(1))
+          .subscribe((result) => {
+            expect(result.resultQuery).not.toBe(null);
+            expect(result.resultQuery?.firstName).toBe(null);
+            expect(result.resultQuery?.lastName).toBe(null);
+            expect(Array.isArray(result.result)).toBe(true);
+            expect(result.result.length).toBe(3);
+            done();
+          });
+      });
+
+      it('should reduce the query', (done) => {
+        const expected = 'test';
+        store
+          .getBehavior(QUERY_BEHAVIOR)
+          .pipe(skip(1), take(1))
+          .subscribe((query) => {
+            expect(query.firstName).toBe(null);
+            expect(query.lastName).toBe(expected);
+            done();
+          });
+        store.dispatchEvent(QUERY_EVENT, {
+          lastName: expected,
+        });
+      });
+
+      it('should get results for the reduced query', (done) => {
+        const expected = 'test';
+        store
+          .getBehavior(RESULT_BEHAVIOR)
+          .pipe(skip(2), take(1))
+          .subscribe((result) => {
+            expect(result.resultQuery).not.toBe(null);
+            expect(result.resultQuery?.firstName).toBe(null);
+            expect(result.resultQuery?.lastName).toBe(expected);
+            expect(Array.isArray(result.result)).toBe(true);
+            expect(result.result.length).toBe(3);
+            done();
+          });
+        store.dispatchEvent(QUERY_EVENT, {
+          lastName: expected,
+        });
+      });
+
+      it('should get initial query state after reset', (done) => {
+        store
+          .getBehavior(QUERY_BEHAVIOR)
+          .pipe(skip(2), take(1))
+          .subscribe((query) => {
+            expect(query.firstName).toBe(null);
+            expect(query.lastName).toBe(null);
+            done();
+          });
+        store.dispatchEvent(QUERY_EVENT, {
+          lastName: 'test',
+        });
+        store.resetBehaviors();
+      });
+
+      it('should get initial results state after reset', (done) => {
+        const expected = 'test';
+        store
+          .getBehavior(RESULT_BEHAVIOR)
+          .pipe(skip(3), take(1))
+          .subscribe((result) => {
+            expect(result.resultQuery).toBe(null);
+            expect(Array.isArray(result.result)).toBe(true);
+            expect(result.result.length).toBe(0);
+            done();
+          });
+        store.dispatchEvent(QUERY_EVENT, {
+          lastName: expected,
+        });
+        store.resetBehaviors();
+      });
+
+      it('should automatically perform result effect after reset', (done) => {
+        store
+          .getBehavior(RESULT_BEHAVIOR)
+          .pipe(skip(4), take(1))
+          .subscribe((result) => {
+            expect(result.resultQuery).not.toBe(null);
+            expect(result.resultQuery?.firstName).toBe(null);
+            expect(result.resultQuery?.lastName).toBe(null);
+            expect(Array.isArray(result.result)).toBe(true);
+            expect(result.result.length).toBe(3);
+            done();
+          });
+        store.dispatchEvent(QUERY_EVENT, {
+          lastName: 'test',
+        });
+        store.resetBehaviors();
+      });
+
+      it('should give the reduced query, if subscribed after reducing', (done) => {
+        const expected = 'test';
+        store.dispatchEvent(QUERY_EVENT, {
+          lastName: expected,
+        });
+        store
+          .getBehavior(QUERY_BEHAVIOR)
+          .pipe(take(1))
+          .subscribe((query) => {
+            expect(query.firstName).toBe(null);
+            expect(query.lastName).toBe(expected);
+            done();
+          });
       });
     });
   });
