@@ -22,6 +22,10 @@ export class SourceObservable<T> {
     return this.sourceId;
   }
 
+  isSubscribed(): boolean {
+    return this.subscription !== null;
+  }
+
   isLazySubscription(): boolean {
     return this.lazySubscription;
   }
@@ -30,7 +34,13 @@ export class SourceObservable<T> {
     this.initialValueDispatched = false;
   }
 
-  subscribeIfNecessary(targetSubject: Subject<T>, error: (error: any) => void, complete: () => void): void {
+  subscribeIfNecessary(
+    targetSubject: Subject<T>,
+    targetObservable: Observable<T>,
+    isTargetSubscribed: boolean,
+    error: (error: any) => void,
+    complete: () => void,
+  ): void {
     if (this.subscriptionPending || this.subscription !== null) {
       return;
     }
@@ -39,9 +49,16 @@ export class SourceObservable<T> {
       // For reset logic (readding sources), it is important to dispatch
       // the initial value before subscribing the source and not after!
       const nextValue = this.initValue;
-      if (!this.initialValueDispatched && nextValue !== undefined && targetSubject.observers.length > 0) {
+      if (!this.initialValueDispatched && nextValue !== undefined) {
         this.initialValueDispatched = true;
+        let targetSubscription: Subscription | null = null;
+        if (!isTargetSubscribed) {
+          targetSubscription = targetObservable.subscribe();
+        }
         targetSubject.next(nextValue);
+        if (targetSubscription) {
+          targetSubscription.unsubscribe();
+        }
       }
       this.subscription = this.sourceObservable.subscribe(
         (next) => {

@@ -19,16 +19,10 @@ export class Store {
   private eventStreams = new Map<symbol, ControlledSubject<any>>();
 
   isBehaviorAdded<T>(identifier: TypeIdentifier<T>): boolean {
-    if (!identifier?.symbol) {
-      throw new Error('identifier.symbol is mandatory');
-    }
     return this.behaviors.get(identifier.symbol)?.hasAnySource() === true;
   }
 
   isSubscribed<T>(identifier: TypeIdentifier<T>): boolean {
-    if (!identifier?.symbol) {
-      throw new Error('identifier.symbol is mandatory');
-    }
     return (
       this.behaviors.get(identifier.symbol)?.isObservableSubscribed() === true ||
       this.eventStreams.get(identifier.symbol)?.isObservableSubscribed() === true
@@ -56,7 +50,7 @@ export class Store {
     subscribeLazy: boolean,
     initialValue?: T,
   ): void {
-    this.assertTypeExists(identifier?.symbol, observable, identifier?.symbol);
+    this.assertSourceExists(identifier.symbol, identifier.symbol);
     this.getBehaviorControlledSubject(identifier).addSource(
       new SourceObservable<T>(identifier.symbol, observable, subscribeLazy, initialValue),
     );
@@ -95,7 +89,7 @@ export class Store {
   }
 
   addEventSource<T>(sourceIdentifier: symbol, eventIdentifier: TypeIdentifier<T>, observable: Observable<T>): void {
-    this.assertTypeExists(sourceIdentifier, observable, sourceIdentifier);
+    this.assertSourceExists(sourceIdentifier, sourceIdentifier);
     this.getEventStreamControlledSubject(eventIdentifier).addSource(
       new SourceObservable<T>(sourceIdentifier, observable, true),
     );
@@ -122,6 +116,7 @@ export class Store {
 
   private createBehaviorControlledSubject<T>(identifier: TypeIdentifier<T>): ControlledSubject<T> {
     const controlledSubject = new ControlledSubject<T>(
+      identifier.symbol,
       (subject) =>
         subject.pipe(
           distinctUntilChanged(), // behaviors represent a current value, hence pushing the same value twice makes no sense
@@ -145,14 +140,12 @@ export class Store {
   }
 
   private getBehaviorControlledSubject<T>(identifier: TypeIdentifier<T>): ControlledSubject<T> {
-    if (!identifier?.symbol) {
-      throw new Error('identifier.symbol is mandatory');
-    }
     return this.behaviors.get(identifier.symbol) ?? this.createBehaviorControlledSubject(identifier);
   }
 
   private createEventStreamControlledSubject<T>(identifier: TypeIdentifier<T>): ControlledSubject<T> {
     const controlledSubject = new ControlledSubject<T>(
+      identifier.symbol,
       (subject) => subject.pipe(share()),
       (id, error) => {
         // If the source errors, remove it and error for the target.
@@ -172,19 +165,10 @@ export class Store {
   }
 
   private getEventStreamControlledSubject<T>(identifier: TypeIdentifier<T>): ControlledSubject<T> {
-    if (!identifier?.symbol) {
-      throw new Error('identifier.symbol is mandatory');
-    }
     return this.eventStreams.get(identifier.symbol) ?? this.createEventStreamControlledSubject(identifier);
   }
 
-  private assertTypeExists(symbol: symbol, observable: Observable<any>, sourceIdentifier: symbol): void {
-    if (!symbol) {
-      throw new Error('identifier.symbol is mandatory');
-    }
-    if (!observable) {
-      throw new Error('observable is mandatory');
-    }
+  private assertSourceExists(symbol: symbol, sourceIdentifier: symbol): void {
     if (
       (this.behaviors.has(symbol) && this.behaviors.get(symbol)?.hasSource(sourceIdentifier)) ||
       (this.eventStreams.has(symbol) && this.eventStreams.get(symbol)?.hasSource(sourceIdentifier))

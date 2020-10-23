@@ -1,3 +1,9 @@
+# 1.0.0-rc.3 (2020-10-23)
+
+### Fixes
+
+- **only subscribe sources, if not-cyclic subscriber exists**
+
 # 1.0.0-rc.2 (2020-10-22)
 
 - **some cleanup work**

@@ -1,41 +1,19 @@
-import { BehaviorSubject, combineLatest, Observable, of, Subject } from 'rxjs';
-import { debounceTime, filter, map, scan, skip, switchMap, take, withLatestFrom } from 'rxjs/operators';
+import { BehaviorSubject, combineLatest, of, Subject } from 'rxjs';
+import { debounceTime, filter, map, skip, switchMap, take, withLatestFrom } from 'rxjs/operators';
 import { Store, TypeIdentifier } from '../src/store';
 
 describe('Store', () => {
   let store: Store;
   let stringBehavior: BehaviorSubject<string>;
-  let numberStatefulBehaviorSource: Subject<number>;
-  let numberStatefulBehavior: Observable<number>;
   let stringEventSource: Subject<string>;
 
   beforeEach(() => {
     store = new Store();
     stringBehavior = new BehaviorSubject<string>('INITIAL_VALUE');
-    numberStatefulBehaviorSource = new Subject<number>();
-    numberStatefulBehavior = numberStatefulBehaviorSource.pipe(scan((prev, next) => prev + next, 0));
     stringEventSource = new Subject<string>();
   });
 
   describe('addStatelessBehavior', () => {
-    it('should throw, if no valid identifier', () => {
-      expect(() => {
-        store.addStatelessBehavior((undefined as unknown) as TypeIdentifier<string>, stringBehavior.asObservable());
-      }).toThrowError('identifier.symbol is mandatory');
-      expect(() => {
-        store.addStatelessBehavior(
-          ({ symbol: null } as unknown) as TypeIdentifier<string>,
-          stringBehavior.asObservable(),
-        );
-      }).toThrowError('identifier.symbol is mandatory');
-    });
-
-    it('should throw, if no valid observable', () => {
-      expect(() => {
-        store.addStatelessBehavior({ symbol: Symbol('TEST') }, (null as unknown) as Observable<any>);
-      }).toThrowError('observable is mandatory');
-    });
-
     it('should throw, if behavior with given identifier already exists', () => {
       const id = { symbol: Symbol('TEST') };
       store.addStatelessBehavior(id, stringBehavior.asObservable());
@@ -54,24 +32,6 @@ describe('Store', () => {
   });
 
   describe('addStatefulBehavior', () => {
-    it('should throw, if no valid identifier', () => {
-      expect(() => {
-        store.addStatefulBehavior((undefined as unknown) as TypeIdentifier<number>, numberStatefulBehavior);
-      }).toThrowError('identifier.symbol is mandatory');
-      expect(() => {
-        store.addStatefulBehavior(
-          ({ symbol: null } as unknown) as TypeIdentifier<string>,
-          stringBehavior.asObservable(),
-        );
-      }).toThrowError('identifier.symbol is mandatory');
-    });
-
-    it('should throw, if no valid observable', () => {
-      expect(() => {
-        store.addStatefulBehavior({ symbol: Symbol('TEST') }, (null as unknown) as Observable<any>);
-      }).toThrowError('observable is mandatory');
-    });
-
     it('should throw, if behavior with given identifier already exists', () => {
       const id = { symbol: Symbol('TEST') };
       store.addStatefulBehavior(id, stringBehavior.asObservable());
@@ -90,15 +50,6 @@ describe('Store', () => {
   });
 
   describe('removeBehavior', () => {
-    it('should throw, if no valid identifier', () => {
-      expect(() => {
-        store.removeBehavior((undefined as unknown) as TypeIdentifier<string>);
-      }).toThrowError('identifier.symbol is mandatory');
-      expect(() => {
-        store.removeBehavior(({ symbol: null } as unknown) as TypeIdentifier<string>);
-      }).toThrowError('identifier.symbol is mandatory');
-    });
-
     it('should work', () => {
       expect(() => {
         store.removeBehavior({ symbol: Symbol('TEST') });
@@ -107,15 +58,6 @@ describe('Store', () => {
   });
 
   describe('getBehavior', () => {
-    it('should throw, if no valid identifier', () => {
-      expect(() => {
-        store.getBehavior((undefined as unknown) as TypeIdentifier<string>);
-      }).toThrowError('identifier.symbol is mandatory');
-      expect(() => {
-        store.getBehavior(({ symbol: null } as unknown) as TypeIdentifier<string>);
-      }).toThrowError('identifier.symbol is mandatory');
-    });
-
     it('should work', () => {
       const behavior = store.getBehavior({ symbol: Symbol('TEST') });
       expect(typeof behavior.pipe).toBe('function');
@@ -123,15 +65,6 @@ describe('Store', () => {
   });
 
   describe('getEventStream', () => {
-    it('should throw, if no valid identifier', () => {
-      expect(() => {
-        store.getEventStream((undefined as unknown) as TypeIdentifier<string>);
-      }).toThrowError('identifier.symbol is mandatory');
-      expect(() => {
-        store.getEventStream(({ symbol: null } as unknown) as TypeIdentifier<string>);
-      }).toThrowError('identifier.symbol is mandatory');
-    });
-
     it('should work', () => {
       const eventStream = store.getEventStream({ symbol: Symbol('TEST') });
       expect(typeof eventStream.pipe).toBe('function');
@@ -139,15 +72,6 @@ describe('Store', () => {
   });
 
   describe('dispatchEvent', () => {
-    it('should throw, if no valid identifier', () => {
-      expect(() => {
-        store.dispatchEvent((undefined as unknown) as TypeIdentifier<string>, 'test');
-      }).toThrowError('identifier.symbol is mandatory');
-      expect(() => {
-        store.dispatchEvent(({ symbol: null } as unknown) as TypeIdentifier<string>, 'test');
-      }).toThrowError('identifier.symbol is mandatory');
-    });
-
     it('should work', () => {
       expect(() => {
         store.dispatchEvent({ symbol: Symbol('TEST') }, 'test');
@@ -156,41 +80,13 @@ describe('Store', () => {
   });
 
   describe('addEventSource', () => {
-    it('should throw, if no valid identifier', () => {
-      expect(() => {
-        const sourceId = Symbol('testSource');
-        store.addEventSource(
-          sourceId,
-          (undefined as unknown) as TypeIdentifier<string>,
-          stringEventSource.asObservable(),
-        );
-      }).toThrowError('identifier.symbol is mandatory');
-      expect(() => {
-        const sourceId = Symbol('testSource');
-        store.addEventSource(
-          sourceId,
-          ({ symbol: null } as unknown) as TypeIdentifier<string>,
-          stringEventSource.asObservable(),
-        );
-      }).toThrowError('identifier.symbol is mandatory');
-    });
-
-    it('should throw, if no valid observable', () => {
-      expect(() => {
-        const sourceId = Symbol('testSource');
-        store.addEventSource(sourceId, { symbol: Symbol('TEST') }, (null as unknown) as Observable<any>);
-      }).toThrowError('observable is mandatory');
-    });
-
     it('should throw, if event source with given identifier already exists', () => {
       const id = { symbol: Symbol('TEST') };
       const sourceId = Symbol('testSource');
       store.addEventSource(sourceId, id, stringEventSource.asObservable());
       expect(() => {
         store.addEventSource(sourceId, id, stringEventSource.asObservable());
-      }).toThrowError(
-        'A source with the given ID has already been added. Remove it first, if you want to add a new one.: Symbol(testSource)',
-      );
+      }).toThrowError('A source with the given ID has already been added.: Symbol(testSource)');
     });
 
     it('should work', () => {
@@ -447,6 +343,90 @@ describe('Store', () => {
             expect(query.lastName).toBe(expected);
             done();
           });
+      });
+    });
+
+    describe('cyclic dependencies', () => {
+      const TEST_BEHAVIOR1: TypeIdentifier<number> = { symbol: Symbol('TEST_BEHAVIOR1') };
+      const TEST_BEHAVIOR2: TypeIdentifier<number> = { symbol: Symbol('TEST_BEHAVIOR2') };
+      const TEST_EVENT: TypeIdentifier<number> = { symbol: Symbol('TEST_EVENT') };
+
+      beforeEach(() => {
+        store.addStatelessBehavior(
+          TEST_BEHAVIOR1,
+          store
+            .getEventStream(TEST_EVENT)
+            .pipe(
+              // tap((val) => console.log('TE-pipe: ', val)),
+              withLatestFrom(
+                store.getBehavior(TEST_BEHAVIOR2).pipe(
+                  // tap((val) => console.log('TB2-pipe: ', val)),
+                  map((val) => val * 10),
+                ),
+              ),
+            )
+            .pipe(
+              // tap((val) => console.log('pair-pipe: ', val)),
+              map((pair) => pair[0] * pair[1]),
+            ),
+          1,
+        );
+
+        store.addStatelessBehavior(TEST_BEHAVIOR2, store.getBehavior(TEST_BEHAVIOR1).pipe(map((val) => val * 10)));
+      });
+
+      it('should have correct initial value', (done) => {
+        store
+          .getBehavior(TEST_BEHAVIOR2)
+          .pipe(take(1))
+          .subscribe((val) => {
+            expect(val).toBe(10);
+            done();
+          });
+      });
+
+      it('should get correct value on first dispatch', (done) => {
+        store
+          .getBehavior(TEST_BEHAVIOR2)
+          .pipe(skip(1), take(1))
+          .subscribe((val) => {
+            expect(val).toBe(1000);
+            done();
+          });
+        store.dispatchEvent(TEST_EVENT, 1);
+      });
+
+      it('should not change, if second event sent while unsubscribed', (done) => {
+        const subscription = store.getBehavior(TEST_BEHAVIOR2).subscribe();
+        // console.log('sending event: 1...');
+        store.dispatchEvent(TEST_EVENT, 1);
+        // console.log('unsubscribe...');
+        subscription.unsubscribe();
+        // console.log('sending event: 2...');
+        store.dispatchEvent(TEST_EVENT, 2);
+        // console.log('subscribing again...');
+        store
+          .getBehavior(TEST_BEHAVIOR2)
+          .pipe(take(1))
+          .subscribe((val) => {
+            expect(val).toBe(1000);
+            done();
+          });
+      });
+
+      it('should get correct value on dispatch after resubscribe', (done) => {
+        const subscription = store.getBehavior(TEST_BEHAVIOR2).subscribe();
+        store.dispatchEvent(TEST_EVENT, 1);
+        subscription.unsubscribe();
+        store.dispatchEvent(TEST_EVENT, 2);
+        store
+          .getBehavior(TEST_BEHAVIOR2)
+          .pipe(skip(1), take(1))
+          .subscribe((val) => {
+            expect(val).toBe(300000);
+            done();
+          });
+        store.dispatchEvent(TEST_EVENT, 3);
       });
     });
   });
