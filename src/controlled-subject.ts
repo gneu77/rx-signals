@@ -1,6 +1,7 @@
 /* eslint no-underscore-dangle: ["error", { "allow": ["_rxs_id"] }] */
 
 import { Observable, Subject, Subscription } from 'rxjs';
+import { ContextHandle } from './context-handle';
 import { SourceObservable } from './source-observable';
 
 export interface ResetHandle {
@@ -25,6 +26,8 @@ export class ControlledSubject<T> {
 
   private nTargetSubscriptions = 0;
 
+  private contextHandle = new ContextHandle();
+
   constructor(
     private id: symbol,
     private getTargetPipe: (targetSubject: Observable<T>) => Observable<T>, // share() or shareReplay(1)
@@ -34,7 +37,7 @@ export class ControlledSubject<T> {
     this.pipe = this.getNewTargetPipe();
     this.observable = new Observable<T>((subscriber) => {
       const subscription = this.pipe.subscribe(subscriber);
-      const isCyclic = this.isCyclicSubscription(subscriber);
+      const isCyclic = this.contextHandle.isInContext;
       if (!isCyclic) {
         this.nTargetSubscriptions += 1;
         this.setIsSubscribed(true);
@@ -134,31 +137,6 @@ export class ControlledSubject<T> {
     return this.lazySources.has(sourceId);
   }
 
-  private isCyclicSubscription(potentialSource: any): boolean {
-    if (!potentialSource) {
-      return false;
-    }
-    if (potentialSource._rxs_id === this.id) {
-      return true;
-    }
-    if (Array.isArray(potentialSource.observables)) {
-      const cyclic = potentialSource.observables.find((observable: any) => this.isCyclicSubscription(observable));
-      if (cyclic) {
-        return true;
-      }
-    }
-    if (this.isCyclicSubscription(potentialSource.parent)) {
-      return true;
-    }
-    if (this.isCyclicSubscription(potentialSource.destination)) {
-      return true;
-    }
-    if (this.isCyclicSubscription(potentialSource.source)) {
-      return true;
-    }
-    return false;
-  }
-
   private getNewTargetPipe(): Observable<T> {
     const localSources = [...this.lazySources.values(), ...this.statefulSources.values()];
     localSources.forEach((source) => {
@@ -166,7 +144,6 @@ export class ControlledSubject<T> {
     });
     this.subject = new Subject<T>();
     this.pipe = this.getTargetPipe(this.subject);
-    (this.pipe as any)._rxs_id = this.id;
     localSources.forEach((source) => {
       this.addSource(source);
     });
@@ -200,6 +177,7 @@ export class ControlledSubject<T> {
       this.selfSubscriptionOrPendingSubscription = this.getObservable().subscribe();
     }
     source.subscribeIfNecessary(
+      this.contextHandle,
       this.subject,
       this.getObservable(),
       this.nTargetSubscriptions > 0,

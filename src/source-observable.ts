@@ -1,4 +1,5 @@
 import { Observable, Subject, Subscription } from 'rxjs';
+import { ContextHandle } from './context-handle';
 
 export class SourceObservable<T> {
   private subscription: Subscription | null = null;
@@ -35,6 +36,7 @@ export class SourceObservable<T> {
   }
 
   subscribeIfNecessary(
+    contextHandle: ContextHandle,
     targetSubject: Subject<T>,
     targetObservable: Observable<T>,
     isTargetSubscribed: boolean,
@@ -60,13 +62,15 @@ export class SourceObservable<T> {
           targetSubscription.unsubscribe();
         }
       }
-      this.subscription = this.sourceObservable.subscribe(
-        (next) => {
-          targetSubject.next(next);
-        },
-        error,
-        complete,
-      );
+      contextHandle.withContext(() => {
+        this.subscription = this.sourceObservable.subscribe(
+          (next) => {
+            targetSubject.next(next);
+          },
+          error,
+          complete,
+        );
+      });
     } finally {
       this.subscriptionPending = false;
     }

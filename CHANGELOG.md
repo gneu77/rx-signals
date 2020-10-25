@@ -1,3 +1,9 @@
+# 1.0.0-rc.4 (2020-10-25)
+
+### Fixes
+
+- **simplified check for cyclic subscription**
+
 # 1.0.0-rc.3 (2020-10-23)
 
 ### Fixes
