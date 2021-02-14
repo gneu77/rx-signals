@@ -1,3 +1,9 @@
+# 1.1.0-rc.1 (2021-02-14)
+
+### Features
+
+- **added two new methods to add typed event sources for two or three different events: add2TypedEventSource, add3TypedEventSource**
+
 # 1.0.0-rc.4 (2020-10-25)
 
 ### Fixes
