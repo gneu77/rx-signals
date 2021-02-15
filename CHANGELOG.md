@@ -1,3 +1,15 @@
+# 1.1.0-rc.3 (2021-02-15)
+
+### Features
+
+- **added methods add4TypedEventSource, add5TypedEventSource, add6TypedEventSource**
+
+# 1.1.0-rc.2 (2021-02-15)
+
+### Fixes
+
+- **share source source for add2TypedEventSource and add3TypedEventSource**
+
 # 1.1.0-rc.1 (2021-02-14)
 
 ### Features

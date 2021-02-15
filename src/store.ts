@@ -103,26 +103,8 @@ export class Store {
   ): void {
     this.assertSourceExists(sourceIdentifier, sourceIdentifier);
     const sharedSource = observable.pipe(share());
-    this.getEventStreamControlledSubject(eventIdentifierA).addSource(
-      new SourceObservable<A>(
-        sourceIdentifier,
-        sharedSource.pipe(
-          filter((typedEvent) => typedEvent.type === eventIdentifierA),
-          map((event) => event.event as A),
-        ),
-        true,
-      ),
-    );
-    this.getEventStreamControlledSubject(eventIdentifierB).addSource(
-      new SourceObservable<B>(
-        sourceIdentifier,
-        sharedSource.pipe(
-          filter((typedEvent) => typedEvent.type === eventIdentifierB),
-          map((event) => event.event as B),
-        ),
-        true,
-      ),
-    );
+    this.addTypedEventSource(sourceIdentifier, eventIdentifierA, sharedSource as Observable<TypedEvent<A>>);
+    this.addTypedEventSource(sourceIdentifier, eventIdentifierB, sharedSource as Observable<TypedEvent<B>>);
   }
 
   add3TypedEventSource<A, B, C>(
@@ -134,36 +116,65 @@ export class Store {
   ): void {
     this.assertSourceExists(sourceIdentifier, sourceIdentifier);
     const sharedSource = observable.pipe(share());
-    this.getEventStreamControlledSubject(eventIdentifierA).addSource(
-      new SourceObservable<A>(
-        sourceIdentifier,
-        sharedSource.pipe(
-          filter((typedEvent) => typedEvent.type === eventIdentifierA),
-          map((event) => event.event as A),
-        ),
-        true,
-      ),
-    );
-    this.getEventStreamControlledSubject(eventIdentifierB).addSource(
-      new SourceObservable<B>(
-        sourceIdentifier,
-        sharedSource.pipe(
-          filter((typedEvent) => typedEvent.type === eventIdentifierB),
-          map((event) => event.event as B),
-        ),
-        true,
-      ),
-    );
-    this.getEventStreamControlledSubject(eventIdentifierC).addSource(
-      new SourceObservable<C>(
-        sourceIdentifier,
-        sharedSource.pipe(
-          filter((typedEvent) => typedEvent.type === eventIdentifierC),
-          map((event) => event.event as C),
-        ),
-        true,
-      ),
-    );
+    this.addTypedEventSource(sourceIdentifier, eventIdentifierA, sharedSource as Observable<TypedEvent<A>>);
+    this.addTypedEventSource(sourceIdentifier, eventIdentifierB, sharedSource as Observable<TypedEvent<B>>);
+    this.addTypedEventSource(sourceIdentifier, eventIdentifierC, sharedSource as Observable<TypedEvent<C>>);
+  }
+
+  add4TypedEventSource<A, B, C, D>(
+    sourceIdentifier: symbol,
+    eventIdentifierA: TypeIdentifier<A>,
+    eventIdentifierB: TypeIdentifier<B>,
+    eventIdentifierC: TypeIdentifier<C>,
+    eventIdentifierD: TypeIdentifier<D>,
+    observable: Observable<TypedEvent<A> | TypedEvent<B> | TypedEvent<C> | TypedEvent<D>>,
+  ): void {
+    this.assertSourceExists(sourceIdentifier, sourceIdentifier);
+    const sharedSource = observable.pipe(share());
+    this.addTypedEventSource(sourceIdentifier, eventIdentifierA, sharedSource as Observable<TypedEvent<A>>);
+    this.addTypedEventSource(sourceIdentifier, eventIdentifierB, sharedSource as Observable<TypedEvent<B>>);
+    this.addTypedEventSource(sourceIdentifier, eventIdentifierC, sharedSource as Observable<TypedEvent<C>>);
+    this.addTypedEventSource(sourceIdentifier, eventIdentifierD, sharedSource as Observable<TypedEvent<D>>);
+  }
+
+  add5TypedEventSource<A, B, C, D, E>(
+    sourceIdentifier: symbol,
+    eventIdentifierA: TypeIdentifier<A>,
+    eventIdentifierB: TypeIdentifier<B>,
+    eventIdentifierC: TypeIdentifier<C>,
+    eventIdentifierD: TypeIdentifier<D>,
+    eventIdentifierE: TypeIdentifier<E>,
+    observable: Observable<TypedEvent<A> | TypedEvent<B> | TypedEvent<C> | TypedEvent<D> | TypedEvent<E>>,
+  ): void {
+    this.assertSourceExists(sourceIdentifier, sourceIdentifier);
+    const sharedSource = observable.pipe(share());
+    this.addTypedEventSource(sourceIdentifier, eventIdentifierA, sharedSource as Observable<TypedEvent<A>>);
+    this.addTypedEventSource(sourceIdentifier, eventIdentifierB, sharedSource as Observable<TypedEvent<B>>);
+    this.addTypedEventSource(sourceIdentifier, eventIdentifierC, sharedSource as Observable<TypedEvent<C>>);
+    this.addTypedEventSource(sourceIdentifier, eventIdentifierD, sharedSource as Observable<TypedEvent<D>>);
+    this.addTypedEventSource(sourceIdentifier, eventIdentifierE, sharedSource as Observable<TypedEvent<E>>);
+  }
+
+  add6TypedEventSource<A, B, C, D, E, F>(
+    sourceIdentifier: symbol,
+    eventIdentifierA: TypeIdentifier<A>,
+    eventIdentifierB: TypeIdentifier<B>,
+    eventIdentifierC: TypeIdentifier<C>,
+    eventIdentifierD: TypeIdentifier<D>,
+    eventIdentifierE: TypeIdentifier<E>,
+    eventIdentifierF: TypeIdentifier<F>,
+    observable: Observable<
+      TypedEvent<A> | TypedEvent<B> | TypedEvent<C> | TypedEvent<D> | TypedEvent<E> | TypedEvent<F>
+    >,
+  ): void {
+    this.assertSourceExists(sourceIdentifier, sourceIdentifier);
+    const sharedSource = observable.pipe(share());
+    this.addTypedEventSource(sourceIdentifier, eventIdentifierA, sharedSource as Observable<TypedEvent<A>>);
+    this.addTypedEventSource(sourceIdentifier, eventIdentifierB, sharedSource as Observable<TypedEvent<B>>);
+    this.addTypedEventSource(sourceIdentifier, eventIdentifierC, sharedSource as Observable<TypedEvent<C>>);
+    this.addTypedEventSource(sourceIdentifier, eventIdentifierD, sharedSource as Observable<TypedEvent<D>>);
+    this.addTypedEventSource(sourceIdentifier, eventIdentifierE, sharedSource as Observable<TypedEvent<E>>);
+    this.addTypedEventSource(sourceIdentifier, eventIdentifierF, sharedSource as Observable<TypedEvent<F>>);
   }
 
   removeEventSource(sourceIdentifier: symbol): void {
@@ -183,6 +194,23 @@ export class Store {
           event,
         })),
       );
+  }
+
+  private addTypedEventSource<T>(
+    sourceIdentifier: symbol,
+    eventIdentifier: TypeIdentifier<T>,
+    sharedSource: Observable<TypedEvent<T>>,
+  ): void {
+    this.getEventStreamControlledSubject(eventIdentifier).addSource(
+      new SourceObservable<T>(
+        sourceIdentifier,
+        sharedSource.pipe(
+          filter((typedEvent) => typedEvent.type === eventIdentifier),
+          map((event) => event.event),
+        ),
+        true,
+      ),
+    );
   }
 
   private createBehaviorControlledSubject<T>(identifier: TypeIdentifier<T>): ControlledSubject<T> {
