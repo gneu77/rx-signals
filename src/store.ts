@@ -96,66 +96,72 @@ export class Store {
   }
 
   add2TypedEventSource<A, B>(
-    sourceIdentifierA: symbol,
-    typeIdentifierA: TypeIdentifier<A>,
-    sourceIdentifierB: symbol,
-    typeIdentifierB: TypeIdentifier<B>,
+    sourceIdentifier: symbol,
+    eventIdentifierA: TypeIdentifier<A>,
+    eventIdentifierB: TypeIdentifier<B>,
     observable: Observable<TypedEvent<A> | TypedEvent<B>>,
   ): void {
-    this.assertSourceExists(sourceIdentifierA, sourceIdentifierA);
-    this.assertSourceExists(sourceIdentifierB, sourceIdentifierB);
-    this.addEventSource<A>(
-      sourceIdentifierA,
-      typeIdentifierA,
-      observable.pipe(
-        filter((typedEvent) => typedEvent.type === typeIdentifierA),
-        map((event) => event.event as A),
+    this.assertSourceExists(sourceIdentifier, sourceIdentifier);
+    const sharedSource = observable.pipe(share());
+    this.getEventStreamControlledSubject(eventIdentifierA).addSource(
+      new SourceObservable<A>(
+        sourceIdentifier,
+        sharedSource.pipe(
+          filter((typedEvent) => typedEvent.type === eventIdentifierA),
+          map((event) => event.event as A),
+        ),
+        true,
       ),
     );
-    this.addEventSource<B>(
-      sourceIdentifierB,
-      typeIdentifierB,
-      observable.pipe(
-        filter((typedEvent) => typedEvent.type === typeIdentifierB),
-        map((event) => event.event as B),
+    this.getEventStreamControlledSubject(eventIdentifierB).addSource(
+      new SourceObservable<B>(
+        sourceIdentifier,
+        sharedSource.pipe(
+          filter((typedEvent) => typedEvent.type === eventIdentifierB),
+          map((event) => event.event as B),
+        ),
+        true,
       ),
     );
   }
 
   add3TypedEventSource<A, B, C>(
-    sourceIdentifierA: symbol,
-    typeIdentifierA: TypeIdentifier<A>,
-    sourceIdentifierB: symbol,
-    typeIdentifierB: TypeIdentifier<B>,
-    sourceIdentifierC: symbol,
-    typeIdentifierC: TypeIdentifier<C>,
+    sourceIdentifier: symbol,
+    eventIdentifierA: TypeIdentifier<A>,
+    eventIdentifierB: TypeIdentifier<B>,
+    eventIdentifierC: TypeIdentifier<C>,
     observable: Observable<TypedEvent<A> | TypedEvent<B> | TypedEvent<C>>,
   ): void {
-    this.assertSourceExists(sourceIdentifierA, sourceIdentifierA);
-    this.assertSourceExists(sourceIdentifierB, sourceIdentifierB);
-    this.assertSourceExists(sourceIdentifierC, sourceIdentifierC);
-    this.addEventSource<A>(
-      sourceIdentifierA,
-      typeIdentifierA,
-      observable.pipe(
-        filter((typedEvent) => typedEvent.type === typeIdentifierA),
-        map((event) => event.event as A),
+    this.assertSourceExists(sourceIdentifier, sourceIdentifier);
+    const sharedSource = observable.pipe(share());
+    this.getEventStreamControlledSubject(eventIdentifierA).addSource(
+      new SourceObservable<A>(
+        sourceIdentifier,
+        sharedSource.pipe(
+          filter((typedEvent) => typedEvent.type === eventIdentifierA),
+          map((event) => event.event as A),
+        ),
+        true,
       ),
     );
-    this.addEventSource<B>(
-      sourceIdentifierB,
-      typeIdentifierB,
-      observable.pipe(
-        filter((typedEvent) => typedEvent.type === typeIdentifierB),
-        map((event) => event.event as B),
+    this.getEventStreamControlledSubject(eventIdentifierB).addSource(
+      new SourceObservable<B>(
+        sourceIdentifier,
+        sharedSource.pipe(
+          filter((typedEvent) => typedEvent.type === eventIdentifierB),
+          map((event) => event.event as B),
+        ),
+        true,
       ),
     );
-    this.addEventSource<C>(
-      sourceIdentifierC,
-      typeIdentifierC,
-      observable.pipe(
-        filter((typedEvent) => typedEvent.type === typeIdentifierC),
-        map((event) => event.event as C),
+    this.getEventStreamControlledSubject(eventIdentifierC).addSource(
+      new SourceObservable<C>(
+        sourceIdentifier,
+        sharedSource.pipe(
+          filter((typedEvent) => typedEvent.type === eventIdentifierC),
+          map((event) => event.event as C),
+        ),
+        true,
       ),
     );
   }
