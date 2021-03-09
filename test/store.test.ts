@@ -92,7 +92,11 @@ describe('Store', () => {
     it('should work', () => {
       expect(() => {
         const sourceId = Symbol('testSource');
-        store.addEventSource(sourceId, { symbol: Symbol('TEST') }, stringEventSource.asObservable());
+        store.addEventSource(
+          sourceId,
+          { symbol: Symbol('TEST') },
+          stringEventSource.asObservable(),
+        );
       }).not.toThrow();
     });
   });
@@ -106,11 +110,11 @@ describe('Store', () => {
   });
 
   describe('complex', () => {
-    it('should receive dispatched events', (done) => {
+    it('should receive dispatched events', done => {
       const identifier: TypeIdentifier<string> = {
         symbol: Symbol('TEST'),
       };
-      store.getEventStream(identifier).subscribe((val) => {
+      store.getEventStream(identifier).subscribe(val => {
         expect(val).toBe('Hello');
         done();
       });
@@ -145,18 +149,18 @@ describe('Store', () => {
               store.getBehavior(QUERY_BEHAVIOR),
               store.getBehavior(RESULT_BEHAVIOR),
             ]).pipe(
-              filter((pair) => pair[0] !== pair[1].resultQuery),
+              filter(pair => pair[0] !== pair[1].resultQuery),
               debounceTime(150),
-              switchMap((pair) => of({ result: [1, 2, 3], resultQuery: pair[0] })),
+              switchMap(pair => of({ result: [1, 2, 3], resultQuery: pair[0] })),
             );
             store.addEventSource(Symbol('RESULT_EVENT_SOURCE'), RESULT_EVENT, eventSource);
           });
 
-          it('should have a current value for the result behavior', (done) => {
+          it('should have a current value for the result behavior', done => {
             store
               .getBehavior(RESULT_BEHAVIOR)
               .pipe(take(1))
-              .subscribe((result) => {
+              .subscribe(result => {
                 expect(result.resultQuery).toBe(null);
                 expect(Array.isArray(result.result)).toBe(true);
                 expect(result.result.length).toBe(0);
@@ -203,29 +207,32 @@ describe('Store', () => {
           resultQuery: null,
         });
 
-        const eventSource = combineLatest([store.getBehavior(QUERY_BEHAVIOR), store.getBehavior(RESULT_BEHAVIOR)]).pipe(
-          filter((pair) => pair[0] !== pair[1].resultQuery),
-          switchMap((pair) => of({ result: [1, 2, 3], resultQuery: pair[0] })),
+        const eventSource = combineLatest([
+          store.getBehavior(QUERY_BEHAVIOR),
+          store.getBehavior(RESULT_BEHAVIOR),
+        ]).pipe(
+          filter(pair => pair[0] !== pair[1].resultQuery),
+          switchMap(pair => of({ result: [1, 2, 3], resultQuery: pair[0] })),
         );
         store.addEventSource(RESULT_EFFECT, RESULT_EVENT, eventSource);
       });
 
-      it('should have correct initial state for query', (done) => {
+      it('should have correct initial state for query', done => {
         store
           .getBehavior(QUERY_BEHAVIOR)
           .pipe(take(1))
-          .subscribe((query) => {
+          .subscribe(query => {
             expect(query.firstName).toBe(null);
             expect(query.lastName).toBe(null);
             done();
           });
       });
 
-      it('should have correct initial state for result', (done) => {
+      it('should have correct initial state for result', done => {
         store
           .getBehavior(RESULT_BEHAVIOR)
           .pipe(take(1))
-          .subscribe((result) => {
+          .subscribe(result => {
             expect(result.resultQuery).toBe(null);
             expect(Array.isArray(result.result)).toBe(true);
             expect(result.result.length).toBe(0);
@@ -233,11 +240,11 @@ describe('Store', () => {
           });
       });
 
-      it('should automatically perform result effect', (done) => {
+      it('should automatically perform result effect', done => {
         store
           .getBehavior(RESULT_BEHAVIOR)
           .pipe(skip(1), take(1))
-          .subscribe((result) => {
+          .subscribe(result => {
             expect(result.resultQuery).not.toBe(null);
             expect(result.resultQuery?.firstName).toBe(null);
             expect(result.resultQuery?.lastName).toBe(null);
@@ -247,12 +254,12 @@ describe('Store', () => {
           });
       });
 
-      it('should reduce the query', (done) => {
+      it('should reduce the query', done => {
         const expected = 'test';
         store
           .getBehavior(QUERY_BEHAVIOR)
           .pipe(skip(1), take(1))
-          .subscribe((query) => {
+          .subscribe(query => {
             expect(query.firstName).toBe(null);
             expect(query.lastName).toBe(expected);
             done();
@@ -262,12 +269,12 @@ describe('Store', () => {
         });
       });
 
-      it('should get results for the reduced query', (done) => {
+      it('should get results for the reduced query', done => {
         const expected = 'test';
         store
           .getBehavior(RESULT_BEHAVIOR)
           .pipe(skip(2), take(1))
-          .subscribe((result) => {
+          .subscribe(result => {
             expect(result.resultQuery).not.toBe(null);
             expect(result.resultQuery?.firstName).toBe(null);
             expect(result.resultQuery?.lastName).toBe(expected);
@@ -280,43 +287,51 @@ describe('Store', () => {
         });
       });
 
-      it('should get initial query state after reset', (done) => {
+      it('should get initial query state after reset', async done => {
         store
           .getBehavior(QUERY_BEHAVIOR)
           .pipe(skip(2), take(1))
-          .subscribe((query) => {
+          .subscribe(query => {
             expect(query.firstName).toBe(null);
             expect(query.lastName).toBe(null);
             done();
           });
-        store.dispatchEvent(QUERY_EVENT, {
+        await store.dispatchEvent(QUERY_EVENT, {
           lastName: 'test',
         });
-        store.resetBehaviors();
+        setTimeout(() => {
+          // we should reset after timeout, because the effect dispatches events async
+          // (so in theory, we would have to await the effects dispatch here)
+          store.resetBehaviors();
+        }, 10);
       });
 
-      it('should get initial results state after reset', (done) => {
+      it('should get initial results state after reset', async done => {
         const expected = 'test';
         store
           .getBehavior(RESULT_BEHAVIOR)
           .pipe(skip(3), take(1))
-          .subscribe((result) => {
+          .subscribe(result => {
             expect(result.resultQuery).toBe(null);
             expect(Array.isArray(result.result)).toBe(true);
             expect(result.result.length).toBe(0);
             done();
           });
-        store.dispatchEvent(QUERY_EVENT, {
+        await store.dispatchEvent(QUERY_EVENT, {
           lastName: expected,
         });
-        store.resetBehaviors();
+        setTimeout(() => {
+          // we should reset after timeout, because the effect dispatches events async
+          // (so in theory, we would have to await the effects dispatch here)
+          store.resetBehaviors();
+        }, 10);
       });
 
-      it('should automatically perform result effect after reset', (done) => {
+      it('should automatically perform result effect after reset', async done => {
         store
           .getBehavior(RESULT_BEHAVIOR)
           .pipe(skip(4), take(1))
-          .subscribe((result) => {
+          .subscribe(result => {
             expect(result.resultQuery).not.toBe(null);
             expect(result.resultQuery?.firstName).toBe(null);
             expect(result.resultQuery?.lastName).toBe(null);
@@ -324,21 +339,25 @@ describe('Store', () => {
             expect(result.result.length).toBe(3);
             done();
           });
-        store.dispatchEvent(QUERY_EVENT, {
+        await store.dispatchEvent(QUERY_EVENT, {
           lastName: 'test',
         });
-        store.resetBehaviors();
+        setTimeout(() => {
+          // we should reset after timeout, because the effect dispatches events async
+          // (so in theory, we would have to await the effects dispatch here)
+          store.resetBehaviors();
+        }, 10);
       });
 
-      it('should give the reduced query, if subscribed after reducing', (done) => {
+      it('should give the reduced query, if subscribed after reducing', async done => {
         const expected = 'test';
-        store.dispatchEvent(QUERY_EVENT, {
+        await store.dispatchEvent(QUERY_EVENT, {
           lastName: expected,
         });
         store
           .getBehavior(QUERY_BEHAVIOR)
           .pipe(take(1))
-          .subscribe((query) => {
+          .subscribe(query => {
             expect(query.firstName).toBe(null);
             expect(query.lastName).toBe(expected);
             done();
@@ -361,68 +380,71 @@ describe('Store', () => {
               withLatestFrom(
                 store.getBehavior(TEST_BEHAVIOR2).pipe(
                   // tap((val) => console.log('TB2-pipe: ', val)),
-                  map((val) => val * 10),
+                  map(val => val * 10),
                 ),
               ),
             )
             .pipe(
               // tap((val) => console.log('pair-pipe: ', val)),
-              map((pair) => pair[0] * pair[1]),
+              map(pair => pair[0] * pair[1]),
             ),
           1,
         );
 
-        store.addStatelessBehavior(TEST_BEHAVIOR2, store.getBehavior(TEST_BEHAVIOR1).pipe(map((val) => val * 10)));
+        store.addStatelessBehavior(
+          TEST_BEHAVIOR2,
+          store.getBehavior(TEST_BEHAVIOR1).pipe(map(val => val * 10)),
+        );
       });
 
-      it('should have correct initial value', (done) => {
+      it('should have correct initial value', done => {
         store
           .getBehavior(TEST_BEHAVIOR2)
           .pipe(take(1))
-          .subscribe((val) => {
+          .subscribe(val => {
             expect(val).toBe(10);
             done();
           });
       });
 
-      it('should get correct value on first dispatch', (done) => {
+      it('should get correct value on first dispatch', done => {
         store
           .getBehavior(TEST_BEHAVIOR2)
           .pipe(skip(1), take(1))
-          .subscribe((val) => {
+          .subscribe(val => {
             expect(val).toBe(1000);
             done();
           });
         store.dispatchEvent(TEST_EVENT, 1);
       });
 
-      it('should not change, if second event sent while unsubscribed', (done) => {
+      it('should not change, if second event sent while unsubscribed', async done => {
         const subscription = store.getBehavior(TEST_BEHAVIOR2).subscribe();
         // console.log('sending event: 1...');
-        store.dispatchEvent(TEST_EVENT, 1);
+        await store.dispatchEvent(TEST_EVENT, 1);
         // console.log('unsubscribe...');
         subscription.unsubscribe();
         // console.log('sending event: 2...');
-        store.dispatchEvent(TEST_EVENT, 2);
+        await store.dispatchEvent(TEST_EVENT, 2);
         // console.log('subscribing again...');
         store
           .getBehavior(TEST_BEHAVIOR2)
           .pipe(take(1))
-          .subscribe((val) => {
+          .subscribe(val => {
             expect(val).toBe(1000);
             done();
           });
       });
 
-      it('should get correct value on dispatch after resubscribe', (done) => {
+      it('should get correct value on dispatch after resubscribe', async done => {
         const subscription = store.getBehavior(TEST_BEHAVIOR2).subscribe();
-        store.dispatchEvent(TEST_EVENT, 1);
+        await store.dispatchEvent(TEST_EVENT, 1);
         subscription.unsubscribe();
-        store.dispatchEvent(TEST_EVENT, 2);
+        await store.dispatchEvent(TEST_EVENT, 2);
         store
           .getBehavior(TEST_BEHAVIOR2)
           .pipe(skip(1), take(1))
-          .subscribe((val) => {
+          .subscribe(val => {
             expect(val).toBe(300000);
             done();
           });

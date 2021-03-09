@@ -1,3 +1,13 @@
+# 2.0.0-rc.1 ()
+
+### Breaking changes
+
+- **With versions 1.x, events were dispatched synchronously, but now they are dispatched asynchronously. The reason is, that in case of synchronous events you could end up in a wrong state, if an effect subscribing a stateful behavior, was dispatching an event that again the behavior was listening to (so a reduce triggered by another reduce, which leads to behavior observers getting the result of the second reduce before getting the result of the first reduce). The solution was to delay the events in the behavior observable, but of course, this is something being easily forgotten or overlooked by developers, so now this source of error is eliminated by the store. In consequence, you no longer can rely on changes being synchronously available after dispatch, but in fact, you never should have done so, because this would mean you have broken reactivity. There is however a way to help in such a scenario: dispatchEvent now returns a Promise\<boolean\> that gets resolved after the async dispatch has been finished. It resolves to true in case the event had been subscribed, else to false. A common use case for awaiting this Promise would be in unit tests.**
+
+### Features
+
+- **added methods addState, addReducer and removeReducer: these are convenience methods that simplify the definition of stateful behaviors. In contrast to directly using addStatefulBehavior, you can now add and/or remove reducers individually. The only way to do this in earlier versions would have been to remove and add the complete behavior each time you were changing the set of its reducers.**
+
 # 1.1.0-rc.3 (2021-02-15)
 
 ### Features

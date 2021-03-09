@@ -16,7 +16,10 @@ export class ControlledSubject<T> {
 
   private lazySources: Map<symbol, SourceObservable<T>> = new Map<symbol, SourceObservable<T>>();
 
-  private statefulSources: Map<symbol, SourceObservable<T>> = new Map<symbol, SourceObservable<T>>();
+  private statefulSources: Map<symbol, SourceObservable<T>> = new Map<
+    symbol,
+    SourceObservable<T>
+  >();
 
   private observable: Observable<T>;
 
@@ -35,7 +38,7 @@ export class ControlledSubject<T> {
     private onSourceCompleted: (sourceId: symbol) => void,
   ) {
     this.pipe = this.getNewTargetPipe();
-    this.observable = new Observable<T>((subscriber) => {
+    this.observable = new Observable<T>(subscriber => {
       const subscription = this.pipe.subscribe(subscriber);
       const isCyclic = this.contextHandle.isInContext;
       if (!isCyclic) {
@@ -61,7 +64,9 @@ export class ControlledSubject<T> {
 
   addSource(source: SourceObservable<T>): void {
     if (this.lazySources.has(source.getId()) || this.statefulSources.has(source.getId())) {
-      throw new Error(`A source with the given ID has already been added.: ${source.getId().toString()}`);
+      throw new Error(
+        `A source with the given ID has already been added.: ${source.getId().toString()}`,
+      );
     }
     if (source.isLazySubscription()) {
       this.lazySources.set(source.getId(), source);
@@ -112,12 +117,12 @@ export class ControlledSubject<T> {
     return {
       removeSources: () => {
         localSources = [...this.lazySources.values(), ...this.statefulSources.values()];
-        localSources.forEach((source) => {
+        localSources.forEach(source => {
           this.removeSource(source.getId());
         });
       },
       readdSources: () => {
-        localSources.forEach((source) => {
+        localSources.forEach(source => {
           source.resetInitialValueDispatched();
           this.addSource(source);
         });
@@ -139,33 +144,36 @@ export class ControlledSubject<T> {
 
   private getNewTargetPipe(): Observable<T> {
     const localSources = [...this.lazySources.values(), ...this.statefulSources.values()];
-    localSources.forEach((source) => {
+    localSources.forEach(source => {
       this.removeSource(source.getId());
     });
     this.subject = new Subject<T>();
     this.pipe = this.getTargetPipe(this.subject);
-    localSources.forEach((source) => {
+    localSources.forEach(source => {
       this.addSource(source);
     });
     return this.pipe;
   }
 
   private unsubscribeSelf(): void {
-    if (typeof (this.selfSubscriptionOrPendingSubscription as Subscription)?.unsubscribe === 'function') {
+    if (
+      typeof (this.selfSubscriptionOrPendingSubscription as Subscription)?.unsubscribe ===
+      'function'
+    ) {
       (this.selfSubscriptionOrPendingSubscription as Subscription).unsubscribe();
     }
   }
 
   private setIsSubscribed(newIsSubscribed: boolean): void {
     this.isSubscribed = newIsSubscribed;
-    this.lazySources.forEach((source) => {
+    this.lazySources.forEach(source => {
       if (this.isSubscribed) {
         this.subscribeSource(source);
       } else {
         source.unsubscribe();
       }
     });
-    this.statefulSources.forEach((source) => {
+    this.statefulSources.forEach(source => {
       // always subscribe (needed for stateful behaviors)
       this.subscribeSource(source);
     });
@@ -181,7 +189,7 @@ export class ControlledSubject<T> {
       this.subject,
       this.getObservable(),
       this.nTargetSubscriptions > 0,
-      (error) => {
+      error => {
         this.onSourceError(source.getId(), error);
       },
       () => {

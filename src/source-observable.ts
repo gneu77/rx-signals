@@ -64,7 +64,7 @@ export class SourceObservable<T> {
       }
       contextHandle.withContext(() => {
         this.subscription = this.sourceObservable.subscribe(
-          (next) => {
+          next => {
             targetSubject.next(next);
           },
           error,

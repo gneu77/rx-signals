@@ -1,5 +1,15 @@
-import { Observable } from 'rxjs';
-import { distinctUntilChanged, filter, map, share, shareReplay } from 'rxjs/operators';
+import { asyncScheduler, NEVER, Observable } from 'rxjs';
+import {
+  delay,
+  distinctUntilChanged,
+  filter,
+  map,
+  mapTo,
+  share,
+  shareReplay,
+  take,
+  withLatestFrom,
+} from 'rxjs/operators';
 import { ControlledSubject } from './controlled-subject';
 import { SourceObservable } from './source-observable';
 
@@ -12,6 +22,8 @@ export interface TypedEvent<T> {
   type: TypeIdentifier<T>;
   event: T;
 }
+
+export type StateReducer<T, E> = (state: T, event: E) => T;
 
 export class Store {
   private behaviors = new Map<symbol, ControlledSubject<any>>();
@@ -32,16 +44,18 @@ export class Store {
   getUnsubscribedIdentifiers(): symbol[] {
     return [
       ...[...this.behaviors.entries()]
-        .filter((tuple) => tuple[1].isObservableSubscribed() === false)
-        .map((tuple) => tuple[0]),
+        .filter(tuple => tuple[1].isObservableSubscribed() === false)
+        .map(tuple => tuple[0]),
       ...[...this.eventStreams.entries()]
-        .filter((tuple) => tuple[1].isObservableSubscribed() === false)
-        .map((tuple) => tuple[0]),
+        .filter(tuple => tuple[1].isObservableSubscribed() === false)
+        .map(tuple => tuple[0]),
     ];
   }
 
   getNoSourceBehaviorIdentifiers(): symbol[] {
-    return [...this.behaviors.entries()].filter((tuple) => tuple[1].hasAnySource() === false).map((tuple) => tuple[0]);
+    return [...this.behaviors.entries()]
+      .filter(tuple => tuple[1].hasAnySource() === false)
+      .map(tuple => tuple[0]);
   }
 
   addBehavior<T>(
@@ -56,12 +70,48 @@ export class Store {
     );
   }
 
-  addStatelessBehavior<T>(identifier: TypeIdentifier<T>, observable: Observable<T>, initialValue?: T): void {
+  addStatelessBehavior<T>(
+    identifier: TypeIdentifier<T>,
+    observable: Observable<T>,
+    initialValue?: T,
+  ): void {
     this.addBehavior(identifier, observable, true, initialValue);
   }
 
-  addStatefulBehavior<T>(identifier: TypeIdentifier<T>, observable: Observable<T>, initialValue?: T): void {
+  addStatefulBehavior<T>(
+    identifier: TypeIdentifier<T>,
+    observable: Observable<T>,
+    initialValue?: T,
+  ): void {
     this.addBehavior(identifier, observable, false, initialValue);
+  }
+
+  addState<T>(identifier: TypeIdentifier<T>, initialValue: T): void {
+    this.assertSourceExists(identifier.symbol, identifier.symbol);
+    this.getBehaviorControlledSubject(identifier).addSource(
+      new SourceObservable<T>(identifier.symbol, NEVER, false, initialValue),
+    );
+  }
+
+  addReducer<T, E>(
+    stateIdentifier: TypeIdentifier<T>,
+    eventIdentifier: TypeIdentifier<E>,
+    reducer: StateReducer<T, E>,
+  ): void {
+    const sourceObservable = this.getEventStream(eventIdentifier).pipe(
+      withLatestFrom(this.getBehavior(stateIdentifier)),
+      map(([event, state]) => reducer(state, event)),
+    );
+    this.getBehaviorControlledSubject(stateIdentifier).addSource(
+      new SourceObservable<T>(eventIdentifier.symbol, sourceObservable, false),
+    );
+  }
+
+  removeReducer<T, E>(
+    stateIdentifier: TypeIdentifier<T>,
+    eventIdentifier: TypeIdentifier<E>,
+  ): void {
+    this.getBehaviorControlledSubject(stateIdentifier).removeSource(eventIdentifier.symbol);
   }
 
   removeBehavior<T>(identifier: TypeIdentifier<T>): void {
@@ -76,19 +126,33 @@ export class Store {
   }
 
   resetBehaviors() {
-    const resetHandles = [...this.behaviors.values()].map((behavior) => behavior.getResetHandle());
-    resetHandles.forEach((handle) => handle.removeSources());
-    resetHandles.forEach((handle) => handle.readdSources());
+    const resetHandles = [...this.behaviors.values()].map(behavior => behavior.getResetHandle());
+    resetHandles.forEach(handle => handle.removeSources());
+    resetHandles.forEach(handle => handle.readdSources());
   }
 
-  dispatchEvent<T>(identifier: TypeIdentifier<T>, event: T): void {
+  dispatchEvent<T>(identifier: TypeIdentifier<T>, event: T): Promise<boolean> {
     const controlledSubject = this.getEventStreamControlledSubject(identifier);
     if (controlledSubject.isObservableSubscribed()) {
+      const result: Promise<boolean> = this.getEventStream(identifier)
+        .pipe(
+          filter(val => val === event),
+          take(1),
+          mapTo(true),
+          delay(1, asyncScheduler),
+        )
+        .toPromise();
       controlledSubject.next(event);
+      return result;
     }
+    return Promise.resolve(false);
   }
 
-  addEventSource<T>(sourceIdentifier: symbol, eventIdentifier: TypeIdentifier<T>, observable: Observable<T>): void {
+  addEventSource<T>(
+    sourceIdentifier: symbol,
+    eventIdentifier: TypeIdentifier<T>,
+    observable: Observable<T>,
+  ): void {
     this.assertSourceExists(sourceIdentifier, sourceIdentifier);
     this.getEventStreamControlledSubject(eventIdentifier).addSource(
       new SourceObservable<T>(sourceIdentifier, observable, true),
@@ -103,8 +167,16 @@ export class Store {
   ): void {
     this.assertSourceExists(sourceIdentifier, sourceIdentifier);
     const sharedSource = observable.pipe(share());
-    this.addTypedEventSource(sourceIdentifier, eventIdentifierA, sharedSource as Observable<TypedEvent<A>>);
-    this.addTypedEventSource(sourceIdentifier, eventIdentifierB, sharedSource as Observable<TypedEvent<B>>);
+    this.addTypedEventSource(
+      sourceIdentifier,
+      eventIdentifierA,
+      sharedSource as Observable<TypedEvent<A>>,
+    );
+    this.addTypedEventSource(
+      sourceIdentifier,
+      eventIdentifierB,
+      sharedSource as Observable<TypedEvent<B>>,
+    );
   }
 
   add3TypedEventSource<A, B, C>(
@@ -116,9 +188,21 @@ export class Store {
   ): void {
     this.assertSourceExists(sourceIdentifier, sourceIdentifier);
     const sharedSource = observable.pipe(share());
-    this.addTypedEventSource(sourceIdentifier, eventIdentifierA, sharedSource as Observable<TypedEvent<A>>);
-    this.addTypedEventSource(sourceIdentifier, eventIdentifierB, sharedSource as Observable<TypedEvent<B>>);
-    this.addTypedEventSource(sourceIdentifier, eventIdentifierC, sharedSource as Observable<TypedEvent<C>>);
+    this.addTypedEventSource(
+      sourceIdentifier,
+      eventIdentifierA,
+      sharedSource as Observable<TypedEvent<A>>,
+    );
+    this.addTypedEventSource(
+      sourceIdentifier,
+      eventIdentifierB,
+      sharedSource as Observable<TypedEvent<B>>,
+    );
+    this.addTypedEventSource(
+      sourceIdentifier,
+      eventIdentifierC,
+      sharedSource as Observable<TypedEvent<C>>,
+    );
   }
 
   add4TypedEventSource<A, B, C, D>(
@@ -131,10 +215,26 @@ export class Store {
   ): void {
     this.assertSourceExists(sourceIdentifier, sourceIdentifier);
     const sharedSource = observable.pipe(share());
-    this.addTypedEventSource(sourceIdentifier, eventIdentifierA, sharedSource as Observable<TypedEvent<A>>);
-    this.addTypedEventSource(sourceIdentifier, eventIdentifierB, sharedSource as Observable<TypedEvent<B>>);
-    this.addTypedEventSource(sourceIdentifier, eventIdentifierC, sharedSource as Observable<TypedEvent<C>>);
-    this.addTypedEventSource(sourceIdentifier, eventIdentifierD, sharedSource as Observable<TypedEvent<D>>);
+    this.addTypedEventSource(
+      sourceIdentifier,
+      eventIdentifierA,
+      sharedSource as Observable<TypedEvent<A>>,
+    );
+    this.addTypedEventSource(
+      sourceIdentifier,
+      eventIdentifierB,
+      sharedSource as Observable<TypedEvent<B>>,
+    );
+    this.addTypedEventSource(
+      sourceIdentifier,
+      eventIdentifierC,
+      sharedSource as Observable<TypedEvent<C>>,
+    );
+    this.addTypedEventSource(
+      sourceIdentifier,
+      eventIdentifierD,
+      sharedSource as Observable<TypedEvent<D>>,
+    );
   }
 
   add5TypedEventSource<A, B, C, D, E>(
@@ -144,15 +244,37 @@ export class Store {
     eventIdentifierC: TypeIdentifier<C>,
     eventIdentifierD: TypeIdentifier<D>,
     eventIdentifierE: TypeIdentifier<E>,
-    observable: Observable<TypedEvent<A> | TypedEvent<B> | TypedEvent<C> | TypedEvent<D> | TypedEvent<E>>,
+    observable: Observable<
+      TypedEvent<A> | TypedEvent<B> | TypedEvent<C> | TypedEvent<D> | TypedEvent<E>
+    >,
   ): void {
     this.assertSourceExists(sourceIdentifier, sourceIdentifier);
     const sharedSource = observable.pipe(share());
-    this.addTypedEventSource(sourceIdentifier, eventIdentifierA, sharedSource as Observable<TypedEvent<A>>);
-    this.addTypedEventSource(sourceIdentifier, eventIdentifierB, sharedSource as Observable<TypedEvent<B>>);
-    this.addTypedEventSource(sourceIdentifier, eventIdentifierC, sharedSource as Observable<TypedEvent<C>>);
-    this.addTypedEventSource(sourceIdentifier, eventIdentifierD, sharedSource as Observable<TypedEvent<D>>);
-    this.addTypedEventSource(sourceIdentifier, eventIdentifierE, sharedSource as Observable<TypedEvent<E>>);
+    this.addTypedEventSource(
+      sourceIdentifier,
+      eventIdentifierA,
+      sharedSource as Observable<TypedEvent<A>>,
+    );
+    this.addTypedEventSource(
+      sourceIdentifier,
+      eventIdentifierB,
+      sharedSource as Observable<TypedEvent<B>>,
+    );
+    this.addTypedEventSource(
+      sourceIdentifier,
+      eventIdentifierC,
+      sharedSource as Observable<TypedEvent<C>>,
+    );
+    this.addTypedEventSource(
+      sourceIdentifier,
+      eventIdentifierD,
+      sharedSource as Observable<TypedEvent<D>>,
+    );
+    this.addTypedEventSource(
+      sourceIdentifier,
+      eventIdentifierE,
+      sharedSource as Observable<TypedEvent<E>>,
+    );
   }
 
   add6TypedEventSource<A, B, C, D, E, F>(
@@ -169,16 +291,40 @@ export class Store {
   ): void {
     this.assertSourceExists(sourceIdentifier, sourceIdentifier);
     const sharedSource = observable.pipe(share());
-    this.addTypedEventSource(sourceIdentifier, eventIdentifierA, sharedSource as Observable<TypedEvent<A>>);
-    this.addTypedEventSource(sourceIdentifier, eventIdentifierB, sharedSource as Observable<TypedEvent<B>>);
-    this.addTypedEventSource(sourceIdentifier, eventIdentifierC, sharedSource as Observable<TypedEvent<C>>);
-    this.addTypedEventSource(sourceIdentifier, eventIdentifierD, sharedSource as Observable<TypedEvent<D>>);
-    this.addTypedEventSource(sourceIdentifier, eventIdentifierE, sharedSource as Observable<TypedEvent<E>>);
-    this.addTypedEventSource(sourceIdentifier, eventIdentifierF, sharedSource as Observable<TypedEvent<F>>);
+    this.addTypedEventSource(
+      sourceIdentifier,
+      eventIdentifierA,
+      sharedSource as Observable<TypedEvent<A>>,
+    );
+    this.addTypedEventSource(
+      sourceIdentifier,
+      eventIdentifierB,
+      sharedSource as Observable<TypedEvent<B>>,
+    );
+    this.addTypedEventSource(
+      sourceIdentifier,
+      eventIdentifierC,
+      sharedSource as Observable<TypedEvent<C>>,
+    );
+    this.addTypedEventSource(
+      sourceIdentifier,
+      eventIdentifierD,
+      sharedSource as Observable<TypedEvent<D>>,
+    );
+    this.addTypedEventSource(
+      sourceIdentifier,
+      eventIdentifierE,
+      sharedSource as Observable<TypedEvent<E>>,
+    );
+    this.addTypedEventSource(
+      sourceIdentifier,
+      eventIdentifierF,
+      sharedSource as Observable<TypedEvent<F>>,
+    );
   }
 
   removeEventSource(sourceIdentifier: symbol): void {
-    this.eventStreams.forEach((cs) => cs.removeSource(sourceIdentifier));
+    this.eventStreams.forEach(cs => cs.removeSource(sourceIdentifier));
   }
 
   getEventStream<T>(identifier: TypeIdentifier<T>): Observable<T> {
@@ -189,7 +335,7 @@ export class Store {
     return this.getEventStreamControlledSubject(identifier)
       .getObservable()
       .pipe(
-        map((event) => ({
+        map(event => ({
           type: identifier,
           event,
         })),
@@ -205,8 +351,8 @@ export class Store {
       new SourceObservable<T>(
         sourceIdentifier,
         sharedSource.pipe(
-          filter((typedEvent) => typedEvent.type === eventIdentifier),
-          map((event) => event.event),
+          filter(typedEvent => typedEvent.type === eventIdentifier),
+          map(event => event.event),
         ),
         true,
       ),
@@ -216,7 +362,7 @@ export class Store {
   private createBehaviorControlledSubject<T>(identifier: TypeIdentifier<T>): ControlledSubject<T> {
     const controlledSubject = new ControlledSubject<T>(
       identifier.symbol,
-      (subject) =>
+      subject =>
         subject.pipe(
           distinctUntilChanged(), // behaviors represent a current value, hence pushing the same value twice makes no sense
           shareReplay(1), // for the same reason, multiple evaluation makes no sense and we ensure that there always is a value
@@ -227,7 +373,7 @@ export class Store {
         controlledSubject.removeSource(id);
         controlledSubject.error(error);
       },
-      (id) => {
+      id => {
         // If the source completes, remove it from the behavior and complete for the target.
         // (It is up to the target to just add a new source or remove and add the complete behavior, or even do nothing)
         controlledSubject.removeSource(id);
@@ -239,20 +385,30 @@ export class Store {
   }
 
   private getBehaviorControlledSubject<T>(identifier: TypeIdentifier<T>): ControlledSubject<T> {
-    return this.behaviors.get(identifier.symbol) ?? this.createBehaviorControlledSubject(identifier);
+    return (
+      this.behaviors.get(identifier.symbol) ?? this.createBehaviorControlledSubject(identifier)
+    );
   }
 
-  private createEventStreamControlledSubject<T>(identifier: TypeIdentifier<T>): ControlledSubject<T> {
+  private createEventStreamControlledSubject<T>(
+    identifier: TypeIdentifier<T>,
+  ): ControlledSubject<T> {
     const controlledSubject = new ControlledSubject<T>(
       identifier.symbol,
-      (subject) => subject.pipe(share()),
+      subject =>
+        subject.pipe(
+          // Always dispatching events asynchronously protects the consumers from strange rxjs behavior
+          // that could lead to wrong states when sychronously dispatching event in another event handler.
+          delay(1, asyncScheduler),
+          share(),
+        ),
       (id, error) => {
         // If the source errors, remove it and error for the target.
         // (It is up to the target to just add a new source or remove and add the complete event stream, or even do nothing)
         controlledSubject.removeSource(id);
         controlledSubject.error(error);
       },
-      (id) => {
+      id => {
         // If the source comples, remove it and complete for the target.
         // (It is up to the target to just add a new source or remove and add the complete event stream, or even do nothing)
         controlledSubject.removeSource(id);
@@ -264,7 +420,10 @@ export class Store {
   }
 
   private getEventStreamControlledSubject<T>(identifier: TypeIdentifier<T>): ControlledSubject<T> {
-    return this.eventStreams.get(identifier.symbol) ?? this.createEventStreamControlledSubject(identifier);
+    return (
+      this.eventStreams.get(identifier.symbol) ??
+      this.createEventStreamControlledSubject(identifier)
+    );
   }
 
   private assertSourceExists(symbol: symbol, sourceIdentifier: symbol): void {
