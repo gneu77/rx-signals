@@ -1,3 +1,4 @@
+import { expectSequence } from './test.utils';
 import { BehaviorSubject, combineLatest, of, Subject } from 'rxjs';
 import { debounceTime, filter, map, skip, switchMap, take, withLatestFrom } from 'rxjs/operators';
 import { Store, TypeIdentifier } from '../src/store';
@@ -288,65 +289,54 @@ describe('Store', () => {
       });
 
       it('should get initial query state after reset', async done => {
-        store
-          .getBehavior(QUERY_BEHAVIOR)
-          .pipe(skip(2), take(1))
-          .subscribe(query => {
-            expect(query.firstName).toBe(null);
-            expect(query.lastName).toBe(null);
-            done();
-          });
+        const lastNameQuery = 'test';
+        expectSequence(store.getBehavior(QUERY_BEHAVIOR), [
+          {firstName: null, lastName: null},
+          {firstName: null, lastName: lastNameQuery},
+          {firstName: null, lastName: null},
+        ]).then(done);
+
         await store.dispatchEvent(QUERY_EVENT, {
           lastName: 'test',
         });
-        setTimeout(() => {
-          // we should reset after timeout, because the effect dispatches events async
-          // (so in theory, we would have to await the effects dispatch here)
-          store.resetBehaviors();
-        }, 10);
+        store.resetBehaviors();
       });
 
-      it('should get initial results state after reset', async done => {
-        const expected = 'test';
-        store
-          .getBehavior(RESULT_BEHAVIOR)
-          .pipe(skip(3), take(1))
-          .subscribe(result => {
-            expect(result.resultQuery).toBe(null);
-            expect(Array.isArray(result.result)).toBe(true);
-            expect(result.result.length).toBe(0);
-            done();
-          });
-        await store.dispatchEvent(QUERY_EVENT, {
-          lastName: expected,
-        });
-        setTimeout(() => {
-          // we should reset after timeout, because the effect dispatches events async
-          // (so in theory, we would have to await the effects dispatch here)
+      it('should get initial results state after reset', done => {
+        const lastNameQuery = 'test';
+        expectSequence(store.getBehavior(RESULT_BEHAVIOR), [
+          {result: [], resultQuery: null},
+          {result: [1, 2, 3], resultQuery: {firstName: null, lastName: null}},
+          {result: [1, 2, 3], resultQuery: {firstName: null, lastName: lastNameQuery}},
+        ]).then(() => {
+          expectSequence(store.getBehavior(RESULT_BEHAVIOR), [
+            {result: [1, 2, 3], resultQuery: {firstName: null, lastName: lastNameQuery}},
+            {result: [], resultQuery: null},
+          ]).then(done);
           store.resetBehaviors();
-        }, 10);
+        });
+        store.dispatchEvent(QUERY_EVENT, {
+          lastName: lastNameQuery,
+        });
       });
 
       it('should automatically perform result effect after reset', async done => {
-        store
-          .getBehavior(RESULT_BEHAVIOR)
-          .pipe(skip(4), take(1))
-          .subscribe(result => {
-            expect(result.resultQuery).not.toBe(null);
-            expect(result.resultQuery?.firstName).toBe(null);
-            expect(result.resultQuery?.lastName).toBe(null);
-            expect(Array.isArray(result.result)).toBe(true);
-            expect(result.result.length).toBe(3);
-            done();
-          });
-        await store.dispatchEvent(QUERY_EVENT, {
-          lastName: 'test',
-        });
-        setTimeout(() => {
-          // we should reset after timeout, because the effect dispatches events async
-          // (so in theory, we would have to await the effects dispatch here)
+        const lastNameQuery = 'test';
+        expectSequence(store.getBehavior(RESULT_BEHAVIOR), [
+          {result: [], resultQuery: null},
+          {result: [1, 2, 3], resultQuery: {firstName: null, lastName: null}},
+          {result: [1, 2, 3], resultQuery: {firstName: null, lastName: lastNameQuery}},
+        ]).then(() => {
+          expectSequence(store.getBehavior(RESULT_BEHAVIOR), [
+            {result: [1, 2, 3], resultQuery: {firstName: null, lastName: lastNameQuery}},
+            {result: [], resultQuery: null},
+            {result: [1, 2, 3], resultQuery: {firstName: null, lastName: null}},
+          ]).then(done);
           store.resetBehaviors();
-        }, 10);
+        });
+        store.dispatchEvent(QUERY_EVENT, {
+          lastName: lastNameQuery,
+        });
       });
 
       it('should give the reduced query, if subscribed after reducing', async done => {

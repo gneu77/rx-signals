@@ -116,7 +116,7 @@ export class Store {
 
   removeBehavior<T>(identifier: TypeIdentifier<T>): void {
     const behavior = this.getBehaviorControlledSubject(identifier);
-    behavior.removeSource(identifier.symbol);
+    behavior.removeAllSources();
     behavior.complete();
     this.behaviors.delete(identifier.symbol);
   }
@@ -129,6 +129,10 @@ export class Store {
     const resetHandles = [...this.behaviors.values()].map(behavior => behavior.getResetHandle());
     resetHandles.forEach(handle => handle.removeSources());
     resetHandles.forEach(handle => handle.readdSources());
+  }
+
+  getNumberOfBehaviorSources<T>(identifier: TypeIdentifier<T>): number {
+    return this.getBehaviorControlledSubject(identifier).getNumberOfSources();
   }
 
   dispatchEvent<T>(identifier: TypeIdentifier<T>, event: T): Promise<boolean> {
@@ -340,6 +344,10 @@ export class Store {
           event,
         })),
       );
+  }
+
+  getNumberOfEventSources<T>(eventIdentifier: TypeIdentifier<T>): number {
+    return this.getEventStreamControlledSubject(eventIdentifier).getNumberOfSources();
   }
 
   private addTypedEventSource<T>(

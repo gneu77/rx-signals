@@ -97,4 +97,22 @@ describe('Reducers', () => {
       }));
     }).toThrowError('A source with the given ID has already been added.: Symbol(INCREASE_EVENT)');
   });
+
+  it('should remove all reducer sources when removing the state', () => {
+    store.addReducer(stateIdentifier, increaseEvent, (state, event) => ({
+      counter: state.counter + event,
+    }));
+    store.addReducer(stateIdentifier, decreaseEvent, (state, event) => ({
+      counter: state.counter - event,
+    }));
+    expect(store.getNumberOfBehaviorSources(stateIdentifier)).toBe(2);
+
+    store.addState(stateIdentifier, {
+      counter: 100,
+    });
+    expect(store.getNumberOfBehaviorSources(stateIdentifier)).toBe(3);
+
+    store.removeBehavior(stateIdentifier);
+    expect(store.getNumberOfBehaviorSources(stateIdentifier)).toBe(0);
+  });
 });

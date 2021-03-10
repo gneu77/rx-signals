@@ -1,4 +1,10 @@
-# 2.0.0-rc.1 ()
+# 2.0.1-rc.1 (2021-03-10)
+
+### Fixes
+
+- **removing all sources when removing a behavior (relevant in case of multiple reducers with the new state/reducer API)**
+
+# 2.0.0-rc.1 (2021-03-09)
 
 ### Breaking changes
 
@@ -18,7 +24,7 @@
 
 ### Fixes
 
-- **share source source for add2TypedEventSource and add3TypedEventSource**
+- **share source code for add2TypedEventSource and add3TypedEventSource**
 
 # 1.1.0-rc.1 (2021-02-14)
 

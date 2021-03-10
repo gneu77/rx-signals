@@ -92,6 +92,11 @@ export class ControlledSubject<T> {
     }
   }
 
+  removeAllSources(): void {
+    this.statefulSources.forEach(source => this.removeSource(source.getId()));
+    this.lazySources.forEach(source => this.removeSource(source.getId()));
+  }
+
   next(next: T): void {
     this.subject.next(next);
   }
@@ -140,6 +145,14 @@ export class ControlledSubject<T> {
 
   isLazySource(sourceId: symbol): boolean {
     return this.lazySources.has(sourceId);
+  }
+
+  getNumberOfSources(): number {
+    return this.lazySources.size + this.statefulSources.size;
+  }
+
+  getNumberOfStatefulSources(): number {
+    return this.statefulSources.size;
   }
 
   private getNewTargetPipe(): Observable<T> {
