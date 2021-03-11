@@ -6,7 +6,7 @@ module.exports = {
     extraFileExtensions: ['.txt'],
   },
   plugins: ['@typescript-eslint', 'jest'],
-  extends: ['airbnb-typescript/base', 'prettier', 'prettier/@typescript-eslint'],
+  extends: ['airbnb-typescript/base', 'prettier'],
   env: {
     'jest/globals': true,
   },
