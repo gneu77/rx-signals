@@ -288,55 +288,62 @@ describe('Store', () => {
         });
       });
 
-      it('should get initial query state after reset', async done => {
+      it('should get initial query state after reset', async () => {
         const lastNameQuery = 'test';
-        expectSequence(store.getBehavior(QUERY_BEHAVIOR), [
-          {firstName: null, lastName: null},
-          {firstName: null, lastName: lastNameQuery},
-          {firstName: null, lastName: null},
-        ]).then(done);
 
+        const querySequence = expectSequence(store.getBehavior(QUERY_BEHAVIOR), [
+          { firstName: null, lastName: null },
+          { firstName: null, lastName: lastNameQuery },
+          { firstName: null, lastName: null },
+        ]);
         await store.dispatchEvent(QUERY_EVENT, {
           lastName: 'test',
         });
         store.resetBehaviors();
+        await querySequence;
       });
 
-      it('should get initial results state after reset', done => {
+      it('should get initial results state after reset', async () => {
         const lastNameQuery = 'test';
-        expectSequence(store.getBehavior(RESULT_BEHAVIOR), [
-          {result: [], resultQuery: null},
-          {result: [1, 2, 3], resultQuery: {firstName: null, lastName: null}},
-          {result: [1, 2, 3], resultQuery: {firstName: null, lastName: lastNameQuery}},
-        ]).then(() => {
-          expectSequence(store.getBehavior(RESULT_BEHAVIOR), [
-            {result: [1, 2, 3], resultQuery: {firstName: null, lastName: lastNameQuery}},
-            {result: [], resultQuery: null},
-          ]).then(done);
-          store.resetBehaviors();
-        });
+
+        const dispatchSequence = expectSequence(store.getBehavior(RESULT_BEHAVIOR), [
+          { result: [], resultQuery: null },
+          { result: [1, 2, 3], resultQuery: { firstName: null, lastName: null } },
+          { result: [1, 2, 3], resultQuery: { firstName: null, lastName: lastNameQuery } },
+        ]);
         store.dispatchEvent(QUERY_EVENT, {
           lastName: lastNameQuery,
         });
+        await dispatchSequence;
+
+        const resetSequence = expectSequence(store.getBehavior(RESULT_BEHAVIOR), [
+          { result: [1, 2, 3], resultQuery: { firstName: null, lastName: lastNameQuery } },
+          { result: [], resultQuery: null },
+        ]);
+        store.resetBehaviors();
+        await resetSequence;
       });
 
-      it('should automatically perform result effect after reset', async done => {
+      it('should automatically perform result effect after reset', async () => {
         const lastNameQuery = 'test';
-        expectSequence(store.getBehavior(RESULT_BEHAVIOR), [
-          {result: [], resultQuery: null},
-          {result: [1, 2, 3], resultQuery: {firstName: null, lastName: null}},
-          {result: [1, 2, 3], resultQuery: {firstName: null, lastName: lastNameQuery}},
-        ]).then(() => {
-          expectSequence(store.getBehavior(RESULT_BEHAVIOR), [
-            {result: [1, 2, 3], resultQuery: {firstName: null, lastName: lastNameQuery}},
-            {result: [], resultQuery: null},
-            {result: [1, 2, 3], resultQuery: {firstName: null, lastName: null}},
-          ]).then(done);
-          store.resetBehaviors();
-        });
+
+        const dispatchSequence = expectSequence(store.getBehavior(RESULT_BEHAVIOR), [
+          { result: [], resultQuery: null },
+          { result: [1, 2, 3], resultQuery: { firstName: null, lastName: null } },
+          { result: [1, 2, 3], resultQuery: { firstName: null, lastName: lastNameQuery } },
+        ]);
         store.dispatchEvent(QUERY_EVENT, {
           lastName: lastNameQuery,
         });
+        await dispatchSequence;
+
+        const resetSequence = expectSequence(store.getBehavior(RESULT_BEHAVIOR), [
+          { result: [1, 2, 3], resultQuery: { firstName: null, lastName: lastNameQuery } },
+          { result: [], resultQuery: null },
+          { result: [1, 2, 3], resultQuery: { firstName: null, lastName: null } },
+        ]);
+        store.resetBehaviors();
+        await resetSequence;
       });
 
       it('should give the reduced query, if subscribed after reducing', async done => {

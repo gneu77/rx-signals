@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 export const expectSequence = (
   observable: Observable<any>,
   sequence: any[],
-  timeoutAfter: number = 500,
+  timeoutAfter: number = 1000, // Jest can be slow sometimes...
 ): Promise<void> => {
   return new Promise<void>(resolve => {
     observable

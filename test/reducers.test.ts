@@ -1,8 +1,8 @@
-import { take } from 'rxjs/operators';
+import { expectSequence } from './test.utils';
 import { Store, TypeIdentifier } from '../src/store';
 
 describe('Reducers', () => {
-  const stateIdentifier: TypeIdentifier<{ counter: number }> = { symbol: Symbol('TEST_STATE') };
+  const counterState: TypeIdentifier<number> = { symbol: Symbol('COUNTER_STATE') };
   const increaseEvent: TypeIdentifier<number> = { symbol: Symbol('INCREASE_EVENT') };
   const decreaseEvent: TypeIdentifier<number> = { symbol: Symbol('DECREASE_EVENT') };
 
@@ -12,57 +12,39 @@ describe('Reducers', () => {
     store = new Store();
   });
 
-  it('should work with adding reducers at arbitrary points of time', async done => {
-    store.addReducer(stateIdentifier, decreaseEvent, (state, event) => ({
-      counter: state.counter - event,
-    }));
+  it('should work with adding reducers at arbitrary points of time', async () => {
+    const counterSequence = expectSequence(store.getBehavior(counterState), [100, 91, 118, 116]);
 
-    let dispatchResult: boolean | null = null;
+    expect(store.getNumberOfBehaviorSources(counterState)).toBe(0);
+    store.addReducer(counterState, decreaseEvent, (state, event) => state - event);
+    expect(store.getNumberOfBehaviorSources(counterState)).toBe(1);
 
-    dispatchResult = await store.dispatchEvent(increaseEvent, 7); // => 100
-    expect(dispatchResult).toBe(false);
-    dispatchResult = await store.dispatchEvent(decreaseEvent, 5); // => 100
-    expect(dispatchResult).toBe(true);
+    await store.dispatchEvent(increaseEvent, 7); // => 100
+    await store.dispatchEvent(decreaseEvent, 5); // => 100
 
-    store.addState(stateIdentifier, {
-      counter: 100,
-    });
+    store.addState(counterState, 100);
+    expect(store.getNumberOfBehaviorSources(counterState)).toBe(2);
 
-    dispatchResult = await store.dispatchEvent(increaseEvent, 17); // => 100
-    expect(dispatchResult).toBe(false);
-    dispatchResult = await store.dispatchEvent(decreaseEvent, 9); // => 91
-    expect(dispatchResult).toBe(true);
+    await store.dispatchEvent(increaseEvent, 17); // => 100
+    await store.dispatchEvent(decreaseEvent, 9); // => 91
 
-    store.addReducer(stateIdentifier, increaseEvent, (state, event) => ({
-      counter: state.counter + event,
-    }));
+    store.addReducer(counterState, increaseEvent, (state, event) => state + event);
+    expect(store.getNumberOfBehaviorSources(counterState)).toBe(3);
 
-    dispatchResult = await store.dispatchEvent(increaseEvent, 27); // => 118
-    expect(dispatchResult).toBe(true);
-    dispatchResult = await store.dispatchEvent(decreaseEvent, 2); // => 116
-    expect(dispatchResult).toBe(true);
+    await store.dispatchEvent(increaseEvent, 27); // => 118
+    await store.dispatchEvent(decreaseEvent, 2); // => 116
 
-    store
-      .getBehavior(stateIdentifier)
-      .pipe(take(1))
-      .subscribe(state => {
-        expect(state.counter).toBe(116);
-        done();
-      });
+    await counterSequence;
   });
 
-  it('should work with removing reducers at arbitrary points of time', async done => {
-    store.addState(stateIdentifier, {
-      counter: 100,
-    });
+  it('should work with removing reducers at arbitrary points of time', async () => {
+    const counterSequence = expectSequence(store.getBehavior(counterState), [100, 117, 108, 107]);
 
-    store.addReducer(stateIdentifier, increaseEvent, (state, event) => ({
-      counter: state.counter + event,
-    }));
+    store.addState(counterState, 100);
 
-    store.addReducer(stateIdentifier, decreaseEvent, (state, event) => ({
-      counter: state.counter - event,
-    }));
+    store.addReducer(counterState, increaseEvent, (state, event) => state + event);
+    store.addReducer(counterState, decreaseEvent, (state, event) => state - event);
+    expect(store.getNumberOfBehaviorSources(counterState)).toBe(3);
 
     await store.dispatchEvent(increaseEvent, 17); // => 117
     await store.dispatchEvent(decreaseEvent, 9); // => 108
@@ -70,7 +52,8 @@ describe('Reducers', () => {
     expect(store.isSubscribed(increaseEvent)).toBe(true);
     expect(store.isSubscribed(decreaseEvent)).toBe(true);
 
-    store.removeReducer(stateIdentifier, increaseEvent);
+    store.removeReducer(counterState, increaseEvent);
+    expect(store.getNumberOfBehaviorSources(counterState)).toBe(2);
 
     expect(store.isSubscribed(increaseEvent)).toBe(false);
     expect(store.isSubscribed(decreaseEvent)).toBe(true);
@@ -78,41 +61,23 @@ describe('Reducers', () => {
     await store.dispatchEvent(increaseEvent, 30); // => 108
     await store.dispatchEvent(decreaseEvent, 1); // => 107
 
-    store
-      .getBehavior(stateIdentifier)
-      .pipe(take(1))
-      .subscribe(state => {
-        expect(state.counter).toBe(107);
-        done();
-      });
+    await counterSequence;
   });
 
   it('should throw, when trying to add a second reducer for the same event', () => {
-    store.addReducer(stateIdentifier, increaseEvent, (state, event) => ({
-      counter: state.counter + event,
-    }));
+    store.addReducer(counterState, increaseEvent, (state, event) => state + event);
     expect(() => {
-      store.addReducer(stateIdentifier, increaseEvent, (state, event) => ({
-        counter: state.counter + event,
-      }));
+      store.addReducer(counterState, increaseEvent, (state, event) => state + event);
     }).toThrowError('A source with the given ID has already been added.: Symbol(INCREASE_EVENT)');
   });
 
   it('should remove all reducer sources when removing the state', () => {
-    store.addReducer(stateIdentifier, increaseEvent, (state, event) => ({
-      counter: state.counter + event,
-    }));
-    store.addReducer(stateIdentifier, decreaseEvent, (state, event) => ({
-      counter: state.counter - event,
-    }));
-    expect(store.getNumberOfBehaviorSources(stateIdentifier)).toBe(2);
+    store.addReducer(counterState, increaseEvent, (state, event) => state + event);
+    store.addReducer(counterState, decreaseEvent, (state, event) => state + event);
+    store.addState(counterState, 100);
+    expect(store.getNumberOfBehaviorSources(counterState)).toBe(3);
 
-    store.addState(stateIdentifier, {
-      counter: 100,
-    });
-    expect(store.getNumberOfBehaviorSources(stateIdentifier)).toBe(3);
-
-    store.removeBehavior(stateIdentifier);
-    expect(store.getNumberOfBehaviorSources(stateIdentifier)).toBe(0);
+    store.removeBehavior(counterState);
+    expect(store.getNumberOfBehaviorSources(counterState)).toBe(0);
   });
 });

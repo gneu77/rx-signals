@@ -1,7 +1,7 @@
 import { expectSequence } from './test.utils';
 import { merge, of } from 'rxjs';
 import { filter, map, switchMap, withLatestFrom } from 'rxjs/operators';
-import { Store, TypeIdentifier } from './../src/store';
+import { Store, TypeIdentifier } from '../src/store';
 
 describe('Effect loops', () => {
   const counterState: TypeIdentifier<number> = { symbol: Symbol('COUNTER_STATE') };
@@ -17,7 +17,7 @@ describe('Effect loops', () => {
     store = new Store();
   });
 
-  it('should perform an effect on a certain condition and result in correct behavior', async done => {
+  it('should perform an effect on a certain condition and result in correct behavior', async () => {
     store.addStatefulBehavior(
       counterState,
       merge(store.getTypedEventStream(addEvent), store.getTypedEventStream(multiplyEvent)).pipe(
@@ -35,7 +35,7 @@ describe('Effect loops', () => {
       0, // => 0
     );
 
-    expectSequence(store.getBehavior(counterState), [0, 5, 10, 23, 25, 50]).then(done);
+    const counterSequence = expectSequence(store.getBehavior(counterState), [0, 5, 10, 23, 25, 50]);
 
     store.addEventSource(
       addEffect,
@@ -58,14 +58,16 @@ describe('Effect loops', () => {
     await store.dispatchEvent(addEvent, 5); // => 5
     await store.dispatchEvent(addEvent, 5); // => 10 => 23
     await store.dispatchEvent(addEvent, 2); // => 25 => 50
+
+    await counterSequence;
   });
 
-  it('should also work with state/reducer convenience API', async done => {
+  it('should also work with state/reducer convenience API', async () => {
     store.addState(counterState, 0); // => 0
     store.addReducer(counterState, addEvent, (counter, event) => counter + event);
     store.addReducer(counterState, multiplyEvent, (counter, event) => counter * event);
 
-    expectSequence(store.getBehavior(counterState), [0, 5, 10, 23, 25, 50]).then(done);
+    const counterSequence = expectSequence(store.getBehavior(counterState), [0, 5, 10, 23, 25, 50]);
 
     store.addEventSource(
       addEffect,
@@ -88,5 +90,7 @@ describe('Effect loops', () => {
     await store.dispatchEvent(addEvent, 5); // => 5
     await store.dispatchEvent(addEvent, 5); // => 10 => 23
     await store.dispatchEvent(addEvent, 2); // => 25 => 50
+
+    await counterSequence;
   });
 });
