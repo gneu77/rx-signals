@@ -9,8 +9,7 @@ import {
   distinctUntilChanged,
 } from 'rxjs/operators';
 import { merge, combineLatest, of, Observable, NEVER } from 'rxjs';
-import { TypeIdentifier } from './../dist/esm/store.d';
-import { Store } from './../src/store';
+import { Store, TypeIdentifier } from './../src/store';
 describe('Edit From Pattern', () => {
   // This integration test is an example for a simple setup to
   // - load

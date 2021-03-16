@@ -1,12 +1,12 @@
 import { Observable, Subject, Subscription } from 'rxjs';
 import { ContextHandle } from './context-handle';
 
+export const NO_VALUE: symbol = Symbol('NO_VALUE');
+
 export class SourceObservable<T> {
   private subscription: Subscription | null = null;
 
   private subscriptionPending = false;
-
-  private initValue: T | undefined = undefined;
 
   private initialValueDispatched = false;
 
@@ -14,10 +14,8 @@ export class SourceObservable<T> {
     private sourceId: symbol,
     private sourceObservable: Observable<T>,
     private lazySubscription: boolean,
-    initialValue?: T,
-  ) {
-    this.initValue = initialValue;
-  }
+    private initialValue: T | symbol = NO_VALUE,
+  ) {}
 
   getId(): symbol {
     return this.sourceId;
@@ -50,14 +48,13 @@ export class SourceObservable<T> {
     try {
       // For reset logic (readding sources), it is important to dispatch
       // the initial value before subscribing the source and not after!
-      const nextValue = this.initValue;
-      if (!this.initialValueDispatched && nextValue !== undefined) {
+      if (!this.initialValueDispatched && this.initialValue !== NO_VALUE) {
         this.initialValueDispatched = true;
         let targetSubscription: Subscription | null = null;
         if (!isTargetSubscribed) {
           targetSubscription = targetObservable.subscribe();
         }
-        targetSubject.next(nextValue);
+        targetSubject.next(this.initialValue as T);
         if (targetSubscription) {
           targetSubscription.unsubscribe();
         }

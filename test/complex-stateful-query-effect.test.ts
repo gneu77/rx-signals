@@ -2,7 +2,7 @@ import { filter, switchMap, map, withLatestFrom } from 'rxjs/operators';
 import { combineLatest, of } from 'rxjs';
 import { Store, TypeIdentifier } from './../src/store';
 import { awaitStringifyEqualState, expectSequence } from './test.utils';
-describe('Lazy query pattern', () => {
+describe('Stateful query pattern', () => {
   interface QueryType {
     firstName: string | null;
     lastName: string | null;

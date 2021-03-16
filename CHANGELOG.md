@@ -1,3 +1,9 @@
+# 2.0.1-rc.2 (2021-03-16)
+
+### Changes
+- **replaced shareReplay(1) by memory-safe variant**
+- **pre-subscribe for lazy behaviors to hand-out only most recent values**
+
 # 2.0.1-rc.1 (2021-03-10)
 
 ### Fixes

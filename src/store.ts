@@ -1,15 +1,5 @@
 import { asyncScheduler, NEVER, Observable } from 'rxjs';
-import {
-  delay,
-  distinctUntilChanged,
-  filter,
-  map,
-  mapTo,
-  share,
-  shareReplay,
-  take,
-  withLatestFrom,
-} from 'rxjs/operators';
+import { delay, filter, map, mapTo, share, take, withLatestFrom } from 'rxjs/operators';
 import { ControlledSubject } from './controlled-subject';
 import { SourceObservable } from './source-observable';
 
@@ -370,11 +360,7 @@ export class Store {
   private createBehaviorControlledSubject<T>(identifier: TypeIdentifier<T>): ControlledSubject<T> {
     const controlledSubject = new ControlledSubject<T>(
       identifier.symbol,
-      subject =>
-        subject.pipe(
-          distinctUntilChanged(), // behaviors represent a current value, hence pushing the same value twice makes no sense
-          shareReplay(1), // for the same reason, multiple evaluation makes no sense and we ensure that there always is a value
-        ),
+      true,
       (id, error) => {
         // If the source errors, remove it from the behavior and complete for the target.
         // (It is up to the target to just add a new source or remove and add the complete behavior, or even do nothing)
@@ -403,13 +389,7 @@ export class Store {
   ): ControlledSubject<T> {
     const controlledSubject = new ControlledSubject<T>(
       identifier.symbol,
-      subject =>
-        subject.pipe(
-          // Always dispatching events asynchronously protects the consumers from strange rxjs behavior
-          // that could lead to wrong states when sychronously dispatching event in another event handler.
-          delay(1, asyncScheduler),
-          share(),
-        ),
+      false,
       (id, error) => {
         // If the source errors, remove it and error for the target.
         // (It is up to the target to just add a new source or remove and add the complete event stream, or even do nothing)

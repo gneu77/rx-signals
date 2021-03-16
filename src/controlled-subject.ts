@@ -1,8 +1,8 @@
 /* eslint no-underscore-dangle: ["error", { "allow": ["_rxs_id"] }] */
-
-import { Observable, Subject, Subscription } from 'rxjs';
+import { asyncScheduler, BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
+import { delay, distinctUntilChanged, filter, share, shareReplay } from 'rxjs/operators';
 import { ContextHandle } from './context-handle';
-import { SourceObservable } from './source-observable';
+import { NO_VALUE, SourceObservable } from './source-observable';
 
 export interface ResetHandle {
   removeSources(): void;
@@ -10,7 +10,7 @@ export interface ResetHandle {
 }
 
 export class ControlledSubject<T> {
-  private subject!: Subject<T>;
+  private subject!: Subject<T> | BehaviorSubject<T>;
 
   private pipe: Observable<T>;
 
@@ -33,18 +33,35 @@ export class ControlledSubject<T> {
 
   constructor(
     private id: symbol,
-    private getTargetPipe: (targetSubject: Observable<T>) => Observable<T>, // share() or shareReplay(1)
+    private isBehavior: boolean,
     private onSourceError: (sourceId: symbol, error: any) => void,
     private onSourceCompleted: (sourceId: symbol) => void,
   ) {
     this.pipe = this.getNewTargetPipe();
     this.observable = new Observable<T>(subscriber => {
-      const subscription = this.pipe.subscribe(subscriber);
-      const isCyclic = this.contextHandle.isInContext;
-      if (!isCyclic) {
-        this.nTargetSubscriptions += 1;
-        this.setIsSubscribed(true);
+      let subscription: Subscription;
+      let isCyclic: boolean;
+      if (this.isBehavior && !this.isSubscribed) {
+        // in case of a behavior, we perform a temporary self-subscription
+        // to get the latest value, such that we do not hand-out an outdated value
+        // before handing out the most recent one:
+        const tmpSubscription = this.pipe.subscribe(() => {});
+        isCyclic = this.contextHandle.isInContext;
+        if (!isCyclic) {
+          this.nTargetSubscriptions += 1;
+          this.setIsSubscribed(true);
+        }
+        subscription = this.pipe.subscribe(subscriber);
+        tmpSubscription.unsubscribe();
+      } else {
+        subscription = this.pipe.subscribe(subscriber);
+        isCyclic = this.contextHandle.isInContext;
+        if (!isCyclic) {
+          this.nTargetSubscriptions += 1;
+          this.setIsSubscribed(true);
+        }
       }
+
       return () => {
         subscription.unsubscribe();
         if (!isCyclic) {
@@ -160,8 +177,16 @@ export class ControlledSubject<T> {
     localSources.forEach(source => {
       this.removeSource(source.getId());
     });
-    this.subject = new Subject<T>();
-    this.pipe = this.getTargetPipe(this.subject);
+    this.subject = this.isBehavior
+      ? new BehaviorSubject<T>((NO_VALUE as unknown) as T)
+      : new Subject<T>();
+    this.pipe = this.isBehavior
+      ? this.subject.pipe(
+          filter(value => value !== ((NO_VALUE as unknown) as T)),
+          distinctUntilChanged(),
+          shareReplay({ bufferSize: 1, refCount: true }),
+        )
+      : this.subject.pipe(delay(1, asyncScheduler), share());
     localSources.forEach(source => {
       this.addSource(source);
     });
@@ -174,6 +199,7 @@ export class ControlledSubject<T> {
       'function'
     ) {
       (this.selfSubscriptionOrPendingSubscription as Subscription).unsubscribe();
+      this.selfSubscriptionOrPendingSubscription = false;
     }
   }
 
