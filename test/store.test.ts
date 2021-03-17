@@ -1,6 +1,5 @@
 import { BehaviorSubject, Subject } from 'rxjs';
-import { map, skip, take, withLatestFrom } from 'rxjs/operators';
-import { Store, TypeIdentifier } from '../src/store';
+import { Store } from '../src/store';
 
 describe('Store', () => {
   let store: Store;
@@ -106,106 +105,6 @@ describe('Store', () => {
       expect(() => {
         store.removeEventSource(Symbol('testSource'));
       }).not.toThrow();
-    });
-  });
-
-  describe('complex', () => {
-    it('should receive dispatched events', done => {
-      const identifier: TypeIdentifier<string> = {
-        symbol: Symbol('TEST'),
-      };
-      store.getEventStream(identifier).subscribe(val => {
-        expect(val).toBe('Hello');
-        done();
-      });
-      store.dispatchEvent(identifier, 'Hello');
-    });
-
-    describe('cyclic dependencies', () => {
-      const TEST_BEHAVIOR1: TypeIdentifier<number> = { symbol: Symbol('TEST_BEHAVIOR1') };
-      const TEST_BEHAVIOR2: TypeIdentifier<number> = { symbol: Symbol('TEST_BEHAVIOR2') };
-      const TEST_EVENT: TypeIdentifier<number> = { symbol: Symbol('TEST_EVENT') };
-
-      beforeEach(() => {
-        store.addStatelessBehavior(
-          TEST_BEHAVIOR1,
-          store
-            .getEventStream(TEST_EVENT)
-            .pipe(
-              // tap((val) => console.log('TE-pipe: ', val)),
-              withLatestFrom(
-                store.getBehavior(TEST_BEHAVIOR2).pipe(
-                  // tap((val) => console.log('TB2-pipe: ', val)),
-                  map(val => val * 10),
-                ),
-              ),
-            )
-            .pipe(
-              // tap((val) => console.log('pair-pipe: ', val)),
-              map(pair => pair[0] * pair[1]),
-            ),
-          1,
-        );
-
-        store.addStatelessBehavior(
-          TEST_BEHAVIOR2,
-          store.getBehavior(TEST_BEHAVIOR1).pipe(map(val => val * 10)),
-        );
-      });
-
-      it('should have correct initial value', done => {
-        store
-          .getBehavior(TEST_BEHAVIOR2)
-          .pipe(take(1))
-          .subscribe(val => {
-            expect(val).toBe(10);
-            done();
-          });
-      });
-
-      it('should get correct value on first dispatch', done => {
-        store
-          .getBehavior(TEST_BEHAVIOR2)
-          .pipe(skip(1), take(1))
-          .subscribe(val => {
-            expect(val).toBe(1000);
-            done();
-          });
-        store.dispatchEvent(TEST_EVENT, 1);
-      });
-
-      it('should not change, if second event sent while unsubscribed', async done => {
-        const subscription = store.getBehavior(TEST_BEHAVIOR2).subscribe();
-        // console.log('sending event: 1...');
-        await store.dispatchEvent(TEST_EVENT, 1);
-        // console.log('unsubscribe...');
-        subscription.unsubscribe();
-        // console.log('sending event: 2...');
-        await store.dispatchEvent(TEST_EVENT, 2);
-        // console.log('subscribing again...');
-        store
-          .getBehavior(TEST_BEHAVIOR2)
-          .pipe(take(1))
-          .subscribe(val => {
-            expect(val).toBe(1000);
-            done();
-          });
-      });
-
-      it('should get correct value on dispatch after resubscribe', async done => {
-        const subscription = store.getBehavior(TEST_BEHAVIOR2).subscribe();
-        await store.dispatchEvent(TEST_EVENT, 1);
-        subscription.unsubscribe();
-        await store.dispatchEvent(TEST_EVENT, 2);
-        store
-          .getBehavior(TEST_BEHAVIOR2)
-          .pipe(skip(1), take(1))
-          .subscribe(val => {
-            expect(val).toBe(300000);
-            done();
-          });
-        store.dispatchEvent(TEST_EVENT, 3);
-      });
     });
   });
 });

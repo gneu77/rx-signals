@@ -1,12 +1,15 @@
-import { scan, take, timeout, filter, delay, startWith, map } from 'rxjs/operators';
 import { combineLatest, Observable, of } from 'rxjs';
+import { delay, filter, map, scan, startWith, take, timeout } from 'rxjs/operators';
 
 export const expectSequence = async (
   observable: Observable<any>,
   sequence: any[],
   timeoutAfter: number = 1000, // Jest can be slow sometimes...
 ): Promise<void> => {
-  const accObservable = observable.pipe(scan((acc: any[], next: any) => [...acc, next], []));
+  const accObservable = observable.pipe(
+    scan((acc: any[], next: any) => [...acc, next], []),
+    startWith([]),
+  );
   const timeoutObservable = of(true).pipe(delay(timeoutAfter), startWith(false));
   return combineLatest([accObservable, timeoutObservable])
     .pipe(
@@ -16,7 +19,6 @@ export const expectSequence = async (
     )
     .toPromise()
     .then(result => {
-      // the toPromise().then() construct is for shorter stack traces
       expect(result).toEqual(sequence);
     });
 };
