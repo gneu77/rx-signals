@@ -25,6 +25,8 @@ export class ControlledSubject<T> {
 
   private isSubscribed: boolean = false;
 
+  private isSubscribedSubject = new BehaviorSubject<boolean>(false);
+
   private selfSubscriptionOrPendingSubscription: Subscription | boolean = false;
 
   private nTargetSubscriptions = 0;
@@ -77,6 +79,10 @@ export class ControlledSubject<T> {
 
   getObservable(): Observable<T> {
     return this.observable;
+  }
+
+  getIsSubscribedObservable(): Observable<boolean> {
+    return this.isSubscribedSubject.asObservable();
   }
 
   addSource(source: SourceObservable<T>): void {
@@ -205,6 +211,7 @@ export class ControlledSubject<T> {
 
   private setIsSubscribed(newIsSubscribed: boolean): void {
     this.isSubscribed = newIsSubscribed;
+    this.isSubscribedSubject.next(this.isSubscribed);
     this.lazySources.forEach(source => {
       if (this.isSubscribed) {
         this.subscribeSource(source);

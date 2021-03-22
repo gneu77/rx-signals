@@ -21,10 +21,6 @@ export class SourceObservable<T> {
     return this.sourceId;
   }
 
-  isSubscribed(): boolean {
-    return this.subscription !== null;
-  }
-
   isLazySubscription(): boolean {
     return this.lazySubscription;
   }

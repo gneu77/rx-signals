@@ -27,7 +27,7 @@ describe('Event streams', () => {
       expect(dispatched).toBe(false);
     });
 
-    it('should dispatch event, if not subscribed', async () => {
+    it('should dispatch event, if subscribed', async () => {
       const eventStream = store.getEventStream(testEvent);
       const sequence = expectSequence(eventStream, ['TEST1', 'TEST2']);
 
@@ -39,6 +39,19 @@ describe('Event streams', () => {
       await sequence;
       const dispatched3 = await store.dispatchEvent(testEvent, 'TEST3');
       expect(dispatched3).toBe(false);
+    });
+
+    it('should provide a typed event stream', async () => {
+      const eventStream = store.getTypedEventStream(testEvent);
+      const sequence = expectSequence(eventStream, [
+        { type: testEvent, event: 'TEST1' },
+        { type: testEvent, event: 'TEST2' },
+      ]);
+
+      store.dispatchEvent(testEvent, 'TEST1');
+      store.dispatchEvent(testEvent, 'TEST2');
+
+      await sequence;
     });
   });
 
@@ -116,6 +129,187 @@ describe('Event streams', () => {
 
       await errorSubscription;
       expect(store.getNumberOfEventSources(testEvent)).toBe(0);
+    });
+  });
+
+  describe('with typed sources', () => {
+    const sourceId = Symbol('SourceId');
+    const testEvent2: TypeIdentifier<string> = { symbol: Symbol('TestEvent2') };
+    const testEvent3: TypeIdentifier<string> = { symbol: Symbol('TestEvent3') };
+    const testEvent4: TypeIdentifier<string> = { symbol: Symbol('TestEvent4') };
+    const testEvent5: TypeIdentifier<string> = { symbol: Symbol('TestEvent5') };
+    const testEvent6: TypeIdentifier<string> = { symbol: Symbol('TestEvent6') };
+
+    it('should work with event sources that emit 2 different event types', async () => {
+      store.add2TypedEventSource(
+        sourceId,
+        testEvent,
+        testEvent2,
+        of(
+          {
+            type: testEvent,
+            event: 'testEvent1',
+          },
+          {
+            type: testEvent2,
+            event: 'testEvent2',
+          },
+        ),
+      );
+      expect(store.getNumberOfEventSources(testEvent)).toBe(1);
+      expect(store.getNumberOfEventSources(testEvent2)).toBe(1);
+
+      const eventStream1 = store.getEventStream(testEvent);
+      const eventStream2 = store.getEventStream(testEvent2);
+
+      const sequence1 = expectSequence(eventStream1, ['testEvent1']);
+      const sequence2 = expectSequence(eventStream2, ['testEvent2']);
+
+      await sequence1;
+      await sequence2;
+    });
+
+    it('should work with event sources that emit 3 different event types', async () => {
+      store.add3TypedEventSource(
+        sourceId,
+        testEvent,
+        testEvent2,
+        testEvent3,
+        of(
+          {
+            type: testEvent,
+            event: 'testEvent1',
+          },
+          {
+            type: testEvent2,
+            event: 'testEvent2',
+          },
+          {
+            type: testEvent3,
+            event: 'testEvent3',
+          },
+        ),
+      );
+      expect(store.getNumberOfEventSources(testEvent)).toBe(1);
+      expect(store.getNumberOfEventSources(testEvent2)).toBe(1);
+      expect(store.getNumberOfEventSources(testEvent3)).toBe(1);
+
+      const eventStream1 = store.getEventStream(testEvent);
+      const eventStream2 = store.getEventStream(testEvent2);
+      const eventStream3 = store.getEventStream(testEvent3);
+
+      const sequence1 = expectSequence(eventStream1, ['testEvent1']);
+      const sequence2 = expectSequence(eventStream2, ['testEvent2']);
+      const sequence3 = expectSequence(eventStream3, ['testEvent3']);
+
+      await sequence1;
+      await sequence2;
+      await sequence3;
+    });
+
+    it('should work with event sources that emit 4 different event types', async () => {
+      store.add4TypedEventSource(
+        sourceId,
+        testEvent,
+        testEvent2,
+        testEvent3,
+        testEvent4,
+        of({
+          type: testEvent4,
+          event: 'testEvent4',
+        }),
+      );
+      expect(store.getNumberOfEventSources(testEvent)).toBe(1);
+      expect(store.getNumberOfEventSources(testEvent2)).toBe(1);
+      expect(store.getNumberOfEventSources(testEvent3)).toBe(1);
+      expect(store.getNumberOfEventSources(testEvent4)).toBe(1);
+
+      const eventStream4 = store.getEventStream(testEvent4);
+
+      await expectSequence(eventStream4, ['testEvent4']);
+    });
+
+    it('should work with event sources that emit 5 different event types', async () => {
+      store.add5TypedEventSource(
+        sourceId,
+        testEvent,
+        testEvent2,
+        testEvent3,
+        testEvent4,
+        testEvent5,
+        of({
+          type: testEvent5,
+          event: 'testEvent5',
+        }),
+      );
+      expect(store.getNumberOfEventSources(testEvent)).toBe(1);
+      expect(store.getNumberOfEventSources(testEvent2)).toBe(1);
+      expect(store.getNumberOfEventSources(testEvent3)).toBe(1);
+      expect(store.getNumberOfEventSources(testEvent4)).toBe(1);
+      expect(store.getNumberOfEventSources(testEvent5)).toBe(1);
+
+      const eventStream5 = store.getEventStream(testEvent5);
+
+      await expectSequence(eventStream5, ['testEvent5']);
+    });
+
+    it('should work with event sources that emit 6 different event types', async () => {
+      store.add6TypedEventSource(
+        sourceId,
+        testEvent,
+        testEvent2,
+        testEvent3,
+        testEvent4,
+        testEvent5,
+        testEvent6,
+        of({
+          type: testEvent6,
+          event: 'testEvent6',
+        }),
+      );
+      expect(store.getNumberOfEventSources(testEvent)).toBe(1);
+      expect(store.getNumberOfEventSources(testEvent2)).toBe(1);
+      expect(store.getNumberOfEventSources(testEvent3)).toBe(1);
+      expect(store.getNumberOfEventSources(testEvent4)).toBe(1);
+      expect(store.getNumberOfEventSources(testEvent5)).toBe(1);
+      expect(store.getNumberOfEventSources(testEvent6)).toBe(1);
+
+      const eventStream6 = store.getEventStream(testEvent6);
+
+      await expectSequence(eventStream6, ['testEvent6']);
+    });
+  });
+
+  describe('with typed sources that are added/removed depending on other sources', () => {
+    const sourceId = Symbol('SourceId');
+    const testEvent2: TypeIdentifier<string> = { symbol: Symbol('TestEvent2') };
+    it('should add source2 only if source1 is subscribed', async () => {
+      store.add2TypedEventSource(
+        sourceId,
+        testEvent,
+        testEvent2,
+        of(
+          {
+            type: testEvent,
+            event: 'testEvent1',
+          },
+          {
+            type: testEvent2,
+            event: 'testEvent2',
+          },
+        ),
+      );
+      expect(store.getNumberOfEventSources(testEvent)).toBe(1);
+      expect(store.getNumberOfEventSources(testEvent2)).toBe(1);
+
+      const eventStream1 = store.getEventStream(testEvent);
+      const eventStream2 = store.getEventStream(testEvent2);
+
+      const sequence1 = expectSequence(eventStream1, ['testEvent1']);
+      const sequence2 = expectSequence(eventStream2, ['testEvent2']);
+
+      await sequence1;
+      await sequence2;
     });
   });
 });
