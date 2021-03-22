@@ -1,5 +1,5 @@
 import { combineLatest, Observable, of } from 'rxjs';
-import { delay, filter, map, scan, startWith, take, timeout } from 'rxjs/operators';
+import { catchError, delay, filter, map, scan, startWith, take, timeout } from 'rxjs/operators';
 
 export const expectSequence = async (
   observable: Observable<any>,
@@ -32,6 +32,24 @@ export const awaitStringifyEqualState = async (
     observable
       .pipe(
         filter(state => JSON.stringify(state) === JSON.stringify(expectedState)),
+        take(1),
+        timeout(timeoutAfter),
+      )
+      .subscribe(() => {
+        resolve();
+      });
+  });
+
+export const awaitError = async (
+  observable: Observable<any>,
+  timeoutAfter: number = 1000,
+): Promise<void> =>
+  new Promise<void>(resolve => {
+    observable
+      .pipe(
+        map(() => null),
+        catchError(error => of(error)),
+        filter(value => value !== null),
         take(1),
         timeout(timeoutAfter),
       )

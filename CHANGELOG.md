@@ -1,6 +1,13 @@
+# 2.0.2-rc.1 (2020-03-22)
+
+### Fixes
+
+- **target subjects are no longer completed, if a source completes**
+
 # 2.0.1-rc.2 (2021-03-16)
 
 ### Changes
+
 - **replaced shareReplay(1) by memory-safe variant**
 - **pre-subscribe for lazy behaviors to hand-out only most recent values**
 

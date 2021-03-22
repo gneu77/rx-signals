@@ -362,16 +362,16 @@ export class Store {
       identifier.symbol,
       true,
       (id, error) => {
-        // If the source errors, remove it from the behavior and complete for the target.
+        // If the source errors, remove it from the behavior and error for the target.
         // (It is up to the target to just add a new source or remove and add the complete behavior, or even do nothing)
         controlledSubject.removeSource(id);
         controlledSubject.error(error);
       },
       id => {
-        // If the source completes, remove it from the behavior and complete for the target.
-        // (It is up to the target to just add a new source or remove and add the complete behavior, or even do nothing)
+        // If a source completes, we remove it from the behavior.
+        // We do not complete the target subject, because more sources might exist
+        // or might be added at a later point of time.
         controlledSubject.removeSource(id);
-        controlledSubject.complete();
       },
     );
     this.behaviors.set(identifier.symbol, controlledSubject);
@@ -397,10 +397,10 @@ export class Store {
         controlledSubject.error(error);
       },
       id => {
-        // If the source comples, remove it and complete for the target.
-        // (It is up to the target to just add a new source or remove and add the complete event stream, or even do nothing)
+        // If the source completes, we can remove it.
+        // However, we cannot complete the target, even if it was the last source, because store.dispatchEvent
+        // is also a valid (never completing) source. Also, new sources might be added at a later point of time.
         controlledSubject.removeSource(id);
-        controlledSubject.complete();
       },
     );
     this.eventStreams.set(identifier.symbol, controlledSubject);

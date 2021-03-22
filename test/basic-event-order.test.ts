@@ -1,12 +1,12 @@
-import { expectSequence } from './test.utils';
 import { merge, of } from 'rxjs';
 import { filter, map, switchMap, withLatestFrom } from 'rxjs/operators';
 import { Store, TypeIdentifier } from '../src/store';
+import { expectSequence } from './test.utils';
 
 describe('Event order', () => {
   const counterState: TypeIdentifier<number> = { symbol: Symbol('COUNTER_STATE') };
-  const addEvent: TypeIdentifier<number> = { symbol: Symbol('ADD_STATE') };
-  const multiplyEvent: TypeIdentifier<number> = { symbol: Symbol('MULTIPLY_STATE') };
+  const addEvent: TypeIdentifier<number> = { symbol: Symbol('ADD_EVENT') };
+  const multiplyEvent: TypeIdentifier<number> = { symbol: Symbol('MULTIPLY_EVENT') };
   const addEffect = Symbol('ADD_EFFECT');
 
   let store: Store;
