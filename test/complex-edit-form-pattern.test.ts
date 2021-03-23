@@ -1,13 +1,11 @@
 import { combineLatest, merge, NEVER, Observable, of } from 'rxjs';
 import {
-  catchError, delay,
-
-
-  distinctUntilChanged, filter, map,
-
+  catchError,
+  delay,
+  distinctUntilChanged,
+  filter,
+  map,
   switchMap,
-
-
   withLatestFrom
 } from 'rxjs/operators';
 import { Store, TypeIdentifier } from './../src/store';
@@ -223,10 +221,7 @@ describe('Edit From Pattern', () => {
     store.add2TypedEventSource(
       editModelEffect,
       editModelEvent,
-      {
-        eventIdentifier: addErrorEvent,
-        ifEventIsSubscribed: editModelEvent, // the event source  should only be subscribed, if addErrorEvent is subscribed
-      },
+      addErrorEvent,
       store.getEventStream(startEditEvent).pipe(
         switchMap(id => {
           if (id === null) {
@@ -249,6 +244,7 @@ describe('Edit From Pattern', () => {
           );
         }),
       ),
+      editModelEvent, // the event source  should only be subscribed, if editModelEvent is subscribed
     );
 
     // Setup validation effect (we could also filter to perform validation only, if showEditModal is true):
@@ -305,6 +301,7 @@ describe('Edit From Pattern', () => {
           ),
         ),
       ),
+      validationEvent, // the event source  should only be subscribed, if validationEvent is subscribed
     );
 
     // Setup save effect:
@@ -359,10 +356,11 @@ describe('Edit From Pattern', () => {
           ),
         ),
       ),
+      savedEvent, // the event source  should only be subscribed, if savedEvent is subscribed
     );
   });
 
-  it('should not subscribe saveDisabled and savePending lazily', () => {
+  it('should subscribe saveDisabled and savePending lazily', () => {
     expect(store.isSubscribed(showEditModalState)).toBe(true);
     expect(store.isSubscribed(editModelState)).toBe(true);
     expect(store.isSubscribed(validationState)).toBe(true);
