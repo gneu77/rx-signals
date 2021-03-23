@@ -1,15 +1,17 @@
-import { expectSequence } from './test.utils';
+import { combineLatest, merge, NEVER, Observable, of } from 'rxjs';
 import {
-  map,
-  filter,
+  catchError, delay,
+
+
+  distinctUntilChanged, filter, map,
+
   switchMap,
-  delay,
-  catchError,
-  withLatestFrom,
-  distinctUntilChanged,
+
+
+  withLatestFrom
 } from 'rxjs/operators';
-import { merge, combineLatest, of, Observable, NEVER } from 'rxjs';
 import { Store, TypeIdentifier } from './../src/store';
+import { expectSequence } from './test.utils';
 describe('Edit From Pattern', () => {
   // This integration test is an example for a simple setup to
   // - load
@@ -221,7 +223,10 @@ describe('Edit From Pattern', () => {
     store.add2TypedEventSource(
       editModelEffect,
       editModelEvent,
-      addErrorEvent,
+      {
+        eventIdentifier: addErrorEvent,
+        ifEventIsSubscribed: editModelEvent, // the event source  should only be subscribed, if addErrorEvent is subscribed
+      },
       store.getEventStream(startEditEvent).pipe(
         switchMap(id => {
           if (id === null) {

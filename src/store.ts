@@ -1,5 +1,5 @@
 import { asyncScheduler, NEVER, Observable } from 'rxjs';
-import { delay, filter, map, mapTo, share, take, withLatestFrom } from 'rxjs/operators';
+import { delay, filter, map, mapTo, share, switchMap, take, withLatestFrom } from 'rxjs/operators';
 import { ControlledSubject } from './controlled-subject';
 import { SourceObservable } from './source-observable';
 
@@ -11,6 +11,11 @@ export interface TypeIdentifier<T> {
 export interface TypedEvent<T> {
   type: TypeIdentifier<T>;
   event: T;
+}
+
+export interface ConditionalEventSource<T> {
+  eventIdentifier: TypeIdentifier<T>;
+  ifEventIsSubscribed: TypeIdentifier<any>;
 }
 
 export type StateReducer<T, E> = (state: T, event: E) => T;
@@ -155,8 +160,8 @@ export class Store {
 
   add2TypedEventSource<A, B>(
     sourceIdentifier: symbol,
-    eventIdentifierA: TypeIdentifier<A>,
-    eventIdentifierB: TypeIdentifier<B>,
+    eventIdentifierA: TypeIdentifier<A> | ConditionalEventSource<A>,
+    eventIdentifierB: TypeIdentifier<B> | ConditionalEventSource<B>,
     observable: Observable<TypedEvent<A> | TypedEvent<B>>,
   ): void {
     this.assertSourceExists(sourceIdentifier, sourceIdentifier);
@@ -175,9 +180,9 @@ export class Store {
 
   add3TypedEventSource<A, B, C>(
     sourceIdentifier: symbol,
-    eventIdentifierA: TypeIdentifier<A>,
-    eventIdentifierB: TypeIdentifier<B>,
-    eventIdentifierC: TypeIdentifier<C>,
+    eventIdentifierA: TypeIdentifier<A> | ConditionalEventSource<A>,
+    eventIdentifierB: TypeIdentifier<B> | ConditionalEventSource<B>,
+    eventIdentifierC: TypeIdentifier<C> | ConditionalEventSource<C>,
     observable: Observable<TypedEvent<A> | TypedEvent<B> | TypedEvent<C>>,
   ): void {
     this.assertSourceExists(sourceIdentifier, sourceIdentifier);
@@ -201,10 +206,10 @@ export class Store {
 
   add4TypedEventSource<A, B, C, D>(
     sourceIdentifier: symbol,
-    eventIdentifierA: TypeIdentifier<A>,
-    eventIdentifierB: TypeIdentifier<B>,
-    eventIdentifierC: TypeIdentifier<C>,
-    eventIdentifierD: TypeIdentifier<D>,
+    eventIdentifierA: TypeIdentifier<A> | ConditionalEventSource<A>,
+    eventIdentifierB: TypeIdentifier<B> | ConditionalEventSource<B>,
+    eventIdentifierC: TypeIdentifier<C> | ConditionalEventSource<C>,
+    eventIdentifierD: TypeIdentifier<D> | ConditionalEventSource<D>,
     observable: Observable<TypedEvent<A> | TypedEvent<B> | TypedEvent<C> | TypedEvent<D>>,
   ): void {
     this.assertSourceExists(sourceIdentifier, sourceIdentifier);
@@ -233,11 +238,11 @@ export class Store {
 
   add5TypedEventSource<A, B, C, D, E>(
     sourceIdentifier: symbol,
-    eventIdentifierA: TypeIdentifier<A>,
-    eventIdentifierB: TypeIdentifier<B>,
-    eventIdentifierC: TypeIdentifier<C>,
-    eventIdentifierD: TypeIdentifier<D>,
-    eventIdentifierE: TypeIdentifier<E>,
+    eventIdentifierA: TypeIdentifier<A> | ConditionalEventSource<A>,
+    eventIdentifierB: TypeIdentifier<B> | ConditionalEventSource<B>,
+    eventIdentifierC: TypeIdentifier<C> | ConditionalEventSource<C>,
+    eventIdentifierD: TypeIdentifier<D> | ConditionalEventSource<D>,
+    eventIdentifierE: TypeIdentifier<E> | ConditionalEventSource<E>,
     observable: Observable<
       TypedEvent<A> | TypedEvent<B> | TypedEvent<C> | TypedEvent<D> | TypedEvent<E>
     >,
@@ -273,12 +278,12 @@ export class Store {
 
   add6TypedEventSource<A, B, C, D, E, F>(
     sourceIdentifier: symbol,
-    eventIdentifierA: TypeIdentifier<A>,
-    eventIdentifierB: TypeIdentifier<B>,
-    eventIdentifierC: TypeIdentifier<C>,
-    eventIdentifierD: TypeIdentifier<D>,
-    eventIdentifierE: TypeIdentifier<E>,
-    eventIdentifierF: TypeIdentifier<F>,
+    eventIdentifierA: TypeIdentifier<A> | ConditionalEventSource<A>,
+    eventIdentifierB: TypeIdentifier<B> | ConditionalEventSource<B>,
+    eventIdentifierC: TypeIdentifier<C> | ConditionalEventSource<C>,
+    eventIdentifierD: TypeIdentifier<D> | ConditionalEventSource<D>,
+    eventIdentifierE: TypeIdentifier<E> | ConditionalEventSource<E>,
+    eventIdentifierF: TypeIdentifier<F> | ConditionalEventSource<F>,
     observable: Observable<
       TypedEvent<A> | TypedEvent<B> | TypedEvent<C> | TypedEvent<D> | TypedEvent<E> | TypedEvent<F>
     >,
@@ -342,18 +347,29 @@ export class Store {
 
   private addTypedEventSource<T>(
     sourceIdentifier: symbol,
-    eventIdentifier: TypeIdentifier<T>,
+    eventIdentifierOrConditionalSource: TypeIdentifier<T> | ConditionalEventSource<T>,
     sharedSource: Observable<TypedEvent<T>>,
   ): void {
+    const isConditional =
+      ((eventIdentifierOrConditionalSource as ConditionalEventSource<T>)?.eventIdentifier?.symbol ??
+        null) !== null;
+    const eventIdentifier: TypeIdentifier<T> = isConditional
+      ? (eventIdentifierOrConditionalSource as ConditionalEventSource<T>).eventIdentifier
+      : (eventIdentifierOrConditionalSource as TypeIdentifier<T>);
+    const source = sharedSource.pipe(
+      filter(typedEvent => typedEvent.type === eventIdentifier),
+      map(event => event.event),
+    );
+    let finalSource = source;
+    if (isConditional) {
+      const dependentEventIdentifier: TypeIdentifier<any> = (eventIdentifierOrConditionalSource as ConditionalEventSource<T>)
+        .ifEventIsSubscribed;
+      finalSource = this.getEventStreamControlledSubject(dependentEventIdentifier)
+        .getIsSubscribedObservable()
+        .pipe(switchMap(isSubscribed => (isSubscribed ? source : NEVER)));
+    }
     this.getEventStreamControlledSubject(eventIdentifier).addSource(
-      new SourceObservable<T>(
-        sourceIdentifier,
-        sharedSource.pipe(
-          filter(typedEvent => typedEvent.type === eventIdentifier),
-          map(event => event.event),
-        ),
-        true,
-      ),
+      new SourceObservable<T>(sourceIdentifier, finalSource, true),
     );
   }
 

@@ -210,8 +210,11 @@ export class ControlledSubject<T> {
   }
 
   private setIsSubscribed(newIsSubscribed: boolean): void {
+    const changed = this.isSubscribed !== newIsSubscribed;
     this.isSubscribed = newIsSubscribed;
-    this.isSubscribedSubject.next(this.isSubscribed);
+    if (changed) {
+      this.isSubscribedSubject.next(this.isSubscribed);
+    }
     this.lazySources.forEach(source => {
       if (this.isSubscribed) {
         this.subscribeSource(source);

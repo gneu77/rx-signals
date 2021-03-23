@@ -1,7 +1,7 @@
-import { interval, of } from 'rxjs';
+import { interval, of, Subject } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Store, TypeIdentifier } from './../src/store';
-import { awaitError, expectSequence } from './test.utils';
+import { Store, TypedEvent, TypeIdentifier } from './../src/store';
+import { awaitError, expectSequence, getSequence } from './test.utils';
 describe('Event streams', () => {
   const testEvent: TypeIdentifier<string> = { symbol: Symbol('TestEvent') };
 
@@ -280,14 +280,19 @@ describe('Event streams', () => {
     });
   });
 
-  describe('with typed sources that are added/removed depending on other sources', () => {
+  describe('with typed sources that are switched depending on subscription of an event', () => {
     const sourceId = Symbol('SourceId');
     const testEvent2: TypeIdentifier<string> = { symbol: Symbol('TestEvent2') };
-    it('should add source2 only if source1 is subscribed', async () => {
+    const testEvent3: TypeIdentifier<string> = { symbol: Symbol('TestEvent3') };
+    const testEvent4: TypeIdentifier<string> = { symbol: Symbol('TestEvent4') };
+    it('should NEVER dispatch testEvent2, if testEvent1 is not subscribed', async () => {
       store.add2TypedEventSource(
         sourceId,
         testEvent,
-        testEvent2,
+        {
+          eventIdentifier: testEvent2,
+          ifEventIsSubscribed: testEvent,
+        },
         of(
           {
             type: testEvent,
@@ -299,17 +304,93 @@ describe('Event streams', () => {
           },
         ),
       );
-      expect(store.getNumberOfEventSources(testEvent)).toBe(1);
-      expect(store.getNumberOfEventSources(testEvent2)).toBe(1);
 
-      const eventStream1 = store.getEventStream(testEvent);
       const eventStream2 = store.getEventStream(testEvent2);
 
-      const sequence1 = expectSequence(eventStream1, ['testEvent1']);
+      const sequence = await getSequence(eventStream2, 1, 100);
+      expect(sequence).toEqual([]);
+    });
+
+    it('should dispatch testEvent2, if testEvent1 is subscribed', async () => {
+      store.add2TypedEventSource(
+        sourceId,
+        testEvent,
+        {
+          eventIdentifier: testEvent2,
+          ifEventIsSubscribed: testEvent,
+        },
+        of(
+          {
+            type: testEvent,
+            event: 'testEvent1',
+          },
+          {
+            type: testEvent2,
+            event: 'testEvent2',
+          },
+          {
+            type: testEvent,
+            event: 'testEvent3',
+          },
+        ),
+      );
+
+      const eventStream2 = store.getEventStream(testEvent2);
       const sequence2 = expectSequence(eventStream2, ['testEvent2']);
+
+      const eventStream1 = store.getEventStream(testEvent);
+      const sequence1 = expectSequence(eventStream1, ['testEvent1', 'testEvent3']);
 
       await sequence1;
       await sequence2;
+    });
+
+    it('should dispatch testEvent2, only while testEvent1 is subscribed and testEvent3 only while testEvent4 is subscribed', async () => {
+      const source = new Subject<TypedEvent<string>>();
+      store.add4TypedEventSource(
+        sourceId,
+        testEvent,
+        {
+          eventIdentifier: testEvent2,
+          ifEventIsSubscribed: testEvent,
+        },
+        {
+          eventIdentifier: testEvent3,
+          ifEventIsSubscribed: testEvent4,
+        },
+        testEvent4,
+        source.asObservable(),
+      );
+
+      const eventStream1 = store.getEventStream(testEvent);
+      const eventStream2 = store.getEventStream(testEvent2);
+      const eventStream3 = store.getEventStream(testEvent3);
+      const eventStream4 = store.getEventStream(testEvent4);
+
+      const s1_1 = expectSequence(eventStream1, ['t1_1']);
+      const s2 = expectSequence(eventStream2, ['t2_1', 't2_3']);
+      const s3 = expectSequence(eventStream3, ['t3_2']);
+
+      source.next({ type: testEvent2, event: 't2_1' }); // received, because E1 is subscribed
+      source.next({ type: testEvent, event: 't1_1' });
+      await s1_1; // will unsubscribe E1
+
+      source.next({ type: testEvent3, event: 't3_1' }); // missed, because E4 is not subscribed
+      source.next({ type: testEvent2, event: 't2_2' }); // missed, because E1 is not subscribed
+
+      const s4 = expectSequence(eventStream4, ['t4_1']);
+      const s1_2 = expectSequence(eventStream1, ['t1_2']);
+
+      source.next({ type: testEvent2, event: 't2_3' }); // received, because E1 is subscribed
+      source.next({ type: testEvent3, event: 't3_2' }); // received, because E4 is subscribed
+
+      source.next({ type: testEvent, event: 't1_2' });
+      source.next({ type: testEvent4, event: 't4_1' });
+
+      await s1_2;
+      await s2;
+      await s3;
+      await s4;
     });
   });
 });

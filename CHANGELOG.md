@@ -4,6 +4,10 @@
 
 - **target subjects are no longer completed, if a source completes**
 
+### Changes
+
+- **x-TypedEventSources can now have sources that are subscribed conditionally only if another event is subscribed**
+
 # 2.0.1-rc.2 (2021-03-16)
 
 ### Changes
