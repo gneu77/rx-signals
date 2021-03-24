@@ -1,13 +1,13 @@
 # 2.1.0-rc.1 (2020-03-24)
 
-# 2.0.2-rc.1 (2020-03-22)
-
 ### Breaking changes
 
 - **renamed addStatelessBehavior to addLazyBehavior**
 - **renamed addStatefulBehavior to addNonLazyBehavior**
 - **renamed removeBehavior to removeBehaviorSources with optional flag to complete subscribers (should not be used)**
 - **removed some obsolete debug methods**
+
+# 2.0.2-rc.1 (2020-03-22)
 
 ### Changes
 
