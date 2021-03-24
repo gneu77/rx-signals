@@ -10,12 +10,12 @@ describe('Store', () => {
     stringBehavior = new BehaviorSubject<string>('INITIAL_VALUE');
   });
 
-  describe('addStatelessBehavior', () => {
+  describe('addLazyBehavior', () => {
     it('should throw, if behavior with given identifier already exists', () => {
       const id = { symbol: Symbol('TEST') };
-      store.addStatelessBehavior(id, stringBehavior.asObservable());
+      store.addLazyBehavior(id, stringBehavior.asObservable());
       expect(() => {
-        store.addStatelessBehavior(id, stringBehavior.asObservable());
+        store.addLazyBehavior(id, stringBehavior.asObservable());
       }).toThrowError(
         'A behavior or event source with the given identifier was already added with a source: Symbol(TEST)',
       );
@@ -23,17 +23,17 @@ describe('Store', () => {
 
     it('should work', () => {
       expect(() => {
-        store.addStatelessBehavior({ symbol: Symbol('TEST') }, stringBehavior.asObservable());
+        store.addLazyBehavior({ symbol: Symbol('TEST') }, stringBehavior.asObservable());
       }).not.toThrow();
     });
   });
 
-  describe('addStatefulBehavior', () => {
+  describe('addNonLazyBehavior', () => {
     it('should throw, if behavior with given identifier already exists', () => {
       const id = { symbol: Symbol('TEST') };
-      store.addStatefulBehavior(id, stringBehavior.asObservable());
+      store.addNonLazyBehavior(id, stringBehavior.asObservable());
       expect(() => {
-        store.addStatefulBehavior(id, stringBehavior.asObservable());
+        store.addNonLazyBehavior(id, stringBehavior.asObservable());
       }).toThrowError(
         'A behavior or event source with the given identifier was already added with a source: Symbol(TEST)',
       );
@@ -41,7 +41,7 @@ describe('Store', () => {
 
     it('should work', () => {
       expect(() => {
-        store.addStatefulBehavior({ symbol: Symbol('TEST') }, stringBehavior.asObservable());
+        store.addNonLazyBehavior({ symbol: Symbol('TEST') }, stringBehavior.asObservable());
       }).not.toThrow();
     });
   });

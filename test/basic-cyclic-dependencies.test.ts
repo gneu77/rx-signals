@@ -13,7 +13,7 @@ describe('Cyclic dependencies', () => {
 
     // derivedBehavior depends on cyclicBehavior && cyclicBehavior depends on derivedBehavior
 
-    store.addStatelessBehavior(
+    store.addLazyBehavior(
       cyclicBehavior,
       store
         .getEventStream(inputEvent)
@@ -22,7 +22,7 @@ describe('Cyclic dependencies', () => {
       1,
     );
 
-    store.addStatelessBehavior(
+    store.addLazyBehavior(
       derivedBehavior,
       store.getBehavior(cyclicBehavior).pipe(map(val => val * 10)),
     );

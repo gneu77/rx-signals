@@ -14,7 +14,7 @@ describe('Event order', () => {
   beforeEach(() => {
     store = new Store();
 
-    store.addStatefulBehavior(
+    store.addNonLazyBehavior(
       counterState,
       merge(store.getTypedEventStream(addEvent), store.getTypedEventStream(multiplyEvent)).pipe(
         withLatestFrom(store.getBehavior(counterState)),

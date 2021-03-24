@@ -1,4 +1,11 @@
+# 2.1.0-rc.1 (2020-03-24)
+
 # 2.0.2-rc.1 (2020-03-22)
+
+### Breaking changes
+
+- **renamed addStatelessBehavior to addLazyBehavior**
+- **renamed addStatefulBehavior to addNonLazyBehavior**
 
 ### Fixes
 

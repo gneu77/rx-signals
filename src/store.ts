@@ -60,7 +60,7 @@ export class Store {
     );
   }
 
-  addStatelessBehavior<T>(
+  addLazyBehavior<T>(
     identifier: TypeIdentifier<T>,
     observable: Observable<T>,
     initialValue?: T,
@@ -68,7 +68,7 @@ export class Store {
     this.addBehavior(identifier, observable, true, initialValue);
   }
 
-  addStatefulBehavior<T>(
+  addNonLazyBehavior<T>(
     identifier: TypeIdentifier<T>,
     observable: Observable<T>,
     initialValue?: T,

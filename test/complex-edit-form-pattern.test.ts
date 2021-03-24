@@ -18,13 +18,13 @@ describe('Edit From Pattern', () => {
   // - persist
   // an entity.
   //
-  // It has the following stateful behaviors:
+  // It has the following non-lazy behaviors:
   // - showEditModal: boolean state
   // - editModelState: represents the state of the model that is updated by events from the edit form
   // - validationState: represents a model and its validation result (not necessarily the current model)
   // - saveRequestState: null or the model to be handled by the SaveEffect
   // - errorState: holds errors thrown by any effects
-  // Stateless/lazy behaviors (derived state):
+  // Lazy behaviors (derived state):
   // - isValidationPending: boolean (true, if editModelState.model !== validationState.model)
   // - isSaveDisabled: boolean (true, if isValidationPending || !validationState.valid || isSavePending)
   // - isSavePending: boolean (true, if saveRequestState !== null)
@@ -139,7 +139,7 @@ describe('Edit From Pattern', () => {
     );
 
     // Setup the show edit modal state:
-    store.addStatefulBehavior(
+    store.addNonLazyBehavior(
       showEditModalState,
       merge(
         store.getTypedEventStream(editModelEvent),
@@ -166,7 +166,7 @@ describe('Edit From Pattern', () => {
     }));
 
     // Setup the save request state:
-    store.addStatefulBehavior(
+    store.addNonLazyBehavior(
       saveRequestState,
       merge(store.getTypedEventStream(saveEvent), store.getTypedEventStream(savedEvent)).pipe(
         withLatestFrom(store.getBehavior(editModelState)),
@@ -176,7 +176,7 @@ describe('Edit From Pattern', () => {
     );
 
     // Setup the validation state:
-    store.addStatefulBehavior(validationState, store.getEventStream(validationEvent), {
+    store.addNonLazyBehavior(validationState, store.getEventStream(validationEvent), {
       model: null,
       valid: false,
       validationResults: {},
@@ -188,17 +188,17 @@ describe('Edit From Pattern', () => {
     store.addReducer(errorState, clearErrorsEvent, () => []);
 
     // Setup stateless/lazy behaviors (dervived state):
-    store.addStatelessBehavior(
+    store.addLazyBehavior(
       isValidationPending,
       combineLatest(store.getBehavior(validationState), store.getBehavior(editModelState)).pipe(
         map(([validation, model]) => validation.model !== model.model),
       ),
     );
-    store.addStatelessBehavior(
+    store.addLazyBehavior(
       isSavePending,
       store.getBehavior(saveRequestState).pipe(map(state => state !== null)),
     );
-    store.addStatelessBehavior(
+    store.addLazyBehavior(
       isSaveDisabled,
       combineLatest(
         store.getBehavior(isValidationPending),

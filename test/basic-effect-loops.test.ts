@@ -1,7 +1,7 @@
-import { expectSequence } from './test.utils';
 import { merge, of } from 'rxjs';
 import { filter, map, switchMap, withLatestFrom } from 'rxjs/operators';
 import { Store, TypeIdentifier } from '../src/store';
+import { expectSequence } from './test.utils';
 
 describe('Effect loops', () => {
   const counterState: TypeIdentifier<number> = { symbol: Symbol('COUNTER_STATE') };
@@ -18,7 +18,7 @@ describe('Effect loops', () => {
   });
 
   it('should perform an effect on a certain condition and result in correct behavior', async () => {
-    store.addStatefulBehavior(
+    store.addNonLazyBehavior(
       counterState,
       merge(store.getTypedEventStream(addEvent), store.getTypedEventStream(multiplyEvent)).pipe(
         withLatestFrom(store.getBehavior(counterState)),

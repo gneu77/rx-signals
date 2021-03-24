@@ -1,5 +1,5 @@
-import { filter, switchMap, debounceTime, map } from 'rxjs/operators';
 import { combineLatest, of } from 'rxjs';
+import { debounceTime, filter, map, switchMap } from 'rxjs/operators';
 import { Store, TypeIdentifier } from './../src/store';
 import { awaitStringifyEqualState, expectSequence } from './test.utils';
 describe('Lazy query pattern', () => {
@@ -20,14 +20,14 @@ describe('Lazy query pattern', () => {
   beforeEach((): void => {
     store = new Store();
 
-    store.addStatelessBehavior(queryBehavior, store.getEventStream(queryEvent), null);
+    store.addLazyBehavior(queryBehavior, store.getEventStream(queryEvent), null);
 
-    store.addStatelessBehavior(resultBehavior, store.getEventStream(resultEvent), {
+    store.addLazyBehavior(resultBehavior, store.getEventStream(resultEvent), {
       result: [],
       resultQuery: null,
     });
 
-    store.addStatelessBehavior(
+    store.addLazyBehavior(
       loadingBehavior,
       combineLatest([store.getBehavior(queryBehavior), store.getBehavior(resultBehavior)]).pipe(
         map(([query, result]) => query !== result.resultQuery),
