@@ -1,5 +1,16 @@
-import { asyncScheduler, NEVER, Observable } from 'rxjs';
-import { delay, filter, map, mapTo, share, switchMap, take, withLatestFrom } from 'rxjs/operators';
+import { asyncScheduler, BehaviorSubject, combineLatest, NEVER, Observable, of } from 'rxjs';
+import {
+  delay,
+  distinctUntilChanged,
+  filter,
+  map,
+  mapTo,
+  share,
+  shareReplay,
+  switchMap,
+  take,
+  withLatestFrom,
+} from 'rxjs/operators';
 import { ControlledSubject } from './controlled-subject';
 import { SourceObservable } from './source-observable';
 
@@ -20,9 +31,13 @@ export class Store {
 
   private eventStreams = new Map<symbol, ControlledSubject<any>>();
 
-  isBehaviorAdded<T>(identifier: TypeIdentifier<T>): boolean {
-    return this.behaviors.get(identifier.symbol)?.hasAnySource() === true;
-  }
+  private behaviorsSubject = new BehaviorSubject<Map<symbol, ControlledSubject<any>>>(
+    new Map<symbol, ControlledSubject<any>>(),
+  );
+
+  private eventStreamsSubject = new BehaviorSubject<Map<symbol, ControlledSubject<any>>>(
+    new Map<symbol, ControlledSubject<any>>(),
+  );
 
   isSubscribed<T>(identifier: TypeIdentifier<T>): boolean {
     return (
@@ -31,21 +46,20 @@ export class Store {
     );
   }
 
-  getUnsubscribedIdentifiers(): symbol[] {
-    return [
-      ...[...this.behaviors.entries()]
-        .filter(tuple => tuple[1].isObservableSubscribed() === false)
-        .map(tuple => tuple[0]),
-      ...[...this.eventStreams.entries()]
-        .filter(tuple => tuple[1].isObservableSubscribed() === false)
-        .map(tuple => tuple[0]),
-    ];
-  }
-
-  getNoSourceBehaviorIdentifiers(): symbol[] {
-    return [...this.behaviors.entries()]
-      .filter(tuple => tuple[1].hasAnySource() === false)
-      .map(tuple => tuple[0]);
+  getIsSubscribedObservable<T>(identifier: TypeIdentifier<T>): Observable<boolean> {
+    const sym = identifier.symbol;
+    return combineLatest([
+      this.behaviorsSubject
+        .asObservable()
+        .pipe(switchMap(s => s.get(sym)?.getIsSubscribedObservable() ?? of(false))),
+      this.eventStreamsSubject
+        .asObservable()
+        .pipe(switchMap(s => s.get(sym)?.getIsSubscribedObservable() ?? of(false))),
+    ]).pipe(
+      map(([s1, s2]) => s1 || s2),
+      distinctUntilChanged(),
+      shareReplay({ bufferSize: 1, refCount: true }),
+    );
   }
 
   addBehavior<T>(
@@ -104,11 +118,17 @@ export class Store {
     this.getBehaviorControlledSubject(stateIdentifier).removeSource(eventIdentifier.symbol);
   }
 
-  removeBehavior<T>(identifier: TypeIdentifier<T>): void {
+  removeBehaviorSources<T>(
+    identifier: TypeIdentifier<T>,
+    completeAndRemoveBehavior: boolean = false,
+  ): void {
     const behavior = this.getBehaviorControlledSubject(identifier);
     behavior.removeAllSources();
-    behavior.complete();
-    this.behaviors.delete(identifier.symbol);
+    if (completeAndRemoveBehavior) {
+      behavior.complete();
+      this.behaviors.delete(identifier.symbol);
+      this.behaviorsSubject.next(this.behaviors);
+    }
   }
 
   getBehavior<T>(identifier: TypeIdentifier<T>): Observable<T> {
@@ -413,6 +433,7 @@ export class Store {
       },
     );
     this.behaviors.set(identifier.symbol, controlledSubject);
+    this.behaviorsSubject.next(this.behaviors);
     return controlledSubject;
   }
 
@@ -442,6 +463,7 @@ export class Store {
       },
     );
     this.eventStreams.set(identifier.symbol, controlledSubject);
+    this.eventStreamsSubject.next(this.eventStreams);
     return controlledSubject;
   }
 

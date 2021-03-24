@@ -1,5 +1,5 @@
-import { expectSequence } from './test.utils';
 import { Store, TypeIdentifier } from '../src/store';
+import { expectSequence } from './test.utils';
 
 describe('Reducers', () => {
   const counterState: TypeIdentifier<number> = { symbol: Symbol('COUNTER_STATE') };
@@ -77,7 +77,7 @@ describe('Reducers', () => {
     store.addState(counterState, 100);
     expect(store.getNumberOfBehaviorSources(counterState)).toBe(3);
 
-    store.removeBehavior(counterState);
+    store.removeBehaviorSources(counterState);
     expect(store.getNumberOfBehaviorSources(counterState)).toBe(0);
   });
 });

@@ -6,6 +6,12 @@
 
 - **renamed addStatelessBehavior to addLazyBehavior**
 - **renamed addStatefulBehavior to addNonLazyBehavior**
+- **renamed removeBehavior to removeBehaviorSources with optional flag to complete subscribers (should not be used)**
+- **removed some obsolete debug methods**
+
+### Changes
+
+- **added method getIsSubscribedObservable to store**
 
 ### Fixes
 

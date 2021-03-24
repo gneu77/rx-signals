@@ -49,7 +49,7 @@ describe('Store', () => {
   describe('removeBehavior', () => {
     it('should work', () => {
       expect(() => {
-        store.removeBehavior({ symbol: Symbol('TEST') });
+        store.removeBehaviorSources({ symbol: Symbol('TEST') });
       }).not.toThrow();
     });
   });

@@ -169,7 +169,7 @@ describe('Behaviors share and reset logic', () => {
         ),
         5,
       );
-      store.addNonLazyBehavior(
+      store.addLazyBehavior(
         doubledBehavior,
         store.getBehavior(rootBehavior).pipe(
           map(root => root * 2),
@@ -178,7 +178,7 @@ describe('Behaviors share and reset logic', () => {
           }),
         ),
       );
-      store.addNonLazyBehavior(
+      store.addLazyBehavior(
         tripledBehavior,
         store.getBehavior(rootBehavior).pipe(
           map(root => root * 3),
