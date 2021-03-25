@@ -162,20 +162,8 @@ export class ControlledSubject<T> {
     return this.lazySources.has(sourceId) || this.statefulSources.has(sourceId);
   }
 
-  hasAnySource(): boolean {
-    return this.lazySources.size > 0 || this.statefulSources.size > 0;
-  }
-
-  isLazySource(sourceId: symbol): boolean {
-    return this.lazySources.has(sourceId);
-  }
-
   getNumberOfSources(): number {
     return this.lazySources.size + this.statefulSources.size;
-  }
-
-  getNumberOfStatefulSources(): number {
-    return this.statefulSources.size;
   }
 
   private getNewTargetPipe(): Observable<T> {

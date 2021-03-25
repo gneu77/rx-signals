@@ -1,7 +1,7 @@
 import { interval, NEVER, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { Store, TypeIdentifier } from '../src/store';
-import { awaitError, expectSequence } from './test.utils';
+import { awaitCompletion, awaitError, expectSequence } from './test.utils';
 
 describe('Store', () => {
   const testId: TypeIdentifier<number> = { symbol: Symbol('TestBehavior') };
@@ -98,7 +98,7 @@ describe('Store', () => {
       await sequence;
     });
 
-    it('should propagate source errors', async () => {
+    it('should propagate source errors and still work after re-subscribe', async () => {
       store.addLazyBehavior(
         testId,
         interval(10).pipe(
@@ -111,6 +111,30 @@ describe('Store', () => {
         ),
       );
       await awaitError(store.getBehavior(testId));
+      expect(store.getNumberOfBehaviorSources(testId)).toBe(1);
+      await expectSequence(store.getBehavior(testId), [0, 1]); // not starting with 2 due to error in pre-subscribe
+    });
+  });
+
+  describe('completeBehavior', () => {
+    it('should remove all sources, and complete the target', async () => {
+      store.addLazyBehavior(
+        testId,
+        interval(10).pipe(
+          tap(s => {
+            if (s === 3) {
+              store.completeBehavior(testId);
+            }
+          }),
+        ),
+      );
+
+      await expectSequence(store.getBehavior(testId), [0, 1, 2]);
+      expect(store.getNumberOfBehaviorSources(testId)).toBe(1);
+
+      await expectSequence(store.getBehavior(testId), [2, 0, 1, 2]);
+      await awaitCompletion(store.getBehavior(testId));
+      expect(store.getNumberOfBehaviorSources(testId)).toBe(0);
     });
   });
 });

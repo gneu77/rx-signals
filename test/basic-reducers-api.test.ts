@@ -64,6 +64,11 @@ describe('Reducers', () => {
     await counterSequence;
   });
 
+  it('should not error, when removing a not-added reducer', () => {
+    store.addState(counterState, 100);
+    store.removeReducer(counterState, increaseEvent);
+  });
+
   it('should throw, when trying to add a second reducer for the same event', () => {
     store.addReducer(counterState, increaseEvent, (state, event) => state + event);
     expect(() => {

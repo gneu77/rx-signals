@@ -64,3 +64,8 @@ export const awaitError = async (
         resolve();
       });
   });
+
+export const awaitCompletion = async (observable: Observable<any>): Promise<void> =>
+  new Promise<void>((resolve, reject) => {
+    observable.subscribe(() => {}, reject, resolve);
+  });

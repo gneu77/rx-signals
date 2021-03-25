@@ -122,6 +122,14 @@ export class Store {
     behavior.removeAllSources();
   }
 
+  completeBehavior<T>(identifier: TypeIdentifier<T>): void {
+    const behavior = this.getBehaviorControlledSubject(identifier);
+    behavior.removeAllSources();
+    behavior.complete();
+    this.behaviors.delete(identifier.symbol);
+    this.behaviorsSubject.next(this.behaviors);
+  }
+
   getBehavior<T>(identifier: TypeIdentifier<T>): Observable<T> {
     return this.getBehaviorControlledSubject(identifier).getObservable();
   }
