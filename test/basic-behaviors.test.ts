@@ -20,6 +20,20 @@ describe('Store', () => {
         'A behavior or event source with the given identifier was already added with a source: Symbol(TestBehavior)',
       );
     });
+    it('should be possible to add behavior sources again, after initial source has completed', async () => {
+      const isSubscribedSequence = expectSequence(store.getIsSubscribedObservable(testId), [
+        false,
+        true,
+        false,
+      ]);
+      store.addLazyBehavior(testId, of(1));
+      expect(store.isSubscribed(testId)).toBe(false);
+      const sequence = expectSequence(store.getBehavior(testId), [1, 2]);
+      expect(store.isSubscribed(testId)).toBe(true);
+      store.addLazyBehavior(testId, of(2));
+      await sequence;
+      await isSubscribedSequence;
+    });
 
     it('should subscribe its source lazily', async () => {
       expect(store.getNumberOfBehaviorSources(testId)).toBe(0);
@@ -72,36 +86,15 @@ describe('Store', () => {
     });
   });
 
-  // describe('addNonLazyBehavior', () => {
-  //   it('should throw, if behavior with given identifier already exists', () => {
-  //     const id = { symbol: Symbol('TEST') };
-  //     store.addNonLazyBehavior(id, stringBehavior.asObservable());
-  //     expect(() => {
-  //       store.addNonLazyBehavior(id, stringBehavior.asObservable());
-  //     }).toThrowError(
-  //       'A behavior or event source with the given identifier was already added with a source: Symbol(TEST)',
-  //     );
-  //   });
-
-  //   it('should work', () => {
-  //     expect(() => {
-  //       store.addNonLazyBehavior({ symbol: Symbol('TEST') }, stringBehavior.asObservable());
-  //     }).not.toThrow();
-  //   });
-  // });
-
-  // describe('removeBehavior', () => {
-  //   it('should work', () => {
-  //     expect(() => {
-  //       store.removeBehaviorSources({ symbol: Symbol('TEST') });
-  //     }).not.toThrow();
-  //   });
-  // });
-
-  // describe('getBehavior', () => {
-  //   it('should work', () => {
-  //     const behavior = store.getBehavior({ symbol: Symbol('TEST') });
-  //     expect(typeof behavior.pipe).toBe('function');
-  //   });
-  // });
+  describe('removeBehaviorSources', () => {
+    it('should work without completing target subscriptions', async () => {
+      store.addLazyBehavior(testId, NEVER);
+      const sequence = expectSequence(store.getBehavior(testId), [1, 2]);
+      expect(store.getNumberOfBehaviorSources(testId)).toBe(1);
+      store.removeBehaviorSources(testId);
+      expect(store.getNumberOfBehaviorSources(testId)).toBe(0);
+      store.addLazyBehavior(testId, of(1, 2));
+      await sequence;
+    });
+  });
 });
