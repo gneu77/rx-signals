@@ -1,6 +1,7 @@
-import { NEVER, of } from 'rxjs';
+import { interval, NEVER, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { Store, TypeIdentifier } from '../src/store';
-import { expectSequence } from './test.utils';
+import { awaitError, expectSequence } from './test.utils';
 
 describe('Store', () => {
   const testId: TypeIdentifier<number> = { symbol: Symbol('TestBehavior') };
@@ -95,6 +96,21 @@ describe('Store', () => {
       expect(store.getNumberOfBehaviorSources(testId)).toBe(0);
       store.addLazyBehavior(testId, of(1, 2));
       await sequence;
+    });
+
+    it('should propagate source errors', async () => {
+      store.addLazyBehavior(
+        testId,
+        interval(10).pipe(
+          map(val => {
+            if (val === 3) {
+              throw 'ERROR';
+            }
+            return val;
+          }),
+        ),
+      );
+      await awaitError(store.getBehavior(testId));
     });
   });
 });

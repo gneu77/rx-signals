@@ -106,7 +106,7 @@ describe('Event streams', () => {
       expect(store.getNumberOfEventSources(testEvent)).toBe(0); // because upon subscription, both sources have dispatched immediately
     });
 
-    it('should remove an errored source', async () => {
+    it('should propagate source errors', async () => {
       store.addEventSource(
         sourceId1,
         testEvent,
@@ -128,7 +128,7 @@ describe('Event streams', () => {
       expect(store.getNumberOfEventSources(testEvent)).toBe(1);
 
       await errorSubscription;
-      expect(store.getNumberOfEventSources(testEvent)).toBe(0);
+      expect(store.getNumberOfEventSources(testEvent)).toBe(1);
     });
   });
 

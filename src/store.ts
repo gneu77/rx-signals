@@ -8,7 +8,7 @@ import {
   share,
   switchMap,
   take,
-  withLatestFrom,
+  withLatestFrom
 } from 'rxjs/operators';
 import { ControlledSubject } from './controlled-subject';
 import { SourceObservable } from './source-observable';
@@ -410,10 +410,8 @@ export class Store {
     const controlledSubject = new ControlledSubject<T>(
       identifier.symbol,
       true,
-      (id, error) => {
-        // If the source errors, remove it from the behavior and error for the target.
-        // (It is up to the target to just add a new source or remove and add the complete behavior, or even do nothing)
-        controlledSubject.removeSource(id);
+      (_, error) => {
+        // If the source errors, error for the target.
         controlledSubject.error(error);
       },
       id => {
@@ -440,10 +438,8 @@ export class Store {
     const controlledSubject = new ControlledSubject<T>(
       identifier.symbol,
       false,
-      (id, error) => {
-        // If the source errors, remove it and error for the target.
-        // (It is up to the target to just add a new source or remove and add the complete event stream, or even do nothing)
-        controlledSubject.removeSource(id);
+      (_, error) => {
+        // If a source errors, error for the target.
         controlledSubject.error(error);
       },
       id => {
