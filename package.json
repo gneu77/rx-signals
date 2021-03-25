@@ -15,6 +15,7 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "build": "tsc -p tsconfig.json && tsc -p tsconfig-cjs.json",
     "test": "jest --config jestconfig.json",
+    "test-coverage": "jest --config jestconfig.json --coverage",
     "lint": "eslint --ext .ts \"src/**\"",
     "pre-publish": "rm -rf dist && npm run format && npm run lint && npm run test && npm run build"
   },

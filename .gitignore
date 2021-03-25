@@ -1,2 +1,11 @@
 /node_modules
 /dist
+/coverage
+
+# IntelliJ stuff
+.idea/
+.idea_modules/
+/out/
+*.iml
+*.ipr
+*.iws
