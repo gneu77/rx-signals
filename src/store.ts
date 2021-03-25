@@ -6,7 +6,6 @@ import {
   map,
   mapTo,
   share,
-  shareReplay,
   switchMap,
   take,
   withLatestFrom,
@@ -58,7 +57,7 @@ export class Store {
     ]).pipe(
       map(([s1, s2]) => s1 || s2),
       distinctUntilChanged(),
-      shareReplay({ bufferSize: 1, refCount: true }),
+      share(),
     );
   }
 
@@ -118,17 +117,9 @@ export class Store {
     this.getBehaviorControlledSubject(stateIdentifier).removeSource(eventIdentifier.symbol);
   }
 
-  removeBehaviorSources<T>(
-    identifier: TypeIdentifier<T>,
-    completeAndRemoveBehavior: boolean = false,
-  ): void {
+  removeBehaviorSources<T>(identifier: TypeIdentifier<T>): void {
     const behavior = this.getBehaviorControlledSubject(identifier);
     behavior.removeAllSources();
-    if (completeAndRemoveBehavior) {
-      behavior.complete();
-      this.behaviors.delete(identifier.symbol);
-      this.behaviorsSubject.next(this.behaviors);
-    }
   }
 
   getBehavior<T>(identifier: TypeIdentifier<T>): Observable<T> {

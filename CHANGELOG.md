@@ -4,8 +4,12 @@
 
 - **renamed addStatelessBehavior to addLazyBehavior**
 - **renamed addStatefulBehavior to addNonLazyBehavior**
-- **renamed removeBehavior to removeBehaviorSources with optional flag to complete subscribers (should not be used)**
+- **renamed removeBehavior to removeBehaviorSources and no longer completing the behavior upon source removal**
 - **removed some obsolete debug methods**
+
+### Fixes
+
+- **if a non-lazy source completes immediately upon self-subscription, the self-subscription will now be unsubscribed**
 
 # 2.0.2-rc.1 (2020-03-22)
 

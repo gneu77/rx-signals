@@ -110,7 +110,7 @@ export class ControlledSubject<T> {
     } else {
       this.statefulSources.delete(sourceId);
     }
-    if (this.statefulSources.size === 0) {
+    if (this.statefulSources.size < 1) {
       this.unsubscribeSelf();
     }
   }
@@ -206,6 +206,9 @@ export class ControlledSubject<T> {
     ) {
       (this.selfSubscriptionOrPendingSubscription as Subscription).unsubscribe();
       this.selfSubscriptionOrPendingSubscription = false;
+      if (this.nTargetSubscriptions < 1) {
+        this.setIsSubscribed(false);
+      }
     }
   }
 
@@ -232,6 +235,10 @@ export class ControlledSubject<T> {
     if (!source.isLazySubscription() && this.selfSubscriptionOrPendingSubscription === false) {
       this.selfSubscriptionOrPendingSubscription = true;
       this.selfSubscriptionOrPendingSubscription = this.getObservable().subscribe();
+      if (this.statefulSources.size < 1) {
+        // can happen, if the source has completed synchronously
+        this.unsubscribeSelf();
+      }
     }
     source.subscribeIfNecessary(
       this.contextHandle,
