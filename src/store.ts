@@ -8,7 +8,7 @@ import {
   share,
   switchMap,
   take,
-  withLatestFrom
+  withLatestFrom,
 } from 'rxjs/operators';
 import { ControlledSubject } from './controlled-subject';
 import { SourceObservable } from './source-observable';
