@@ -11,7 +11,7 @@ import {
   withLatestFrom,
 } from 'rxjs/operators';
 import { ControlledSubject } from './controlled-subject';
-import { SourceObservable } from './source-observable';
+import { NO_VALUE, SourceObservable } from './source-observable';
 
 export interface TypeIdentifier<T> {
   _typeTemplate?: T | undefined; // should always be undefined (just here to make TS happy)
@@ -65,7 +65,7 @@ export class Store {
     identifier: TypeIdentifier<T>,
     observable: Observable<T>,
     subscribeLazy: boolean,
-    initialValue?: T,
+    initialValue: T | symbol = NO_VALUE,
   ): void {
     this.assertSourceExists(identifier.symbol, identifier.symbol);
     this.getBehaviorControlledSubject(identifier).addSource(
@@ -76,7 +76,7 @@ export class Store {
   addLazyBehavior<T>(
     identifier: TypeIdentifier<T>,
     observable: Observable<T>,
-    initialValue?: T,
+    initialValue: T | symbol = NO_VALUE,
   ): void {
     this.addBehavior(identifier, observable, true, initialValue);
   }
@@ -84,7 +84,7 @@ export class Store {
   addNonLazyBehavior<T>(
     identifier: TypeIdentifier<T>,
     observable: Observable<T>,
-    initialValue?: T,
+    initialValue: T | symbol = NO_VALUE,
   ): void {
     this.addBehavior(identifier, observable, false, initialValue);
   }

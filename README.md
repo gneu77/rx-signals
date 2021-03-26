@@ -1,7 +1,7 @@
 # @rx-signals/store
 
-Reactive effects management with behaviors and event streams
+**Reactive effects management with behaviors and event streams**
 
-This is just an initial work in progres commit.
+Yes, I published the first initial release and there is still no documentation
 
-Proper documentation will follow...
+But there will be in the near future...
