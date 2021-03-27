@@ -26,15 +26,15 @@ export interface TypedEvent<T> {
 export type StateReducer<T, E> = (state: T, event: E) => T;
 
 export class Store {
-  private behaviors = new Map<symbol, ControlledSubject<any>>();
+  private readonly behaviors = new Map<symbol, ControlledSubject<any>>();
 
-  private eventStreams = new Map<symbol, ControlledSubject<any>>();
+  private readonly eventStreams = new Map<symbol, ControlledSubject<any>>();
 
-  private behaviorsSubject = new BehaviorSubject<Map<symbol, ControlledSubject<any>>>(
+  private readonly behaviorsSubject = new BehaviorSubject<Map<symbol, ControlledSubject<any>>>(
     new Map<symbol, ControlledSubject<any>>(),
   );
 
-  private eventStreamsSubject = new BehaviorSubject<Map<symbol, ControlledSubject<any>>>(
+  private readonly eventStreamsSubject = new BehaviorSubject<Map<symbol, ControlledSubject<any>>>(
     new Map<symbol, ControlledSubject<any>>(),
   );
 

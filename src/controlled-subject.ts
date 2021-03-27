@@ -14,9 +14,12 @@ export class ControlledSubject<T> {
 
   private pipe: Observable<T>;
 
-  private lazySources: Map<symbol, SourceObservable<T>> = new Map<symbol, SourceObservable<T>>();
+  private readonly lazySources: Map<symbol, SourceObservable<T>> = new Map<
+    symbol,
+    SourceObservable<T>
+  >();
 
-  private statefulSources: Map<symbol, SourceObservable<T>> = new Map<
+  private readonly statefulSources: Map<symbol, SourceObservable<T>> = new Map<
     symbol,
     SourceObservable<T>
   >();
@@ -25,19 +28,19 @@ export class ControlledSubject<T> {
 
   private isSubscribed: boolean = false;
 
-  private isSubscribedSubject = new BehaviorSubject<boolean>(false);
+  private readonly isSubscribedSubject = new BehaviorSubject<boolean>(false);
 
   private selfSubscriptionOrPendingSubscription: Subscription | boolean = false;
 
   private nTargetSubscriptions = 0;
 
-  private contextHandle = new ContextHandle();
+  private readonly contextHandle = new ContextHandle();
 
   constructor(
-    private id: symbol,
-    private isBehavior: boolean,
-    private onSourceError: (sourceId: symbol, error: any) => void,
-    private onSourceCompleted: (sourceId: symbol) => void,
+    private readonly id: symbol,
+    private readonly isBehavior: boolean,
+    private readonly onSourceError: (sourceId: symbol, error: any) => void,
+    private readonly onSourceCompleted: (sourceId: symbol) => void,
   ) {
     this.pipe = this.getNewTargetPipe();
     this.observable = new Observable<T>(subscriber => {

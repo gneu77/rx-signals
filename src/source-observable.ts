@@ -11,10 +11,10 @@ export class SourceObservable<T> {
   private initialValueDispatched = false;
 
   constructor(
-    private sourceId: symbol,
-    private sourceObservable: Observable<T>,
-    private lazySubscription: boolean,
-    private initialValueOrValueGetter: T | (() => T) | symbol = NO_VALUE,
+    private readonly sourceId: symbol,
+    private readonly sourceObservable: Observable<T>,
+    private readonly lazySubscription: boolean,
+    private readonly initialValueOrValueGetter: T | (() => T) | symbol = NO_VALUE,
   ) {}
 
   getId(): symbol {
