@@ -65,34 +65,39 @@ export class Store {
     identifier: TypeIdentifier<T>,
     observable: Observable<T>,
     subscribeLazy: boolean,
-    initialValue: T | symbol = NO_VALUE,
+    initialValueOrValueGetter: T | (() => T) | symbol = NO_VALUE,
   ): void {
     this.assertSourceExists(identifier.symbol, identifier.symbol);
     this.getBehaviorControlledSubject(identifier).addSource(
-      new SourceObservable<T>(identifier.symbol, observable, subscribeLazy, initialValue),
+      new SourceObservable<T>(
+        identifier.symbol,
+        observable,
+        subscribeLazy,
+        initialValueOrValueGetter,
+      ),
     );
   }
 
   addLazyBehavior<T>(
     identifier: TypeIdentifier<T>,
     observable: Observable<T>,
-    initialValue: T | symbol = NO_VALUE,
+    initialValueOrValueGetter: T | (() => T) | symbol = NO_VALUE,
   ): void {
-    this.addBehavior(identifier, observable, true, initialValue);
+    this.addBehavior(identifier, observable, true, initialValueOrValueGetter);
   }
 
   addNonLazyBehavior<T>(
     identifier: TypeIdentifier<T>,
     observable: Observable<T>,
-    initialValue: T | symbol = NO_VALUE,
+    initialValueOrValueGetter: T | (() => T) | symbol = NO_VALUE,
   ): void {
-    this.addBehavior(identifier, observable, false, initialValue);
+    this.addBehavior(identifier, observable, false, initialValueOrValueGetter);
   }
 
-  addState<T>(identifier: TypeIdentifier<T>, initialValue: T): void {
+  addState<T>(identifier: TypeIdentifier<T>, initialValueOrValueGetter: T | (() => T)): void {
     this.assertSourceExists(identifier.symbol, identifier.symbol);
     this.getBehaviorControlledSubject(identifier).addSource(
-      new SourceObservable<T>(identifier.symbol, NEVER, false, initialValue),
+      new SourceObservable<T>(identifier.symbol, NEVER, false, initialValueOrValueGetter),
     );
   }
 

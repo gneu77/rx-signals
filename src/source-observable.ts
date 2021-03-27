@@ -14,7 +14,7 @@ export class SourceObservable<T> {
     private sourceId: symbol,
     private sourceObservable: Observable<T>,
     private lazySubscription: boolean,
-    private initialValue: T | symbol = NO_VALUE,
+    private initialValueOrValueGetter: T | (() => T) | symbol = NO_VALUE,
   ) {}
 
   getId(): symbol {
@@ -44,13 +44,17 @@ export class SourceObservable<T> {
     try {
       // For reset logic (readding sources), it is important to dispatch
       // the initial value before subscribing the source and not after!
-      if (!this.initialValueDispatched && this.initialValue !== NO_VALUE) {
+      if (!this.initialValueDispatched && this.initialValueOrValueGetter !== NO_VALUE) {
         this.initialValueDispatched = true;
         let targetSubscription: Subscription | null = null;
         if (!isTargetSubscribed) {
           targetSubscription = targetObservable.subscribe();
         }
-        targetSubject.next(this.initialValue as T);
+        const initialValue =
+          typeof this.initialValueOrValueGetter === 'function'
+            ? (this.initialValueOrValueGetter as () => T)()
+            : this.initialValueOrValueGetter;
+        targetSubject.next(initialValue as T);
         if (targetSubscription) {
           targetSubscription.unsubscribe();
         }

@@ -4,7 +4,7 @@ import { catchError, delay, filter, map, scan, startWith, take, timeout } from '
 export const getSequence = async (
   observable: Observable<any>,
   length: number,
-  timeoutAfter: number = 1000, // Jest can be slow sometimes...
+  timeoutAfter: number = 3000, // Jest can be slow sometimes...
 ): Promise<any[]> => {
   const accObservable = observable.pipe(
     scan((acc: any[], next: any) => [...acc, next], []),
@@ -23,7 +23,7 @@ export const getSequence = async (
 export const expectSequence = async (
   observable: Observable<any>,
   sequence: any[],
-  timeoutAfter: number = 1000, // Jest can be slow sometimes...
+  timeoutAfter: number = 3000, // Jest can be slow sometimes...
 ): Promise<void> => {
   return getSequence(observable, sequence.length, timeoutAfter).then(result => {
     expect(result).toEqual(sequence);
@@ -33,7 +33,7 @@ export const expectSequence = async (
 export const awaitStringifyEqualState = async (
   observable: Observable<any>,
   expectedState: any,
-  timeoutAfter: number = 1000,
+  timeoutAfter: number = 3000,
 ): Promise<void> =>
   new Promise<void>(resolve => {
     observable
@@ -49,7 +49,7 @@ export const awaitStringifyEqualState = async (
 
 export const awaitError = async (
   observable: Observable<any>,
-  timeoutAfter: number = 1000,
+  timeoutAfter: number = 3000,
 ): Promise<void> =>
   new Promise<void>(resolve => {
     observable
