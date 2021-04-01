@@ -1,8 +1,12 @@
-# 2.2.0 (2021-03-26)
+# 2.2.0 (2021-04-01)
 
 ### Features
 
 - **Instead of passing an initial value, all corresponding methods now also accept a callback providing the initial value.** This is especially useful for lazy behaviors, as you can now also perform the initial value creation lazily (of course you could already do this before, by not using initialValue, but instead piping your behavior observable with a startWith(initialValue)).
+
+### Documentation
+
+- **Finally added at least some doc strings for the store API**
 
 # 2.1.1 (2021-03-26)
 
