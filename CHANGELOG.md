@@ -1,3 +1,9 @@
+# 2.2.1 (2021-04-03)
+
+### Dependencies
+
+- **Made rxjs a peer dependency (was a dependency before) and relaxed the version requirement to ^6.4.0 (though there should be no reason not to upgrade your project to the latest 6.x version)**
+
 # 2.2.0 (2021-04-01)
 
 ### Features
