@@ -11,6 +11,7 @@ import {
   withLatestFrom,
 } from 'rxjs/operators';
 import { ControlledSubject } from './controlled-subject';
+import { DelayedEventQueue } from './delayed-event-queue';
 import { NO_VALUE, SourceObservable } from './source-observable';
 
 /**
@@ -66,6 +67,8 @@ export type StateReducer<T, E> = (state: T, event: E) => T;
  * @class Store
  */
 export class Store {
+  private readonly delayedEventQueue = new DelayedEventQueue();
+
   private readonly behaviors = new Map<symbol, ControlledSubject<any>>();
 
   private readonly eventStreams = new Map<symbol, ControlledSubject<any>>();
@@ -568,7 +571,7 @@ export class Store {
   /**
    * This method returns an observable for events of the specified type.
    * Please note, that all observables for the same identifier are already piped with delay(1, asyncScheduler)
-   * and share(). So event will always be received asynchronously (expecting synchronous event dispatch would
+   * and share(). So events will always be received asynchronously (expecting synchronous event dispatch would
    * be a strong indicator of flawed design, because it would mean your code is not reactive).
    *
    * @param {TypeIdentifier<T>} identifier - the unique identifier for the event
@@ -700,6 +703,7 @@ export class Store {
         // or might be added at a later point of time.
         controlledSubject.removeSource(id);
       },
+      this.delayedEventQueue,
     );
     this.behaviors.set(identifier.symbol, controlledSubject);
     this.behaviorsSubject.next(this.behaviors);
@@ -728,6 +732,7 @@ export class Store {
         // is also a valid (never completing) source. Also, new sources might be added at a later point of time.
         controlledSubject.removeSource(id);
       },
+      this.delayedEventQueue,
     );
     this.eventStreams.set(identifier.symbol, controlledSubject);
     this.eventStreamsSubject.next(this.eventStreams);

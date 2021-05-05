@@ -1,7 +1,8 @@
 /* eslint no-underscore-dangle: ["error", { "allow": ["_rxs_id"] }] */
-import { asyncScheduler, BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
-import { delay, distinctUntilChanged, filter, share, shareReplay } from 'rxjs/operators';
+import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
+import { distinctUntilChanged, filter, share, shareReplay } from 'rxjs/operators';
 import { ContextHandle } from './context-handle';
+import { DelayedEventQueue } from './delayed-event-queue';
 import { NO_VALUE, SourceObservable } from './source-observable';
 
 export interface ResetHandle {
@@ -41,6 +42,7 @@ export class ControlledSubject<T> {
     private readonly isBehavior: boolean,
     private readonly onSourceError: (sourceId: symbol, error: any) => void,
     private readonly onSourceCompleted: (sourceId: symbol) => void,
+    private readonly delayedEventQueue: DelayedEventQueue,
   ) {
     this.pipe = this.getNewTargetPipe();
     this.observable = new Observable<T>(subscriber => {
@@ -183,7 +185,7 @@ export class ControlledSubject<T> {
           distinctUntilChanged(),
           shareReplay({ bufferSize: 1, refCount: true }),
         )
-      : this.subject.pipe(delay(1, asyncScheduler), share());
+      : this.delayedEventQueue.getQueueDelayedObservable(this.subject).pipe(share());
     localSources.forEach(source => {
       this.addSource(source);
     });

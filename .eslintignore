@@ -7,3 +7,7 @@ lib
 
 # don't lint nyc coverage output
 coverage
+
+# we need this, because else VSCode would show errors, because the test files are not included in tsconfig
+# (we could maybe create a dedicated tsconfig for eslint instead)
+test

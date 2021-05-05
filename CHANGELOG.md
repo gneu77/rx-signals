@@ -1,3 +1,9 @@
+# 2.2.3 (2021-05-05)
+
+### Fixes
+
+- Up to 2.2.2, the order in which events were dispatched was guaranteed only for events of the same type. Hence, in case of synchronously dispatched events A1, A2, B1, A3, B2, it was guaranteed that A2 is always received after A1, but it was not guaranteed that B1 always directly follows A2 dispatch (e.g. A1, A2, A3, B1, B2 was possible). From 2.2.3 on, there is a store-wide event queue that guarantees observers to receive events exactly in dispatch order.
+
 # 2.2.2 (2021-04-03)
 
 ### Dependencies
