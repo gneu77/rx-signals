@@ -1,3 +1,11 @@
+# 2.3.0 (2021-06-17)
+
+### Features
+
+**First store utility functions** This minor version brings the first utility functions to help reducing boilerplate code for standard patterns.
+- **getIdentifier** A simple convenience function to create store type identifiers.
+- **prepareEffectSignals** A facory function that generalizes all the store setup for the case where you have an input model, an effect taking the input and producing a result model, as well as providing loading behavior and invalidation (refresh) event.
+
 # 2.2.3 (2021-05-05)
 
 ### Fixes

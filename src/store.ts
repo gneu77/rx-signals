@@ -40,8 +40,8 @@ export interface TypeIdentifier<T> {
  * @property {T} event - the event itself
  */
 export interface TypedEvent<T> {
-  type: TypeIdentifier<T>;
-  event: T;
+  readonly type: TypeIdentifier<T>;
+  readonly event: T;
 }
 
 /**

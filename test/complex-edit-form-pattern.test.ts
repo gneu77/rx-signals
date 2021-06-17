@@ -190,7 +190,7 @@ describe('Edit From Pattern', () => {
     // Setup stateless/lazy behaviors (dervived state):
     store.addLazyBehavior(
       isValidationPending,
-      combineLatest(store.getBehavior(validationState), store.getBehavior(editModelState)).pipe(
+      combineLatest([store.getBehavior(validationState), store.getBehavior(editModelState)]).pipe(
         map(([validation, model]) => validation.model !== model.model),
       ),
     );
@@ -200,11 +200,11 @@ describe('Edit From Pattern', () => {
     );
     store.addLazyBehavior(
       isSaveDisabled,
-      combineLatest(
+      combineLatest([
         store.getBehavior(isValidationPending),
         store.getBehavior(isSavePending),
         store.getBehavior(validationState),
-      ).pipe(map(([validating, saving, validation]) => validating || saving || !validation.valid)),
+      ]).pipe(map(([validating, saving, validation]) => validating || saving || !validation.valid)),
     );
 
     // Setup edit model effect:

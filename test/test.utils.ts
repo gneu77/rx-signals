@@ -69,3 +69,12 @@ export const awaitCompletion = async (observable: Observable<any>): Promise<void
   new Promise<void>((resolve, reject) => {
     observable.subscribe(() => {}, reject, resolve);
   });
+
+export const withSubscription = async (
+  observable: Observable<any>,
+  callback: () => Promise<void>,
+): Promise<void> => {
+  const subscription = observable.subscribe();
+  await callback();
+  subscription.unsubscribe();
+};
