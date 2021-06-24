@@ -1,3 +1,11 @@
+# 2.4.0 (2021-06-24)
+
+### Features
+
+- **prepareValidatedInputSignals** Get a factory for signals representing a validated input.
+- **prepareInputWithResultSignals** Get a factory for signals representing a result for an input and result invalidation.
+- **prepareValidatedInputWithResultSignals** Get a factory for signals representing a result for a validated input.
+
 # 2.3.0 (2021-06-17)
 
 ### Features
