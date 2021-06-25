@@ -1,3 +1,9 @@
+# 2.4.1 (2021-06-25)
+
+### Fixes
+
+- Fixed module exports, to make everything available under @rx-signals/store
+
 # 2.4.0 (2021-06-24)
 
 ### Features
