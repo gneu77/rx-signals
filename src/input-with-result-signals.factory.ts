@@ -23,11 +23,13 @@ export interface InputWithResultSignals<InputModel, ResultModel> extends Signals
   readonly inputWithResultBehaviorId: TypeIdentifier<InputWithResult<InputModel, ResultModel>>;
   readonly resultPendingBehaviorId: TypeIdentifier<boolean>;
   readonly invalidateResultEventId: TypeIdentifier<void>;
+  readonly triggerResultEffectEventId: TypeIdentifier<void>;
 }
 
 export interface InputWithResultSignalsFactoryOptions<InputModel, ResultModel>
   extends SignalsFactoryOptions<InputModel> {
   readonly initialResult?: ResultModel;
+  readonly withTriggerEvent?: boolean;
 }
 
 interface InternalResult<InputModel, ResultModel> {
@@ -47,11 +49,18 @@ export const prepareInputWithResultSignals = <InputModel, ResultModel>(
   const internalInputEquals = (newInput?: InputModel, stateInput?: InputModel | symbol) =>
     stateInput === newInput ||
     (stateInput !== NO_VALUE && inputEquals(stateInput as InputModel, newInput));
-  const internalResultInputEquals = (
-    input: InputModel,
-    resultToken: object | null,
-    state: InternalResult<InputModel, ResultModel>,
-  ) => resultToken === state.resultResultToken && internalInputEquals(input, state.resultInput);
+  const withTriggerEvent: boolean = options.withTriggerEvent ?? false;
+  const internalResultInputEquals = withTriggerEvent
+    ? (
+        input: InputModel,
+        resultToken: object | null,
+        state: InternalResult<InputModel, ResultModel>,
+      ) => resultToken === state.resultResultToken || internalInputEquals(input, state.resultInput)
+    : (
+        input: InputModel,
+        resultToken: object | null,
+        state: InternalResult<InputModel, ResultModel>,
+      ) => resultToken === state.resultResultToken && internalInputEquals(input, state.resultInput);
   const identifierNamePrefix = options.identifierNamePrefix ?? '';
   const inputDebounceTime = options.inputDebounceTime ?? 50;
   const initialResult = options.initialResult ?? NO_VALUE;
@@ -67,7 +76,10 @@ export const prepareInputWithResultSignals = <InputModel, ResultModel>(
     `${identifierNamePrefix}_InputWithResult`,
   );
   const resultPendingBehaviorId = getIdentifier<boolean>(`${identifierNamePrefix}_ResultPending`);
-  const invalidateResultEventId = getIdentifier<void>(`${identifierNamePrefix}_InvalidateEvent`);
+  const invalidateResultEventId = getIdentifier<void>(
+    `${identifierNamePrefix}_InvalidateAndTriggerEvent`,
+  );
+  const triggerResultEffectEventId = invalidateResultEventId;
 
   const resultTokenBehaviorId = getIdentifier<object | null>(`${identifierNamePrefix}_ResultToken`);
   const internalResultBehaviorId = getIdentifier<InternalResult<InputModel, ResultModel>>(
@@ -85,6 +97,7 @@ export const prepareInputWithResultSignals = <InputModel, ResultModel>(
     inputWithResultBehaviorId,
     resultPendingBehaviorId,
     invalidateResultEventId,
+    triggerResultEffectEventId,
     setup: (store: Store) => {
       store.addNonLazyBehavior(
         // invalidation must be possible while result is unsubscribed, hence this must be non-lazy!
@@ -106,7 +119,7 @@ export const prepareInputWithResultSignals = <InputModel, ResultModel>(
         combinedInput.pipe(
           filter(
             ([input, resultToken, state]) => !internalResultInputEquals(input, resultToken, state),
-          ), // NoOp, if we already have a result for the input
+          ), // NoOp, if we already have a result for the input, or if trigger event has not been sent in case of withTriggerEvent
           switchMap(([input, resultToken]) =>
             internalResultEffect(input, store).pipe(
               map(result => ({

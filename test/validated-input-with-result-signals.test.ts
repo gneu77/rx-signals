@@ -359,4 +359,173 @@ describe('prepareValidatedInputWithResultSignals', () => {
       });
     });
   });
+
+  describe('with trigger event', () => {
+    beforeEach(() => {
+      factory = prepareValidatedInputWithResultSignals(
+        s => s.getBehavior(inputStateId),
+        validationEffect,
+        resultEffect,
+        {
+          withTriggerEvent: true,
+        },
+      );
+      factory.setup(store);
+      observable = store.getBehavior(factory.validatedInputWithResultBehaviorId);
+    });
+
+    it('should have correct sequence for input with explicit result trigger', async () => {
+      const sequence = expectSequence(observable, [
+        {
+          currentInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          validationPending: true,
+          isValid: false,
+          unhandledValidationEffectError: null,
+          resultPending: false,
+          unhandledResultEffectError: null,
+        },
+        {
+          currentInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          validationPending: false,
+          isValid: true,
+          unhandledValidationEffectError: null,
+          validatedInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          validationResult: null,
+          resultPending: false,
+          unhandledResultEffectError: null,
+        },
+      ]);
+      inputSubject.next({
+        searchString: 'test',
+        page: 2,
+      });
+      await sequence;
+
+      const sequence2 = expectSequence(observable, [
+        {
+          currentInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          validationPending: false,
+          isValid: true,
+          unhandledValidationEffectError: null,
+          validatedInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          validationResult: null,
+          resultPending: false,
+          unhandledResultEffectError: null,
+        },
+        {
+          currentInput: {
+            searchString: 'test',
+            page: 1,
+          },
+          validationPending: true,
+          isValid: true,
+          unhandledValidationEffectError: null,
+          validatedInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          validationResult: null,
+          resultPending: false,
+          unhandledResultEffectError: null,
+        },
+        {
+          currentInput: {
+            searchString: 'test',
+            page: 1,
+          },
+          validationPending: false,
+          isValid: true,
+          unhandledValidationEffectError: null,
+          validatedInput: {
+            searchString: 'test',
+            page: 1,
+          },
+          validationResult: null,
+          resultPending: false,
+          unhandledResultEffectError: null,
+        },
+      ]);
+      inputSubject.next({
+        searchString: 'test',
+        page: 1,
+      });
+      await sequence2;
+
+      const sequence3 = expectSequence(observable, [
+        {
+          currentInput: {
+            searchString: 'test',
+            page: 1,
+          },
+          validationPending: false,
+          isValid: true,
+          unhandledValidationEffectError: null,
+          validatedInput: {
+            searchString: 'test',
+            page: 1,
+          },
+          validationResult: null,
+          resultPending: false,
+          unhandledResultEffectError: null,
+        },
+        {
+          currentInput: {
+            searchString: 'test',
+            page: 1,
+          },
+          validationPending: false,
+          isValid: true,
+          unhandledValidationEffectError: null,
+          validatedInput: {
+            searchString: 'test',
+            page: 1,
+          },
+          validationResult: null,
+          resultPending: true,
+          unhandledResultEffectError: null,
+        },
+        {
+          currentInput: {
+            searchString: 'test',
+            page: 1,
+          },
+          validationPending: false,
+          isValid: true,
+          unhandledValidationEffectError: null,
+          validatedInput: {
+            searchString: 'test',
+            page: 1,
+          },
+          validationResult: null,
+          resultPending: false,
+          unhandledResultEffectError: null,
+          resultInput: {
+            searchString: 'test',
+            page: 1,
+          },
+          result: {
+            results: [],
+            totalResults: 1,
+          },
+        },
+      ]);
+      store.dispatchEvent(factory.triggerResultEffectEventId, null);
+      await sequence3;
+    });
+  });
 });

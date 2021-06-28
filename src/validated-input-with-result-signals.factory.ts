@@ -1,15 +1,17 @@
 import { NEVER, Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { distinctUntilChanged, map } from 'rxjs/operators';
 import {
   InputWithResult,
+  InputWithResultSignals,
   InputWithResultSignalsFactoryOptions,
   prepareInputWithResultSignals,
 } from './input-with-result-signals.factory';
 import { Store, TypeIdentifier } from './store';
-import { EffectType, getIdentifier, SignalsFactory } from './store.utils';
+import { EffectType, getIdentifier } from './store.utils';
 import {
   prepareValidatedInputSignals,
   ValidatedInput,
+  ValidatedInputSignals,
   ValidatedInputSignalsFactoryOptions,
 } from './validated-input-signals.factory';
 
@@ -20,14 +22,11 @@ export type ValidatedInputWithResult<InputModel, ValidationResult, ResultModel> 
   InputWithResult<InputModel, ResultModel>;
 
 export interface ValidatedInputWithResultSignals<InputModel, ValidationResult, ResultModel>
-  extends SignalsFactory {
+  extends ValidatedInputSignals<InputModel, ValidationResult>,
+    InputWithResultSignals<InputModel, ResultModel> {
   readonly validatedInputWithResultBehaviorId: TypeIdentifier<
     ValidatedInputWithResult<InputModel, ValidationResult, ResultModel>
   >;
-  readonly validationPendingBehaviorId: TypeIdentifier<boolean>;
-  readonly isValidBehaviorId: TypeIdentifier<boolean>;
-  readonly resultPendingBehaviorId: TypeIdentifier<boolean>;
-  readonly invalidateResultEventId: TypeIdentifier<void>;
 }
 
 export type ValidatedInputWithResultSignalsFactoryOptions<
@@ -51,6 +50,9 @@ export const prepareValidatedInputWithResultSignals = <InputModel, ValidationRes
   const validatedInputWithResultBehaviorId = getIdentifier<
     ValidatedInputWithResult<InputModel, ValidationResult, ResultModel>
   >(`${identifierNamePrefix}_ValidatedInputWithResult`);
+  const inputWithResultBehaviorId = getIdentifier<InputWithResult<InputModel, ResultModel>>(
+    `${identifierNamePrefix}_ValidatedInputWithResult`,
+  );
 
   const internalResultEffect: EffectType<
     ValidatedInput<InputModel, ValidationResult>,
@@ -83,11 +85,14 @@ export const prepareValidatedInputWithResultSignals = <InputModel, ValidationRes
   });
 
   return {
+    validatedInputBehaviorId: validationFactory.validatedInputBehaviorId,
+    inputWithResultBehaviorId,
     validatedInputWithResultBehaviorId,
     validationPendingBehaviorId: validationFactory.validationPendingBehaviorId,
     isValidBehaviorId: validationFactory.isValidBehaviorId,
     resultPendingBehaviorId: resultFactory.resultPendingBehaviorId,
     invalidateResultEventId: resultFactory.invalidateResultEventId,
+    triggerResultEffectEventId: resultFactory.triggerResultEffectEventId,
     setup: (store: Store) => {
       validationFactory.setup(store);
       resultFactory.setup(store);
@@ -110,6 +115,40 @@ export const prepareValidatedInputWithResultSignals = <InputModel, ValidationRes
               r.currentInput?.validationPending === false,
             unhandledResultEffectError: r.unhandledResultEffectError,
           })),
+          distinctUntilChanged(
+            (a, b) =>
+              a.currentInput === b.currentInput &&
+              a.validationResult === b.validationResult &&
+              a.isValid === b.isValid &&
+              a.validationPending === b.validationPending &&
+              a.unhandledValidationEffectError === b.unhandledValidationEffectError &&
+              a.result === b.result &&
+              a.resultPending === b.resultPending &&
+              a.unhandledResultEffectError === b.unhandledResultEffectError &&
+              inputEquals(a.validatedInput, b.validatedInput) &&
+              inputEquals(a.resultInput, b.resultInput),
+          ),
+        ),
+      );
+
+      store.addLazyBehavior(
+        inputWithResultBehaviorId,
+        store.getBehavior(validatedInputWithResultBehaviorId).pipe(
+          map(r => ({
+            currentInput: r.currentInput,
+            resultInput: r.resultInput,
+            result: r.result,
+            resultPending: r.resultPending,
+            unhandledResultEffectError: r.unhandledResultEffectError,
+          })),
+          distinctUntilChanged(
+            (a, b) =>
+              a.currentInput === b.currentInput &&
+              a.result === b.result &&
+              a.resultPending === b.resultPending &&
+              a.unhandledResultEffectError === b.unhandledResultEffectError &&
+              inputEquals(a.resultInput, b.resultInput),
+          ),
         ),
       );
     },

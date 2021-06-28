@@ -1,3 +1,9 @@
+# 2.5.0 (2021-06-28)
+
+### Features
+
+- **prepareInputWithResultSignals** and **prepareValidatedInputWithResultSignals**: Added new option **withTriggerEvent**. If set true, the result effect will only be triggered, when the corresponding event is dispatched (the event is just an alias for the invalidation event).
+
 # 2.4.2 (2021-06-28)
 
 ### Fixes

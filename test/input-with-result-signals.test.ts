@@ -487,4 +487,93 @@ describe('prepareInputWithResultSignals', () => {
       await sequence;
     });
   });
+
+  describe('with trigger event', () => {
+    beforeEach(() => {
+      factory = prepareInputWithResultSignals(s => s.getBehavior(inputStateId), resultEffect, {
+        withTriggerEvent: true,
+      });
+      factory.setup(store);
+      observable = store.getBehavior(factory.inputWithResultBehaviorId);
+    });
+
+    it('should have correct sequence for input with explicit result trigger', async () => {
+      const sequence = expectSequence(observable, [
+        {
+          currentInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          resultPending: false,
+          unhandledResultEffectError: null,
+        },
+      ]);
+      inputSubject.next({
+        searchString: 'test',
+        page: 2,
+      });
+      await sequence;
+
+      const sequence2 = expectSequence(observable, [
+        {
+          currentInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          resultPending: false,
+          unhandledResultEffectError: null,
+        },
+        {
+          currentInput: {
+            searchString: 'test',
+            page: 1,
+          },
+          resultPending: false,
+          unhandledResultEffectError: null,
+        },
+      ]);
+      inputSubject.next({
+        searchString: 'test',
+        page: 1,
+      });
+      await sequence2;
+
+      const sequence3 = expectSequence(observable, [
+        {
+          currentInput: {
+            searchString: 'test',
+            page: 1,
+          },
+          resultPending: false,
+          unhandledResultEffectError: null,
+        },
+        {
+          currentInput: {
+            searchString: 'test',
+            page: 1,
+          },
+          resultPending: true,
+          unhandledResultEffectError: null,
+        },
+        {
+          currentInput: {
+            searchString: 'test',
+            page: 1,
+          },
+          resultInput: {
+            searchString: 'test',
+            page: 1,
+          },
+          result: {
+            results: [],
+            totalResults: 1,
+          },
+          resultPending: false,
+          unhandledResultEffectError: null,
+        },
+      ]);
+      store.dispatchEvent(factory.triggerResultEffectEventId, null);
+      await sequence3;
+    });
+  });
 });
