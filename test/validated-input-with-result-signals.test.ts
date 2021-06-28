@@ -8,7 +8,7 @@ import {
   ValidatedInputWithResult,
   ValidatedInputWithResultSignals
 } from './../src/validated-input-with-result-signals.factory';
-import { expectSequence } from './test.utils';
+import { expectSequence, withSubscription } from './test.utils';
 
 describe('prepareValidatedInputWithResultSignals', () => {
   interface InputModel {
@@ -168,6 +168,195 @@ describe('prepareValidatedInputWithResultSignals', () => {
         page: 2,
       });
       await sequence;
+    });
+  });
+
+  describe('custom input equals function', () => {
+    beforeEach(() => {
+      factory = prepareValidatedInputWithResultSignals(
+        s => s.getBehavior(inputStateId),
+        validationEffect,
+        resultEffect,
+        {
+          inputDebounceTime: 0,
+          inputEquals: (prev, next) => prev?.searchString === next?.searchString,
+        },
+      );
+      factory.setup(store);
+      observable = store.getBehavior(factory.validatedInputWithResultBehaviorId);
+    });
+
+    it('should use custom input equals', async () => {
+      await withSubscription(observable, async () => {
+        const sequence = expectSequence(observable, [
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            validationPending: true,
+            isValid: false,
+            unhandledValidationEffectError: null,
+            resultPending: false,
+            unhandledResultEffectError: null,
+          },
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            validationPending: false,
+            isValid: true,
+            unhandledValidationEffectError: null,
+            validatedInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            validationResult: null,
+            resultPending: true,
+            unhandledResultEffectError: null,
+          },
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            validationPending: false,
+            isValid: true,
+            unhandledValidationEffectError: null,
+            validatedInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            validationResult: null,
+            resultInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            result: {
+              results: [],
+              totalResults: 1,
+            },
+            resultPending: false,
+            unhandledResultEffectError: null,
+          },
+        ]);
+        inputSubject.next({
+          searchString: 'test',
+          page: 2,
+        });
+        await sequence;
+        const sequence2 = expectSequence(observable, [
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            validationPending: false,
+            isValid: true,
+            unhandledValidationEffectError: null,
+            validatedInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            validationResult: null,
+            resultInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            result: {
+              results: [],
+              totalResults: 1,
+            },
+            resultPending: false,
+            unhandledResultEffectError: null,
+          },
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 1,
+            },
+            validationPending: false,
+            isValid: true,
+            unhandledValidationEffectError: null,
+            validatedInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            validationResult: null,
+            resultInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            result: {
+              results: [],
+              totalResults: 1,
+            },
+            resultPending: false,
+            unhandledResultEffectError: null,
+          },
+        ]);
+        inputSubject.next({
+          searchString: 'test',
+          page: 1,
+        });
+        await sequence2;
+        const sequence3 = expectSequence(observable, [
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 1,
+            },
+            validationPending: false,
+            isValid: true,
+            unhandledValidationEffectError: null,
+            validatedInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            validationResult: null,
+            resultInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            result: {
+              results: [],
+              totalResults: 1,
+            },
+            resultPending: false,
+            unhandledResultEffectError: null,
+          },
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 0,
+            },
+            validationPending: false,
+            isValid: true,
+            unhandledValidationEffectError: null,
+            validatedInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            validationResult: null,
+            resultInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            result: {
+              results: [],
+              totalResults: 1,
+            },
+            resultPending: false,
+            unhandledResultEffectError: null,
+          },
+        ]);
+        inputSubject.next({
+          searchString: 'test',
+          page: 0,
+        });
+        await sequence3;
+      });
     });
   });
 });

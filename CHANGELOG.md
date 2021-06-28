@@ -1,3 +1,9 @@
+# 2.4.2 (2021-06-28)
+
+### Fixes
+
+- **prepareValidatedInputWithResultSignals** a custom input equals function will now also be used on the validated input (preventing a retriggered result effect upon changed input)
+
 # 2.4.1 (2021-06-25)
 
 ### Fixes

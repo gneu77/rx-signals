@@ -67,13 +67,19 @@ export const prepareValidatedInputWithResultSignals = <InputModel, ValidationRes
     validationEffect,
     options,
   );
+  const inputEquals: (prevInput?: InputModel, nextInput?: InputModel) => boolean =
+    options.inputEquals ?? ((prev, next) => prev === next);
+  const resultInputEquals = (
+    prev?: ValidatedInput<InputModel, ValidationResult>,
+    next?: ValidatedInput<InputModel, ValidationResult>,
+  ) => inputEquals(prev?.validatedInput, next?.validatedInput);
   const resultFactory = prepareInputWithResultSignals<
     ValidatedInput<InputModel, ValidationResult>,
     ResultModel
   >(store => store.getBehavior(validationFactory.validatedInputBehaviorId), internalResultEffect, {
     ...options,
     inputDebounceTime: 0,
-    inputEquals: undefined,
+    inputEquals: resultInputEquals, // undefined,
   });
 
   return {
