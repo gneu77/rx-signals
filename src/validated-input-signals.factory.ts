@@ -5,7 +5,7 @@ import {
   distinctUntilChanged,
   filter,
   map,
-  switchMap,
+  switchMap
 } from 'rxjs/operators';
 import { NO_VALUE } from './source-observable';
 import { Store, TypeIdentifier } from './store';
@@ -31,11 +31,19 @@ export interface ValidatedInputSignalsFactoryOptions<InputModel, ValidationResul
   readonly isValid?: (validationResult?: ValidationResult) => boolean;
 }
 
-interface InternalResult<InputModel, ValidationResult> {
+interface InternalRequest<InputModel, ValidationResult> {
+  readonly input: InputModel | symbol;
   readonly validatedInput: InputModel | symbol;
-  readonly validationResult?: ValidationResult;
+  readonly validationResult: ValidationResult | symbol;
   readonly isValid: boolean;
   readonly unhandledValidationEffectError: any | null;
+}
+
+interface InternalResultEvent<InputModel, ValidationResult> {
+  readonly validatedInput: InputModel;
+  readonly unhandledValidationEffectError: any | null;
+  readonly validationResult: ValidationResult | symbol;
+  readonly isValid: boolean;
 }
 
 export const prepareValidatedInputSignals = <InputModel, ValidationResult>(
@@ -45,9 +53,13 @@ export const prepareValidatedInputSignals = <InputModel, ValidationResult>(
 ): ValidatedInputSignals<InputModel, ValidationResult> => {
   const inputEquals: (prevInput?: InputModel, nextInput?: InputModel) => boolean =
     options.inputEquals ?? ((prev, next) => prev === next);
-  const internalInputEquals = (newInput?: InputModel, stateInput?: InputModel | symbol) =>
-    stateInput === newInput ||
-    (stateInput !== NO_VALUE && inputEquals(stateInput as InputModel, newInput));
+  const internalRequestInputChanged: (a: InputModel | symbol, b: InputModel | symbol) => boolean = (
+    input: InputModel | symbol,
+    validatedInput: InputModel | symbol,
+  ) =>
+    input !== NO_VALUE &&
+    (validatedInput === NO_VALUE ||
+      !inputEquals(input as InputModel, validatedInput as InputModel));
   const identifierNamePrefix = options.identifierNamePrefix ?? '';
   const inputDebounceTime = options.inputDebounceTime ?? 30;
   const internalValidationEffect = (input: InputModel, store: Store) => {
@@ -71,12 +83,14 @@ export const prepareValidatedInputSignals = <InputModel, ValidationResult>(
   );
   const isValidBehaviorId = getIdentifier<boolean>(`${identifierNamePrefix}_IsValid`);
 
-  const internalResultBehaviorId = getIdentifier<InternalResult<InputModel, ValidationResult>>(
-    `${identifierNamePrefix}_InternalResult`,
-  );
+  const internalRequestBehaviorId = getIdentifier<InternalRequest<InputModel, ValidationResult>>();
+  const internalRequestEventId = getIdentifier<InputModel | symbol>();
+  const internalResultEventId = getIdentifier<InternalResultEvent<InputModel, ValidationResult>>();
 
-  const initialInternalResult: InternalResult<InputModel, ValidationResult> = {
+  const initialInternalRequest: InternalRequest<InputModel, ValidationResult> = {
+    input: NO_VALUE,
     validatedInput: NO_VALUE,
+    validationResult: NO_VALUE,
     isValid: false,
     unhandledValidationEffectError: null,
   };
@@ -86,26 +100,34 @@ export const prepareValidatedInputSignals = <InputModel, ValidationResult>(
     validationPendingBehaviorId,
     isValidBehaviorId,
     setup: (store: Store) => {
-      const combinedInput = combineLatest([
-        inputObservableGetter(store).pipe(distinctUntilChanged(), debounceTime(inputDebounceTime)),
-        store.getBehavior(internalResultBehaviorId),
-      ]);
-
-      store.addLazyBehavior(
-        internalResultBehaviorId,
-        combinedInput.pipe(
-          filter(([input, state]) => !internalInputEquals(input, state.validatedInput)),
-          switchMap(([input]) =>
-            internalValidationEffect(input, store).pipe(
+      store.addState(internalRequestBehaviorId, initialInternalRequest);
+      store.addReducer(internalRequestBehaviorId, internalRequestEventId, (state, event) => ({
+        ...state,
+        input: event,
+      }));
+      store.addReducer(internalRequestBehaviorId, internalResultEventId, (state, event) => ({
+        ...state,
+        ...event,
+      }));
+      const sourceId: symbol = Symbol('');
+      store.addEventSource(
+        sourceId,
+        internalResultEventId,
+        store.getBehavior(internalRequestBehaviorId).pipe(
+          filter(state => state.input !== NO_VALUE),
+          filter(state => internalRequestInputChanged(state.input, state.validatedInput)),
+          switchMap(state =>
+            internalValidationEffect(state.input as InputModel, store).pipe(
               map(validationResult => ({
-                validatedInput: input,
+                validatedInput: state.input as InputModel,
                 validationResult,
                 isValid: isValidationResultValid(validationResult),
                 unhandledValidationEffectError: null,
               })),
               catchError(error =>
                 of({
-                  validatedInput: input,
+                  validatedInput: state.input as InputModel,
+                  validationResult: NO_VALUE,
                   isValid: false,
                   unhandledValidationEffectError: error,
                 }),
@@ -113,30 +135,43 @@ export const prepareValidatedInputSignals = <InputModel, ValidationResult>(
             ),
           ),
         ),
-        initialInternalResult,
       );
+
+      const combinedInput = combineLatest([
+        inputObservableGetter(store).pipe(distinctUntilChanged(), debounceTime(inputDebounceTime)),
+        store.getBehavior(internalRequestBehaviorId),
+      ]);
 
       store.addLazyBehavior(
         validatedInputBehaviorId,
         combinedInput.pipe(
-          map(([input, state]) => ({
-            currentInput: input,
-            validatedInput:
-              state.validatedInput === NO_VALUE ? undefined : (state.validatedInput as InputModel),
-            validationResult:
-              state.validatedInput === NO_VALUE ? undefined : state.validationResult,
-            isValid: state.isValid,
-            validationPending: !internalInputEquals(input, state.validatedInput),
-            unhandledValidationEffectError: state.unhandledValidationEffectError,
-          })),
+          map(([input, state]) => {
+            if (internalRequestInputChanged(input, state.input)) {
+              store.dispatchEvent(internalRequestEventId, input);
+            }
+            return {
+              currentInput: input,
+              validatedInput:
+                state.validatedInput === NO_VALUE
+                  ? undefined
+                  : (state.validatedInput as InputModel),
+              validationResult:
+                state.validationResult === NO_VALUE
+                  ? undefined
+                  : (state.validationResult as ValidationResult),
+              isValid: state.isValid,
+              validationPending: internalRequestInputChanged(input, state.validatedInput),
+              unhandledValidationEffectError: state.unhandledValidationEffectError,
+            };
+          }),
           distinctUntilChanged(
             (a, b) =>
-              a.isValid === b.isValid &&
               a.validationResult === b.validationResult &&
+              a.isValid === b.isValid &&
               a.validationPending === b.validationPending &&
               a.unhandledValidationEffectError === b.unhandledValidationEffectError &&
               a.currentInput === b.currentInput &&
-              internalInputEquals(a.validatedInput, b.validatedInput),
+              inputEquals(a.validatedInput, b.validatedInput),
           ),
         ),
       );
