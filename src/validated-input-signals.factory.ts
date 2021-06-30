@@ -5,11 +5,17 @@ import {
   distinctUntilChanged,
   filter,
   map,
-  switchMap
+  switchMap,
 } from 'rxjs/operators';
 import { NO_VALUE } from './source-observable';
 import { Store, TypeIdentifier } from './store';
-import { EffectType, getIdentifier, SignalsFactory, SignalsFactoryOptions } from './store.utils';
+import {
+  EffectType,
+  getIdentifier,
+  SignalsFactory,
+  SignalsFactoryOptions,
+  UnhandledEffectErrorEvent,
+} from './store.utils';
 
 export interface ValidatedInput<InputModel, ValidationResult> {
   readonly currentInput?: InputModel;
@@ -24,6 +30,9 @@ export interface ValidatedInputSignals<InputModel, ValidationResult> extends Sig
   readonly validatedInputBehaviorId: TypeIdentifier<ValidatedInput<InputModel, ValidationResult>>;
   readonly validationPendingBehaviorId: TypeIdentifier<boolean>;
   readonly isValidBehaviorId: TypeIdentifier<boolean>;
+  readonly unhandledValidationEffectErrorEventId: TypeIdentifier<
+    UnhandledEffectErrorEvent<InputModel>
+  >;
 }
 
 export interface ValidatedInputSignalsFactoryOptions<InputModel, ValidationResult>
@@ -61,7 +70,7 @@ export const prepareValidatedInputSignals = <InputModel, ValidationResult>(
     (validatedInput === NO_VALUE ||
       !inputEquals(input as InputModel, validatedInput as InputModel));
   const identifierNamePrefix = options.identifierNamePrefix ?? '';
-  const inputDebounceTime = options.inputDebounceTime ?? 30;
+  const inputDebounceTime = options.inputDebounceTime ?? 10;
   const internalValidationEffect = (input: InputModel, store: Store) => {
     try {
       return validationEffect(input, store);
@@ -82,6 +91,9 @@ export const prepareValidatedInputSignals = <InputModel, ValidationResult>(
     `${identifierNamePrefix}_ValidationPending`,
   );
   const isValidBehaviorId = getIdentifier<boolean>(`${identifierNamePrefix}_IsValid`);
+  const unhandledValidationEffectErrorEventId = getIdentifier<
+    UnhandledEffectErrorEvent<InputModel>
+  >(`${identifierNamePrefix}_ValidationErrorEvent`);
 
   const internalRequestBehaviorId = getIdentifier<InternalRequest<InputModel, ValidationResult>>();
   const internalRequestEventId = getIdentifier<InputModel | symbol>();
@@ -99,6 +111,7 @@ export const prepareValidatedInputSignals = <InputModel, ValidationResult>(
     validatedInputBehaviorId,
     validationPendingBehaviorId,
     isValidBehaviorId,
+    unhandledValidationEffectErrorEventId,
     setup: (store: Store) => {
       store.addState(internalRequestBehaviorId, initialInternalRequest);
       store.addReducer(internalRequestBehaviorId, internalRequestEventId, (state, event) => ({
@@ -109,9 +122,19 @@ export const prepareValidatedInputSignals = <InputModel, ValidationResult>(
         ...state,
         ...event,
       }));
-      const sourceId: symbol = Symbol('');
       store.addEventSource(
-        sourceId,
+        Symbol(''),
+        unhandledValidationEffectErrorEventId,
+        store.getEventStream(internalResultEventId).pipe(
+          filter(event => event.unhandledValidationEffectError !== null),
+          map(event => ({
+            input: event.validatedInput,
+            error: event.unhandledValidationEffectError,
+          })),
+        ),
+      );
+      store.addEventSource(
+        Symbol(''),
         internalResultEventId,
         store.getBehavior(internalRequestBehaviorId).pipe(
           filter(state => state.input !== NO_VALUE),

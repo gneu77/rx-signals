@@ -6,7 +6,13 @@ export {
 } from './input-with-result-signals.factory';
 export { NO_VALUE } from './source-observable';
 export { Store, TypedEvent, TypeIdentifier } from './store';
-export { EffectType, getIdentifier, SignalsFactory, SignalsFactoryOptions } from './store.utils';
+export {
+  EffectType,
+  getIdentifier,
+  SignalsFactory,
+  SignalsFactoryOptions,
+  UnhandledEffectErrorEvent,
+} from './store.utils';
 export {
   prepareValidatedInputSignals,
   ValidatedInput,

@@ -9,7 +9,13 @@ import {
 } from 'rxjs/operators';
 import { NO_VALUE } from './source-observable';
 import { Store, TypeIdentifier } from './store';
-import { EffectType, getIdentifier, SignalsFactory, SignalsFactoryOptions } from './store.utils';
+import {
+  EffectType,
+  getIdentifier,
+  SignalsFactory,
+  SignalsFactoryOptions,
+  UnhandledEffectErrorEvent,
+} from './store.utils';
 
 export interface InputWithResult<InputModel, ResultModel> {
   readonly currentInput?: InputModel;
@@ -24,6 +30,7 @@ export interface InputWithResultSignals<InputModel, ResultModel> extends Signals
   readonly resultPendingBehaviorId: TypeIdentifier<boolean>;
   readonly invalidateResultEventId: TypeIdentifier<void>;
   readonly triggerResultEffectEventId: TypeIdentifier<void>;
+  readonly unhandledResultEffectErrorEventId: TypeIdentifier<UnhandledEffectErrorEvent<InputModel>>;
 }
 
 export interface InputWithResultSignalsFactoryOptions<InputModel, ResultModel>
@@ -62,7 +69,7 @@ export const prepareInputWithResultSignals = <InputModel, ResultModel>(
     (resultInput === NO_VALUE || !inputEquals(input as InputModel, resultInput as InputModel));
   const withTriggerEvent: boolean = options.withTriggerEvent ?? false;
   const identifierNamePrefix = options.identifierNamePrefix ?? '';
-  const inputDebounceTime = options.inputDebounceTime ?? 50;
+  const inputDebounceTime = options.inputDebounceTime ?? 10;
   const initialResult = options.initialResult ?? NO_VALUE;
   const internalResultEffect = (input: InputModel, store: Store) => {
     try {
@@ -80,6 +87,9 @@ export const prepareInputWithResultSignals = <InputModel, ResultModel>(
     `${identifierNamePrefix}_InvalidateAndTriggerEvent`,
   );
   const triggerResultEffectEventId = invalidateResultEventId;
+  const unhandledResultEffectErrorEventId = getIdentifier<UnhandledEffectErrorEvent<InputModel>>(
+    `${identifierNamePrefix}_ResultErrorEvent`,
+  );
 
   const internalRequestBehaviorId = getIdentifier<InternalRequest<InputModel, ResultModel>>();
   const internalRequestEventId = getIdentifier<InputModel | symbol>();
@@ -99,6 +109,7 @@ export const prepareInputWithResultSignals = <InputModel, ResultModel>(
     resultPendingBehaviorId,
     invalidateResultEventId,
     triggerResultEffectEventId,
+    unhandledResultEffectErrorEventId,
     setup: (store: Store) => {
       store.addState(internalRequestBehaviorId, initialInternalRequest);
       store.addReducer(internalRequestBehaviorId, invalidateResultEventId, state => ({
@@ -115,9 +126,19 @@ export const prepareInputWithResultSignals = <InputModel, ResultModel>(
         ...event,
         resultToken: state.token,
       }));
-      const sourceId: symbol = Symbol('');
       store.addEventSource(
-        sourceId,
+        Symbol(''),
+        unhandledResultEffectErrorEventId,
+        store.getEventStream(internalResultEventId).pipe(
+          filter(event => event.unhandledResultEffectError !== null),
+          map(event => ({
+            input: event.resultInput,
+            error: event.unhandledResultEffectError,
+          })),
+        ),
+      );
+      store.addEventSource(
+        Symbol(''),
         internalResultEventId,
         store.getBehavior(internalRequestBehaviorId).pipe(
           filter(state => state.input !== NO_VALUE),

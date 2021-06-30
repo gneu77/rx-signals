@@ -276,6 +276,55 @@ describe('prepareValidatedInputSignals', () => {
           await sequence2;
         });
       });
+
+      it('should provide unhandled error events and subscribing the errors must not subscribe the effect', async () => {
+        const errorSequence = expectSequence(
+          store.getEventStream(factory.unhandledValidationEffectErrorEventId),
+          [
+            {
+              input: {
+                searchString: 'throw',
+                page: 2,
+              },
+              error: 'unhandled',
+            },
+          ],
+        );
+        expect(store.isSubscribed(factory.validatedInputBehaviorId)).toBe(false);
+
+        const sequence = expectSequence(observable, [
+          {
+            currentInput: {
+              searchString: 'throw',
+              page: 2,
+            },
+            validationPending: true,
+            isValid: false,
+            unhandledValidationEffectError: null,
+          },
+          {
+            currentInput: {
+              searchString: 'throw',
+              page: 2,
+            },
+            validationPending: false,
+            isValid: false,
+            unhandledValidationEffectError: 'unhandled',
+            validatedInput: {
+              searchString: 'throw',
+              page: 2,
+            },
+          },
+        ]);
+        expect(store.isSubscribed(factory.validatedInputBehaviorId)).toBe(true);
+
+        inputSubject.next({
+          searchString: 'throw',
+          page: 2,
+        });
+        await sequence;
+        await errorSequence;
+      });
     });
   });
 

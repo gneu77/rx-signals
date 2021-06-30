@@ -25,6 +25,17 @@ export type EffectType<InputModel, ResultModel> = (
 ) => Observable<ResultModel>;
 
 /**
+ * @typedef {object} UnhandledEffectErrorEvent<InputModel> - generic type for unhandled-error-events
+ * @template InputModel - specifies the type of the effects input
+ * @property {InputModel} input - effect input that lead to the error
+ * @property {any} error - the error that occurred
+ */
+export interface UnhandledEffectErrorEvent<InputModel> {
+  readonly input: InputModel;
+  readonly error: any;
+}
+
+/**
  * @typedef {object} SignalsFactoryOptions<InputModel> - base options interface for all signals factories
  * @template InputModel - input model for the signals factory
  * @property {function} inputEquals - optional equal function for the input model (factories will use reference equals as default)

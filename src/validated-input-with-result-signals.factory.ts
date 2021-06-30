@@ -7,7 +7,7 @@ import {
   prepareInputWithResultSignals,
 } from './input-with-result-signals.factory';
 import { Store, TypeIdentifier } from './store';
-import { EffectType, getIdentifier } from './store.utils';
+import { EffectType, getIdentifier, UnhandledEffectErrorEvent } from './store.utils';
 import {
   prepareValidatedInputSignals,
   ValidatedInput,
@@ -53,6 +53,9 @@ export const prepareValidatedInputWithResultSignals = <InputModel, ValidationRes
   const inputWithResultBehaviorId = getIdentifier<InputWithResult<InputModel, ResultModel>>(
     `${identifierNamePrefix}_ValidatedInputWithResult`,
   );
+  const unhandledResultEffectErrorEventId = getIdentifier<UnhandledEffectErrorEvent<InputModel>>(
+    `${identifierNamePrefix}_EffectiveResultErrorEvent`,
+  );
 
   const internalResultEffect: EffectType<
     ValidatedInput<InputModel, ValidationResult>,
@@ -81,7 +84,7 @@ export const prepareValidatedInputWithResultSignals = <InputModel, ValidationRes
   >(store => store.getBehavior(validationFactory.validatedInputBehaviorId), internalResultEffect, {
     ...options,
     inputDebounceTime: 0,
-    inputEquals: resultInputEquals, // undefined,
+    inputEquals: resultInputEquals,
   });
 
   return {
@@ -90,12 +93,25 @@ export const prepareValidatedInputWithResultSignals = <InputModel, ValidationRes
     validatedInputWithResultBehaviorId,
     validationPendingBehaviorId: validationFactory.validationPendingBehaviorId,
     isValidBehaviorId: validationFactory.isValidBehaviorId,
+    unhandledValidationEffectErrorEventId: validationFactory.unhandledValidationEffectErrorEventId,
     resultPendingBehaviorId: resultFactory.resultPendingBehaviorId,
     invalidateResultEventId: resultFactory.invalidateResultEventId,
     triggerResultEffectEventId: resultFactory.triggerResultEffectEventId,
+    unhandledResultEffectErrorEventId,
     setup: (store: Store) => {
       validationFactory.setup(store);
       resultFactory.setup(store);
+
+      store.addEventSource(
+        Symbol(''),
+        unhandledResultEffectErrorEventId,
+        store.getEventStream(resultFactory.unhandledResultEffectErrorEventId).pipe(
+          map(event => ({
+            input: event.input.validatedInput,
+            error: event.error,
+          })),
+        ),
+      );
 
       store.addLazyBehavior(
         validatedInputWithResultBehaviorId,

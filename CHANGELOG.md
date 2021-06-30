@@ -1,8 +1,9 @@
-# 2.5.0 (2021-06-28)
+# 2.5.0 (2021-06-30)
 
 ### Features
 
 - **prepareInputWithResultSignals** and **prepareValidatedInputWithResultSignals**: Added new option **withTriggerEvent**. If set true, the result effect will only be triggered, when the corresponding event is dispatched (the event is just an alias for the invalidation event).
+- All signals factories now provide an event stream for unhandled effect errors. Subscribing to these streams will NOT subscribe the effect (thus, you can always subscribe with your generic error handler without triggering the effects unless you subscribe the behaviors of these factories).
 
 # 2.4.2 (2021-06-28)
 
