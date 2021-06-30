@@ -71,9 +71,14 @@ export const prepareValidatedInputSignals = <InputModel, ValidationResult>(
       !inputEquals(input as InputModel, validatedInput as InputModel));
   const identifierNamePrefix = options.identifierNamePrefix ?? '';
   const inputDebounceTime = options.inputDebounceTime ?? 10;
-  const internalValidationEffect = (input: InputModel, store: Store) => {
+  const internalValidationEffect = (
+    input: InputModel,
+    store: Store,
+    previousInput?: InputModel,
+    previousResult?: ValidationResult,
+  ) => {
     try {
-      return validationEffect(input, store);
+      return validationEffect(input, store, previousInput, previousResult);
     } catch (error) {
       return throwError(error);
     }
@@ -140,7 +145,14 @@ export const prepareValidatedInputSignals = <InputModel, ValidationResult>(
           filter(state => state.input !== NO_VALUE),
           filter(state => internalRequestInputChanged(state.input, state.validatedInput)),
           switchMap(state =>
-            internalValidationEffect(state.input as InputModel, store).pipe(
+            internalValidationEffect(
+              state.input as InputModel,
+              store,
+              state.validatedInput === NO_VALUE ? undefined : (state.validatedInput as InputModel),
+              state.validationResult === NO_VALUE
+                ? undefined
+                : (state.validationResult as ValidationResult),
+            ).pipe(
               map(validationResult => ({
                 validatedInput: state.input as InputModel,
                 validationResult,

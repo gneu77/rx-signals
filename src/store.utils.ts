@@ -22,6 +22,8 @@ export const getIdentifier = <T>(name?: string): TypeIdentifier<T> => ({
 export type EffectType<InputModel, ResultModel> = (
   input: InputModel,
   store: Store,
+  previousInput?: InputModel,
+  previousResult?: ResultModel,
 ) => Observable<ResultModel>;
 
 /**

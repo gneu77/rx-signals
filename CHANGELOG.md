@@ -1,3 +1,9 @@
+# 2.5.1 (2021-06-30)
+
+### Features
+
+- All signals factories will now pass input and result of previous calls as additional optional arguments to effects.
+
 # 2.5.0 (2021-06-30)
 
 ### Features

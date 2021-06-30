@@ -60,9 +60,19 @@ export const prepareValidatedInputWithResultSignals = <InputModel, ValidationRes
   const internalResultEffect: EffectType<
     ValidatedInput<InputModel, ValidationResult>,
     ResultModel
-  > = (input: ValidatedInput<InputModel, ValidationResult>, store: Store) => {
+  > = (
+    input: ValidatedInput<InputModel, ValidationResult>,
+    store: Store,
+    previousInput?: ValidatedInput<InputModel, ValidationResult>,
+    previousResult?: ResultModel,
+  ) => {
     if (!input.validationPending && input.validatedInput !== undefined && input.isValid) {
-      return resultEffect(input.validatedInput, store);
+      return resultEffect(
+        input.validatedInput,
+        store,
+        previousInput?.validatedInput,
+        previousResult,
+      );
     }
     return NEVER;
   };

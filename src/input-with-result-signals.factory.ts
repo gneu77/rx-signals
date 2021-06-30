@@ -71,9 +71,14 @@ export const prepareInputWithResultSignals = <InputModel, ResultModel>(
   const identifierNamePrefix = options.identifierNamePrefix ?? '';
   const inputDebounceTime = options.inputDebounceTime ?? 10;
   const initialResult = options.initialResult ?? NO_VALUE;
-  const internalResultEffect = (input: InputModel, store: Store) => {
+  const internalResultEffect = (
+    input: InputModel,
+    store: Store,
+    previousInput?: InputModel,
+    previousResult?: ResultModel,
+  ) => {
     try {
-      return resultEffect(input, store);
+      return resultEffect(input, store, previousInput, previousResult);
     } catch (error) {
       return throwError(error);
     }
@@ -150,7 +155,12 @@ export const prepareInputWithResultSignals = <InputModel, ResultModel>(
                 internalRequestInputChanged(state.input, state.resultInput),
           ),
           switchMap(state =>
-            internalResultEffect(state.input as InputModel, store).pipe(
+            internalResultEffect(
+              state.input as InputModel,
+              store,
+              state.resultInput === NO_VALUE ? undefined : (state.resultInput as InputModel),
+              state.resultInput === NO_VALUE ? undefined : (state.result as ResultModel),
+            ).pipe(
               map(result => ({
                 resultInput: state.input as InputModel,
                 result,
