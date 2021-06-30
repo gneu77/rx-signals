@@ -32,12 +32,12 @@ describe('prepareInputWithResultSignals', () => {
       return of({
         results: [],
         totalResults: 1,
-      }).pipe(delay(10));
+      }).pipe(delay(100));
     }
     return of({
       results: [input.searchString + '_result'],
       totalResults: 1,
-    }).pipe(delay(10));
+    }).pipe(delay(100));
   };
 
   let store: Store;

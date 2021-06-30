@@ -32,11 +32,19 @@ export interface InputWithResultSignalsFactoryOptions<InputModel, ResultModel>
   readonly withTriggerEvent?: boolean;
 }
 
-interface InternalResult<InputModel, ResultModel> {
+interface InternalRequest<InputModel, ResultModel> {
+  readonly input: InputModel | symbol;
   readonly resultInput: InputModel | symbol;
-  readonly resultResultToken: object | null;
-  readonly result?: ResultModel;
+  readonly token: object | null;
+  readonly resultToken: object | null;
+  readonly result: ResultModel | symbol;
   readonly unhandledResultEffectError: any | null;
+}
+
+interface InternalResultEvent<InputModel, ResultModel> {
+  readonly resultInput: InputModel;
+  readonly unhandledResultEffectError: any | null;
+  readonly result: ResultModel | symbol;
 }
 
 export const prepareInputWithResultSignals = <InputModel, ResultModel>(
@@ -46,21 +54,13 @@ export const prepareInputWithResultSignals = <InputModel, ResultModel>(
 ): InputWithResultSignals<InputModel, ResultModel> => {
   const inputEquals: (prevInput?: InputModel, nextInput?: InputModel) => boolean =
     options.inputEquals ?? ((prev, next) => prev === next);
-  const internalInputEquals = (newInput?: InputModel, stateInput?: InputModel | symbol) =>
-    stateInput === newInput ||
-    (stateInput !== NO_VALUE && inputEquals(stateInput as InputModel, newInput));
+  const internalRequestInputChanged: (a: InputModel | symbol, b: InputModel | symbol) => boolean = (
+    input: InputModel | symbol,
+    resultInput: InputModel | symbol,
+  ) =>
+    input !== NO_VALUE &&
+    (resultInput === NO_VALUE || !inputEquals(input as InputModel, resultInput as InputModel));
   const withTriggerEvent: boolean = options.withTriggerEvent ?? false;
-  const internalResultInputEquals = withTriggerEvent
-    ? (
-        input: InputModel,
-        resultToken: object | null,
-        state: InternalResult<InputModel, ResultModel>,
-      ) => resultToken === state.resultResultToken || internalInputEquals(input, state.resultInput)
-    : (
-        input: InputModel,
-        resultToken: object | null,
-        state: InternalResult<InputModel, ResultModel>,
-      ) => resultToken === state.resultResultToken && internalInputEquals(input, state.resultInput);
   const identifierNamePrefix = options.identifierNamePrefix ?? '';
   const inputDebounceTime = options.inputDebounceTime ?? 50;
   const initialResult = options.initialResult ?? NO_VALUE;
@@ -81,15 +81,16 @@ export const prepareInputWithResultSignals = <InputModel, ResultModel>(
   );
   const triggerResultEffectEventId = invalidateResultEventId;
 
-  const resultTokenBehaviorId = getIdentifier<object | null>(`${identifierNamePrefix}_ResultToken`);
-  const internalResultBehaviorId = getIdentifier<InternalResult<InputModel, ResultModel>>(
-    `${identifierNamePrefix}_InternalResult`,
-  );
+  const internalRequestBehaviorId = getIdentifier<InternalRequest<InputModel, ResultModel>>();
+  const internalRequestEventId = getIdentifier<InputModel | symbol>();
+  const internalResultEventId = getIdentifier<InternalResultEvent<InputModel, ResultModel>>();
 
-  const initialInternalResult: InternalResult<InputModel, ResultModel> = {
+  const initialInternalRequest: InternalRequest<InputModel, ResultModel> = {
+    input: NO_VALUE,
     resultInput: NO_VALUE,
-    result: initialResult === NO_VALUE ? undefined : (initialResult as ResultModel),
-    resultResultToken: null,
+    token: null,
+    resultToken: null,
+    result: NO_VALUE,
     unhandledResultEffectError: null,
   };
 
@@ -99,62 +100,80 @@ export const prepareInputWithResultSignals = <InputModel, ResultModel>(
     invalidateResultEventId,
     triggerResultEffectEventId,
     setup: (store: Store) => {
-      store.addNonLazyBehavior(
-        // invalidation must be possible while result is unsubscribed, hence this must be non-lazy!
-        resultTokenBehaviorId,
-        store.getEventStream(invalidateResultEventId).pipe(
-          map(() => ({})), // cannot use mapTo, because RxJs would optimize this to always return the same object!
-        ),
-        null,
-      );
-
-      const combinedInput = combineLatest([
-        inputObservableGetter(store).pipe(distinctUntilChanged(), debounceTime(inputDebounceTime)),
-        store.getBehavior(resultTokenBehaviorId),
-        store.getBehavior(internalResultBehaviorId),
-      ]);
-
-      store.addLazyBehavior(
-        internalResultBehaviorId,
-        combinedInput.pipe(
-          filter(
-            ([input, resultToken, state]) => !internalResultInputEquals(input, resultToken, state),
-          ), // NoOp, if we already have a result for the input, or if trigger event has not been sent in case of withTriggerEvent
-          switchMap(([input, resultToken]) =>
-            internalResultEffect(input, store).pipe(
+      store.addState(internalRequestBehaviorId, initialInternalRequest);
+      store.addReducer(internalRequestBehaviorId, invalidateResultEventId, state => ({
+        ...state,
+        token: {},
+      }));
+      store.addReducer(internalRequestBehaviorId, internalRequestEventId, (state, event) => ({
+        ...state,
+        input: event,
+        resultToken: state.token,
+      }));
+      store.addReducer(internalRequestBehaviorId, internalResultEventId, (state, event) => ({
+        ...state,
+        ...event,
+        resultToken: state.token,
+      }));
+      const sourceId: symbol = Symbol('');
+      store.addEventSource(
+        sourceId,
+        internalResultEventId,
+        store.getBehavior(internalRequestBehaviorId).pipe(
+          filter(state => state.input !== NO_VALUE),
+          filter(state =>
+            withTriggerEvent
+              ? state.token !== state.resultToken &&
+                internalRequestInputChanged(state.input, state.resultInput)
+              : state.token !== state.resultToken ||
+                internalRequestInputChanged(state.input, state.resultInput),
+          ),
+          switchMap(state =>
+            internalResultEffect(state.input as InputModel, store).pipe(
               map(result => ({
-                resultInput: input,
+                resultInput: state.input as InputModel,
                 result,
                 unhandledResultEffectError: null,
-                resultResultToken: resultToken,
               })),
               catchError(error =>
                 of({
-                  resultInput: input,
+                  resultInput: state.input as InputModel,
+                  result: NO_VALUE,
                   unhandledResultEffectError: error,
-                  resultResultToken: resultToken,
                 }),
               ),
             ),
           ),
         ),
-        initialInternalResult,
       );
+
+      const combinedInput = combineLatest([
+        inputObservableGetter(store).pipe(distinctUntilChanged(), debounceTime(inputDebounceTime)),
+        store.getBehavior(internalRequestBehaviorId),
+      ]);
 
       store.addLazyBehavior(
         inputWithResultBehaviorId,
         combinedInput.pipe(
-          map(([input, resultToken, state]) => ({
-            currentInput: input,
-            resultInput:
-              state.resultInput === NO_VALUE ? undefined : (state.resultInput as InputModel),
-            result:
-              state.resultInput === NO_VALUE && initialResult === NO_VALUE
-                ? undefined
-                : state.result,
-            resultPending: !internalResultInputEquals(input, resultToken, state),
-            unhandledResultEffectError: state.unhandledResultEffectError,
-          })),
+          map(([input, state]) => {
+            if (internalRequestInputChanged(input, state.input)) {
+              store.dispatchEvent(internalRequestEventId, input);
+            }
+            const noValueResult: ResultModel | undefined =
+              initialResult === NO_VALUE ? undefined : (initialResult as ResultModel);
+            return {
+              currentInput: input,
+              resultInput:
+                state.resultInput === NO_VALUE ? undefined : (state.resultInput as InputModel),
+              result: state.result === NO_VALUE ? noValueResult : (state.result as ResultModel),
+              resultPending: withTriggerEvent
+                ? state.token !== state.resultToken &&
+                  internalRequestInputChanged(input, state.resultInput)
+                : state.token !== state.resultToken ||
+                  internalRequestInputChanged(input, state.resultInput),
+              unhandledResultEffectError: state.unhandledResultEffectError,
+            };
+          }),
           distinctUntilChanged(
             (a, b) =>
               a.result === b.result &&

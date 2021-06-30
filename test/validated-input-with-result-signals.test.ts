@@ -41,12 +41,12 @@ describe('prepareValidatedInputWithResultSignals', () => {
       return of({
         results: [],
         totalResults: 1,
-      }).pipe(delay(10));
+      }).pipe(delay(100));
     }
     return of({
       results: [input.searchString + '_result'],
       totalResults: 1,
-    }).pipe(delay(10));
+    }).pipe(delay(100));
   };
 
   let store: Store;
@@ -526,6 +526,119 @@ describe('prepareValidatedInputWithResultSignals', () => {
       ]);
       store.dispatchEvent(factory.triggerResultEffectEventId, null);
       await sequence3;
+    });
+
+    it('should not trigger effect, if trigger is sent while invalid and then input becomes valid', async () => {
+      await withSubscription(observable, async () => {
+        const sequence = expectSequence(observable, [
+          {
+            currentInput: {
+              searchString: 'invalid',
+              page: 2,
+            },
+            validationPending: true,
+            isValid: false,
+            unhandledValidationEffectError: null,
+            resultPending: false,
+            unhandledResultEffectError: null,
+          },
+          {
+            currentInput: {
+              searchString: 'invalid',
+              page: 2,
+            },
+            validationPending: false,
+            isValid: false,
+            unhandledValidationEffectError: null,
+            validatedInput: {
+              searchString: 'invalid',
+              page: 2,
+            },
+            validationResult: 'nope',
+            resultPending: false,
+            unhandledResultEffectError: null,
+          },
+        ]);
+        inputSubject.next({
+          searchString: 'invalid',
+          page: 2,
+        });
+        await sequence;
+
+        store.dispatchEvent(factory.triggerResultEffectEventId, null);
+
+        const sequence2 = expectSequence(observable, [
+          {
+            currentInput: {
+              searchString: 'invalid',
+              page: 2,
+            },
+            validationPending: false,
+            isValid: false,
+            unhandledValidationEffectError: null,
+            validatedInput: {
+              searchString: 'invalid',
+              page: 2,
+            },
+            validationResult: 'nope',
+            resultPending: false,
+            unhandledResultEffectError: null,
+          },
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            validationPending: true,
+            isValid: false,
+            unhandledValidationEffectError: null,
+            validatedInput: {
+              searchString: 'invalid',
+              page: 2,
+            },
+            validationResult: 'nope',
+            resultPending: false,
+            unhandledResultEffectError: null,
+          },
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            validationPending: false,
+            isValid: true,
+            unhandledValidationEffectError: null,
+            validatedInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            validationResult: null,
+            resultPending: true,
+            unhandledResultEffectError: null,
+          },
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            validationPending: false,
+            isValid: true,
+            unhandledValidationEffectError: null,
+            validatedInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            validationResult: null,
+            resultPending: false,
+            unhandledResultEffectError: null,
+          },
+        ]);
+        inputSubject.next({
+          searchString: 'test',
+          page: 2,
+        });
+        await sequence2;
+      });
     });
   });
 });
