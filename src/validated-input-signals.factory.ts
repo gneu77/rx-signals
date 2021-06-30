@@ -33,11 +33,19 @@ export interface ValidatedInputSignals<InputModel, ValidationResult> extends Sig
   readonly unhandledValidationEffectErrorEventId: TypeIdentifier<
     UnhandledEffectErrorEvent<InputModel>
   >;
+  readonly validationEventId: TypeIdentifier<ValidationEvent<InputModel, ValidationResult>>;
 }
 
 export interface ValidatedInputSignalsFactoryOptions<InputModel, ValidationResult>
   extends SignalsFactoryOptions<InputModel> {
   readonly isValid?: (validationResult?: ValidationResult) => boolean;
+}
+
+export interface ValidationEvent<InputModel, ValidationResult> {
+  readonly validatedInput: InputModel;
+  readonly unhandledValidationEffectError: any | null;
+  readonly validationResult: ValidationResult | symbol;
+  readonly isValid: boolean;
 }
 
 interface InternalRequest<InputModel, ValidationResult> {
@@ -46,13 +54,6 @@ interface InternalRequest<InputModel, ValidationResult> {
   readonly validationResult: ValidationResult | symbol;
   readonly isValid: boolean;
   readonly unhandledValidationEffectError: any | null;
-}
-
-interface InternalResultEvent<InputModel, ValidationResult> {
-  readonly validatedInput: InputModel;
-  readonly unhandledValidationEffectError: any | null;
-  readonly validationResult: ValidationResult | symbol;
-  readonly isValid: boolean;
 }
 
 export const prepareValidatedInputSignals = <InputModel, ValidationResult>(
@@ -102,7 +103,9 @@ export const prepareValidatedInputSignals = <InputModel, ValidationResult>(
 
   const internalRequestBehaviorId = getIdentifier<InternalRequest<InputModel, ValidationResult>>();
   const internalRequestEventId = getIdentifier<InputModel | symbol>();
-  const internalResultEventId = getIdentifier<InternalResultEvent<InputModel, ValidationResult>>();
+  const validationEventId = getIdentifier<ValidationEvent<InputModel, ValidationResult>>(
+    `${identifierNamePrefix}_ValidationEvent`,
+  );
 
   const initialInternalRequest: InternalRequest<InputModel, ValidationResult> = {
     input: NO_VALUE,
@@ -117,20 +120,21 @@ export const prepareValidatedInputSignals = <InputModel, ValidationResult>(
     validationPendingBehaviorId,
     isValidBehaviorId,
     unhandledValidationEffectErrorEventId,
+    validationEventId,
     setup: (store: Store) => {
       store.addState(internalRequestBehaviorId, initialInternalRequest);
       store.addReducer(internalRequestBehaviorId, internalRequestEventId, (state, event) => ({
         ...state,
         input: event,
       }));
-      store.addReducer(internalRequestBehaviorId, internalResultEventId, (state, event) => ({
+      store.addReducer(internalRequestBehaviorId, validationEventId, (state, event) => ({
         ...state,
         ...event,
       }));
       store.addEventSource(
         Symbol(''),
         unhandledValidationEffectErrorEventId,
-        store.getEventStream(internalResultEventId).pipe(
+        store.getEventStream(validationEventId).pipe(
           filter(event => event.unhandledValidationEffectError !== null),
           map(event => ({
             input: event.validatedInput,
@@ -140,7 +144,7 @@ export const prepareValidatedInputSignals = <InputModel, ValidationResult>(
       );
       store.addEventSource(
         Symbol(''),
-        internalResultEventId,
+        validationEventId,
         store.getBehavior(internalRequestBehaviorId).pipe(
           filter(state => state.input !== NO_VALUE),
           filter(state => internalRequestInputChanged(state.input, state.validatedInput)),

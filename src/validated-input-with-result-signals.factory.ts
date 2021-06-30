@@ -5,6 +5,7 @@ import {
   InputWithResultSignals,
   InputWithResultSignalsFactoryOptions,
   prepareInputWithResultSignals,
+  ResultEvent,
 } from './input-with-result-signals.factory';
 import { Store, TypeIdentifier } from './store';
 import { EffectType, getIdentifier, UnhandledEffectErrorEvent } from './store.utils';
@@ -56,6 +57,9 @@ export const prepareValidatedInputWithResultSignals = <InputModel, ValidationRes
   const unhandledResultEffectErrorEventId = getIdentifier<UnhandledEffectErrorEvent<InputModel>>(
     `${identifierNamePrefix}_EffectiveResultErrorEvent`,
   );
+  const resultEventId = getIdentifier<ResultEvent<InputModel, ResultModel>>(
+    `${identifierNamePrefix}_EffectiveResultEvent`,
+  );
 
   const internalResultEffect: EffectType<
     ValidatedInput<InputModel, ValidationResult>,
@@ -104,10 +108,12 @@ export const prepareValidatedInputWithResultSignals = <InputModel, ValidationRes
     validationPendingBehaviorId: validationFactory.validationPendingBehaviorId,
     isValidBehaviorId: validationFactory.isValidBehaviorId,
     unhandledValidationEffectErrorEventId: validationFactory.unhandledValidationEffectErrorEventId,
+    validationEventId: validationFactory.validationEventId,
     resultPendingBehaviorId: resultFactory.resultPendingBehaviorId,
     invalidateResultEventId: resultFactory.invalidateResultEventId,
     triggerResultEffectEventId: resultFactory.triggerResultEffectEventId,
     unhandledResultEffectErrorEventId,
+    resultEventId,
     setup: (store: Store) => {
       validationFactory.setup(store);
       resultFactory.setup(store);
@@ -119,6 +125,17 @@ export const prepareValidatedInputWithResultSignals = <InputModel, ValidationRes
           map(event => ({
             input: event.input.validatedInput,
             error: event.error,
+          })),
+        ),
+      );
+
+      store.addEventSource(
+        Symbol(''),
+        resultEventId,
+        store.getEventStream(resultFactory.resultEventId).pipe(
+          map(event => ({
+            ...event,
+            resultInput: event.resultInput.validatedInput,
           })),
         ),
       );

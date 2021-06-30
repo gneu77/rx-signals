@@ -21,7 +21,7 @@ export interface InputWithResult<InputModel, ResultModel> {
   readonly currentInput?: InputModel;
   readonly resultInput?: InputModel;
   readonly result?: ResultModel;
-  readonly resultPending: boolean; // true, if the current input differs from resultInput
+  readonly resultPending: boolean;
   readonly unhandledResultEffectError: any | null;
 }
 
@@ -31,12 +31,19 @@ export interface InputWithResultSignals<InputModel, ResultModel> extends Signals
   readonly invalidateResultEventId: TypeIdentifier<void>;
   readonly triggerResultEffectEventId: TypeIdentifier<void>;
   readonly unhandledResultEffectErrorEventId: TypeIdentifier<UnhandledEffectErrorEvent<InputModel>>;
+  readonly resultEventId: TypeIdentifier<ResultEvent<InputModel, ResultModel>>;
 }
 
 export interface InputWithResultSignalsFactoryOptions<InputModel, ResultModel>
   extends SignalsFactoryOptions<InputModel> {
   readonly initialResult?: ResultModel;
   readonly withTriggerEvent?: boolean;
+}
+
+export interface ResultEvent<InputModel, ResultModel> {
+  readonly resultInput: InputModel;
+  readonly unhandledResultEffectError: any | null;
+  readonly result: ResultModel | symbol;
 }
 
 interface InternalRequest<InputModel, ResultModel> {
@@ -46,12 +53,6 @@ interface InternalRequest<InputModel, ResultModel> {
   readonly resultToken: object | null;
   readonly result: ResultModel | symbol;
   readonly unhandledResultEffectError: any | null;
-}
-
-interface InternalResultEvent<InputModel, ResultModel> {
-  readonly resultInput: InputModel;
-  readonly unhandledResultEffectError: any | null;
-  readonly result: ResultModel | symbol;
 }
 
 export const prepareInputWithResultSignals = <InputModel, ResultModel>(
@@ -98,7 +99,9 @@ export const prepareInputWithResultSignals = <InputModel, ResultModel>(
 
   const internalRequestBehaviorId = getIdentifier<InternalRequest<InputModel, ResultModel>>();
   const internalRequestEventId = getIdentifier<InputModel | symbol>();
-  const internalResultEventId = getIdentifier<InternalResultEvent<InputModel, ResultModel>>();
+  const resultEventId = getIdentifier<ResultEvent<InputModel, ResultModel>>(
+    `${identifierNamePrefix}_ResultEvent`,
+  );
 
   const initialInternalRequest: InternalRequest<InputModel, ResultModel> = {
     input: NO_VALUE,
@@ -115,6 +118,7 @@ export const prepareInputWithResultSignals = <InputModel, ResultModel>(
     invalidateResultEventId,
     triggerResultEffectEventId,
     unhandledResultEffectErrorEventId,
+    resultEventId,
     setup: (store: Store) => {
       store.addState(internalRequestBehaviorId, initialInternalRequest);
       store.addReducer(internalRequestBehaviorId, invalidateResultEventId, state => ({
@@ -126,7 +130,7 @@ export const prepareInputWithResultSignals = <InputModel, ResultModel>(
         input: event,
         resultToken: state.token,
       }));
-      store.addReducer(internalRequestBehaviorId, internalResultEventId, (state, event) => ({
+      store.addReducer(internalRequestBehaviorId, resultEventId, (state, event) => ({
         ...state,
         ...event,
         resultToken: state.token,
@@ -134,7 +138,7 @@ export const prepareInputWithResultSignals = <InputModel, ResultModel>(
       store.addEventSource(
         Symbol(''),
         unhandledResultEffectErrorEventId,
-        store.getEventStream(internalResultEventId).pipe(
+        store.getEventStream(resultEventId).pipe(
           filter(event => event.unhandledResultEffectError !== null),
           map(event => ({
             input: event.resultInput,
@@ -144,7 +148,7 @@ export const prepareInputWithResultSignals = <InputModel, ResultModel>(
       );
       store.addEventSource(
         Symbol(''),
-        internalResultEventId,
+        resultEventId,
         store.getBehavior(internalRequestBehaviorId).pipe(
           filter(state => state.input !== NO_VALUE),
           filter(state =>
