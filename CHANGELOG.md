@@ -1,3 +1,9 @@
+# 2.5.6 (2021-07-01)
+
+### Improvements
+
+- Added also the exported low-level-type-symbols to index.ts, to help Typescript recognizing matching types
+
 # 2.5.2 (2021-06-30)
 
 ### Features

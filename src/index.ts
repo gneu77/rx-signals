@@ -1,3 +1,6 @@
+export { ContextHandle } from './context-handle';
+export { ControlledSubject, ResetHandle } from './controlled-subject';
+export { DelayedEventQueue } from './delayed-event-queue';
 export {
   InputWithResult,
   InputWithResultSignals,
@@ -5,7 +8,7 @@ export {
   prepareInputWithResultSignals,
   ResultEvent,
 } from './input-with-result-signals.factory';
-export { NO_VALUE } from './source-observable';
+export { NO_VALUE, SourceObservable } from './source-observable';
 export { Store, TypedEvent, TypeIdentifier } from './store';
 export {
   EffectType,
