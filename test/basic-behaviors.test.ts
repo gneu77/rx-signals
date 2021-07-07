@@ -3,7 +3,7 @@ import { map, tap } from 'rxjs/operators';
 import { Store, TypeIdentifier } from '../src/store';
 import { awaitCompletion, awaitError, expectSequence } from './test.utils';
 
-describe('Store', () => {
+describe('Behavior basics', () => {
   const testId: TypeIdentifier<number> = { symbol: Symbol('TestBehavior') };
 
   let store: Store;

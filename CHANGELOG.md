@@ -1,4 +1,10 @@
-# 2.5.6 (2021-07-01)
+# 2.5.4 (2021-07-07)
+
+### Features
+
+- The store constructor now takes a parent store as optional parameter. If a behavior is requested from a store and it has a parent store with that behavior, than the request will be delegated to the parent. This means, all required parent behaviors should be added before being requested from a child, to avoid unexpected results. Also event sources are not delegated. 
+
+# 2.5.3 (2021-07-01)
 
 ### Improvements
 

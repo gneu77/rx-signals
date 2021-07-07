@@ -81,6 +81,8 @@ export class Store {
     new Map<symbol, ControlledSubject<any>>(),
   );
 
+  constructor(private parentStore?: Store) {}
+
   /**
    * This method adds the given observable as source for the behavior identified by the
    * given identifier.
@@ -234,6 +236,9 @@ export class Store {
    * @returns {Observable<T>} - the behavior observable (shared and distinct)
    */
   getBehavior<T>(identifier: TypeIdentifier<T>): Observable<T> {
+    if (this.parentStore && this.parentStore.hasBehavior(identifier)) {
+      return this.parentStore.getBehavior(identifier);
+    }
     return this.getBehaviorControlledSubject(identifier).getObservable();
   }
 
@@ -657,6 +662,10 @@ export class Store {
    */
   getNumberOfEventSources<T>(eventIdentifier: TypeIdentifier<T>): number {
     return this.getEventStreamControlledSubject(eventIdentifier).getNumberOfSources();
+  }
+
+  private hasBehavior<T>(identifier: TypeIdentifier<T>): boolean {
+    return this.behaviors.has(identifier.symbol);
   }
 
   private addTypedEventSource<T>(
