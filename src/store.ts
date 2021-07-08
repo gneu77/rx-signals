@@ -83,6 +83,10 @@ export class Store {
 
   constructor(private parentStore?: Store) {}
 
+  getParentStore(): Store | null {
+    return this.parentStore ?? null;
+  }
+
   /**
    * This method adds the given observable as source for the behavior identified by the
    * given identifier.
