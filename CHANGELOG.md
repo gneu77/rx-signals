@@ -1,3 +1,13 @@
+# 2.6.0 (2021-07)
+
+### Fixes
+
+- Fixed a bug for x-typed event sources with subscribeObservableOnlyIfEventIsSubscribed parameter: It was possible that the source was not already switched for one of the sources, when an event was already dispatched after the subscribeObservableOnlyIfEventIsSubscribed event was subscribed.
+
+### Features
+
+- Generalized and simplified the signal factories API
+
 # 2.5.5 (2021-07-08)
 
 ### Features

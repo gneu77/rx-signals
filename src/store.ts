@@ -336,18 +336,19 @@ export class Store {
     subscribeObservableOnlyIfEventIsSubscribed: TypeIdentifier<any> | null = null,
   ): void {
     this.assertSourceExists(sourceIdentifier, sourceIdentifier);
-    const sharedSource = observable.pipe(share());
+    const sharedSource = this.getDependentObservable(
+      observable.pipe(delay(1, asyncScheduler), share()),
+      subscribeObservableOnlyIfEventIsSubscribed,
+    );
     this.addTypedEventSource(
       sourceIdentifier,
       eventIdentifierA,
       sharedSource as Observable<TypedEvent<A>>,
-      subscribeObservableOnlyIfEventIsSubscribed,
     );
     this.addTypedEventSource(
       sourceIdentifier,
       eventIdentifierB,
       sharedSource as Observable<TypedEvent<B>>,
-      subscribeObservableOnlyIfEventIsSubscribed,
     );
   }
 
@@ -371,24 +372,24 @@ export class Store {
     subscribeObservableOnlyIfEventIsSubscribed: TypeIdentifier<any> | null = null,
   ): void {
     this.assertSourceExists(sourceIdentifier, sourceIdentifier);
-    const sharedSource = observable.pipe(share());
+    const sharedSource = this.getDependentObservable(
+      observable.pipe(delay(1, asyncScheduler), share()),
+      subscribeObservableOnlyIfEventIsSubscribed,
+    );
     this.addTypedEventSource(
       sourceIdentifier,
       eventIdentifierA,
       sharedSource as Observable<TypedEvent<A>>,
-      subscribeObservableOnlyIfEventIsSubscribed,
     );
     this.addTypedEventSource(
       sourceIdentifier,
       eventIdentifierB,
       sharedSource as Observable<TypedEvent<B>>,
-      subscribeObservableOnlyIfEventIsSubscribed,
     );
     this.addTypedEventSource(
       sourceIdentifier,
       eventIdentifierC,
       sharedSource as Observable<TypedEvent<C>>,
-      subscribeObservableOnlyIfEventIsSubscribed,
     );
   }
 
@@ -414,30 +415,29 @@ export class Store {
     subscribeObservableOnlyIfEventIsSubscribed: TypeIdentifier<any> | null = null,
   ): void {
     this.assertSourceExists(sourceIdentifier, sourceIdentifier);
-    const sharedSource = observable.pipe(share());
+    const sharedSource = this.getDependentObservable(
+      observable.pipe(delay(1, asyncScheduler), share()),
+      subscribeObservableOnlyIfEventIsSubscribed,
+    );
     this.addTypedEventSource(
       sourceIdentifier,
       eventIdentifierA,
       sharedSource as Observable<TypedEvent<A>>,
-      subscribeObservableOnlyIfEventIsSubscribed,
     );
     this.addTypedEventSource(
       sourceIdentifier,
       eventIdentifierB,
       sharedSource as Observable<TypedEvent<B>>,
-      subscribeObservableOnlyIfEventIsSubscribed,
     );
     this.addTypedEventSource(
       sourceIdentifier,
       eventIdentifierC,
       sharedSource as Observable<TypedEvent<C>>,
-      subscribeObservableOnlyIfEventIsSubscribed,
     );
     this.addTypedEventSource(
       sourceIdentifier,
       eventIdentifierD,
       sharedSource as Observable<TypedEvent<D>>,
-      subscribeObservableOnlyIfEventIsSubscribed,
     );
   }
 
@@ -467,36 +467,34 @@ export class Store {
     subscribeObservableOnlyIfEventIsSubscribed: TypeIdentifier<any> | null = null,
   ): void {
     this.assertSourceExists(sourceIdentifier, sourceIdentifier);
-    const sharedSource = observable.pipe(share());
+    const sharedSource = this.getDependentObservable(
+      observable.pipe(delay(1, asyncScheduler), share()),
+      subscribeObservableOnlyIfEventIsSubscribed,
+    );
     this.addTypedEventSource(
       sourceIdentifier,
       eventIdentifierA,
       sharedSource as Observable<TypedEvent<A>>,
-      subscribeObservableOnlyIfEventIsSubscribed,
     );
     this.addTypedEventSource(
       sourceIdentifier,
       eventIdentifierB,
       sharedSource as Observable<TypedEvent<B>>,
-      subscribeObservableOnlyIfEventIsSubscribed,
     );
     this.addTypedEventSource(
       sourceIdentifier,
       eventIdentifierC,
       sharedSource as Observable<TypedEvent<C>>,
-      subscribeObservableOnlyIfEventIsSubscribed,
     );
     this.addTypedEventSource(
       sourceIdentifier,
       eventIdentifierD,
       sharedSource as Observable<TypedEvent<D>>,
-      subscribeObservableOnlyIfEventIsSubscribed,
     );
     this.addTypedEventSource(
       sourceIdentifier,
       eventIdentifierE,
       sharedSource as Observable<TypedEvent<E>>,
-      subscribeObservableOnlyIfEventIsSubscribed,
     );
   }
 
@@ -528,42 +526,39 @@ export class Store {
     subscribeObservableOnlyIfEventIsSubscribed: TypeIdentifier<any> | null = null,
   ): void {
     this.assertSourceExists(sourceIdentifier, sourceIdentifier);
-    const sharedSource = observable.pipe(share());
+    const sharedSource = this.getDependentObservable(
+      observable.pipe(delay(1, asyncScheduler), share()),
+      subscribeObservableOnlyIfEventIsSubscribed,
+    );
     this.addTypedEventSource(
       sourceIdentifier,
       eventIdentifierA,
       sharedSource as Observable<TypedEvent<A>>,
-      subscribeObservableOnlyIfEventIsSubscribed,
     );
     this.addTypedEventSource(
       sourceIdentifier,
       eventIdentifierB,
       sharedSource as Observable<TypedEvent<B>>,
-      subscribeObservableOnlyIfEventIsSubscribed,
     );
     this.addTypedEventSource(
       sourceIdentifier,
       eventIdentifierC,
       sharedSource as Observable<TypedEvent<C>>,
-      subscribeObservableOnlyIfEventIsSubscribed,
     );
     this.addTypedEventSource(
       sourceIdentifier,
       eventIdentifierD,
       sharedSource as Observable<TypedEvent<D>>,
-      subscribeObservableOnlyIfEventIsSubscribed,
     );
     this.addTypedEventSource(
       sourceIdentifier,
       eventIdentifierE,
       sharedSource as Observable<TypedEvent<E>>,
-      subscribeObservableOnlyIfEventIsSubscribed,
     );
     this.addTypedEventSource(
       sourceIdentifier,
       eventIdentifierF,
       sharedSource as Observable<TypedEvent<F>>,
-      subscribeObservableOnlyIfEventIsSubscribed,
     );
   }
 
@@ -672,34 +667,30 @@ export class Store {
     return this.behaviors.has(identifier.symbol);
   }
 
+  private getDependentObservable<T>(
+    observable: Observable<T>,
+    subscribeObservableOnlyIfEventIsSubscribed: TypeIdentifier<any> | null,
+  ): Observable<T> {
+    if (subscribeObservableOnlyIfEventIsSubscribed === null) {
+      return observable;
+    }
+    return this.getEventStreamControlledSubject(subscribeObservableOnlyIfEventIsSubscribed)
+      .getIsSubscribedObservable()
+      .pipe(switchMap(isSubscribed => (isSubscribed ? observable : NEVER)));
+  }
+
   private addTypedEventSource<T>(
     sourceIdentifier: symbol,
     eventIdentifier: TypeIdentifier<T>,
     sharedSource: Observable<TypedEvent<T>>,
-    subscribeObservableOnlyIfEventIsSubscribed: TypeIdentifier<any> | null,
   ): void {
     const source = sharedSource.pipe(
       filter(typedEvent => typedEvent.type === eventIdentifier),
       map(event => event.event),
     );
-    if (subscribeObservableOnlyIfEventIsSubscribed === null) {
-      this.getEventStreamControlledSubject(eventIdentifier).addSource(
-        new SourceObservable<T>(sourceIdentifier, source, true),
-      );
-    } else {
-      this.getEventStreamControlledSubject(eventIdentifier).addSource(
-        new SourceObservable<T>(
-          sourceIdentifier,
-          this.getEventStreamControlledSubject(subscribeObservableOnlyIfEventIsSubscribed)
-            .getIsSubscribedObservable()
-            .pipe(
-              switchMap(isSubscribed => (isSubscribed ? source : NEVER)),
-              share(),
-            ),
-          true,
-        ),
-      );
-    }
+    this.getEventStreamControlledSubject(eventIdentifier).addSource(
+      new SourceObservable<T>(sourceIdentifier, source, true),
+    );
   }
 
   private createBehaviorControlledSubject<T>(identifier: TypeIdentifier<T>): ControlledSubject<T> {
