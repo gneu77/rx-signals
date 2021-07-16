@@ -4,8 +4,9 @@ import {
   CombinedEffectResult,
   EffectSignalsFactory,
   EffectSignalsType,
-  getEffectSignalsFactory
-} from '../src/signal-factories';
+  getEffectSignalsFactory,
+  TriggeredEffectSignalsType
+} from '../src/effect-signal-factories';
 import { Store } from '../src/store';
 import { EffectType, getIdentifier } from '../src/store.utils';
 import { expectSequence, withSubscription } from './test.utils';
@@ -57,7 +58,11 @@ describe('signal factories', () => {
   });
 
   describe('getEffectSignalsFactory', () => {
-    let factory: EffectSignalsFactory<EffectSignalsType<InputModel, ResultModel>, undefined>;
+    let factory: EffectSignalsFactory<
+      InputModel,
+      ResultModel,
+      EffectSignalsType<InputModel, ResultModel>
+    >;
 
     beforeEach(() => {
       factory = getEffectSignalsFactory<InputModel, ResultModel>(
@@ -340,6 +345,80 @@ describe('signal factories', () => {
         });
         await sequence2;
         store.dispatchEvent(signals.invalidateEvent, null);
+      });
+    });
+
+    describe('with trigger', () => {
+      let signals: TriggeredEffectSignalsType<InputModel, ResultModel>;
+      let observable: Observable<CombinedEffectResult<InputModel, ResultModel>>;
+
+      beforeEach(() => {
+        const factoryResult = factory.withTrigger().build();
+        signals = factoryResult.signals;
+        factoryResult.setup(store);
+        observable = store.getBehavior(signals.combinedBehavior);
+      });
+
+      it('should have correct sequence for input', async () => {
+        const sequence = expectSequence(observable, [
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            resultPending: false,
+          },
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 3,
+            },
+            resultPending: false,
+          },
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 4,
+            },
+            resultPending: false,
+          },
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 4,
+            },
+            resultPending: true,
+          },
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 4,
+            },
+            resultInput: {
+              searchString: 'test',
+              page: 4,
+            },
+            result: {
+              results: [],
+              totalResults: 1,
+            },
+            resultPending: false,
+          },
+        ]);
+        inputSubject.next({
+          searchString: 'test',
+          page: 2,
+        });
+        inputSubject.next({
+          searchString: 'test',
+          page: 3,
+        });
+        inputSubject.next({
+          searchString: 'test',
+          page: 4,
+        });
+        store.dispatchEvent(signals.triggerEvent, null);
+        await sequence;
       });
     });
   });
