@@ -1,6 +1,6 @@
 import { combineLatest, Observable, of, throwError } from 'rxjs';
 import { catchError, filter, map, mapTo, switchMap } from 'rxjs/operators';
-import { Signals, SignalsFactory, signalsFactoryBind, signalsFactoryMap } from './signal-factories';
+import { Signals, SignalsFactory, signalsFactoryBind, signalsFactoryMap } from './signals-factory';
 import { Store, TypeIdentifier } from './store';
 import { EffectType, getIdentifier } from './store.utils';
 

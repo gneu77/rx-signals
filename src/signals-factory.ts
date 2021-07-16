@@ -2,17 +2,17 @@
 
 import { Store } from './store';
 
-export interface SetupWithStore {
+interface SetupWithStore {
   readonly setup: (store: Store) => void;
 }
 
-export interface SignalsTypeWrapper<SignalsType> {
+interface SignalsTypeWrapper<SignalsType> {
   signals: SignalsType;
 }
 
 export type Signals<SignalsType> = SetupWithStore & SignalsTypeWrapper<SignalsType>;
 
-export interface MappedSignalsType<SignalsType1, SignalsType2> {
+interface MappedSignalsType<SignalsType1, SignalsType2> {
   readonly signals1: SignalsType1;
   readonly signals2: SignalsType2;
 }
@@ -84,43 +84,6 @@ export const signalsFactoryBind = <SignalsType1, SignalsType2>(
   };
   return factory2;
 };
-
-export type FactoryMap<
-  SignalsType1,
-  SignalsType2,
-  FactoryType1 extends SignalsFactory<SignalsType1>,
-  FactoryType2 extends SignalsFactory<SignalsType2>
-> = (
-  factory1: FactoryType1,
-  mapper: (signals: Signals<SignalsType1>) => Signals<SignalsType2>,
-  concreteMapper: (factory2: SignalsFactory<SignalsType2>) => FactoryType2,
-) => FactoryType2;
-
-export type FactoryBind<
-  SignalsType1,
-  SignalsType2,
-  FactoryType1 extends SignalsFactory<SignalsType1>,
-  FactoryType2 extends SignalsFactory<SignalsType2>
-> = (
-  factory1: FactoryType1,
-  mapper: (signals: Signals<SignalsType1>) => SignalsFactory<SignalsType2>,
-  concreteMapper: (
-    factory2: SignalsFactory<MappedSignalsType<SignalsType1, SignalsType2>>,
-  ) => FactoryType2,
-) => FactoryType2;
-
-export interface ConcreteSignalsFactory<SignalsType> extends SignalsFactory<SignalsType> {
-  readonly concreteBind: <SignalsType2, FactoryType2 extends SignalsFactory<SignalsType2>>(
-    mapper: (signals: Signals<SignalsType>) => SignalsFactory<SignalsType2>,
-    concreteMapper: (
-      factory2: SignalsFactory<MappedSignalsType<SignalsType, SignalsType2>>,
-    ) => FactoryType2,
-  ) => FactoryType2;
-  readonly concreteMap: <SignalsType2, FactoryType2 extends SignalsFactory<SignalsType2>>(
-    mapper: (signals: Signals<SignalsType>) => Signals<SignalsType2>,
-    concreteMapper: (factory2: SignalsFactory<SignalsType2>) => FactoryType2,
-  ) => FactoryType2;
-}
 
 export const concreteFactoryMap = <
   SignalsType1,

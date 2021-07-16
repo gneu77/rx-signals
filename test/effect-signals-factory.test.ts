@@ -6,7 +6,7 @@ import {
   EffectSignalsType,
   getEffectSignalsFactory,
   TriggeredEffectSignalsType
-} from '../src/effect-signal-factories';
+} from '../src/effect-signals-factory';
 import { Store } from '../src/store';
 import { EffectType, getIdentifier } from '../src/store.utils';
 import { expectSequence, withSubscription } from './test.utils';

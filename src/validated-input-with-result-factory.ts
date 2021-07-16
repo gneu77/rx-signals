@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
-import { getEffectSignalsFactory } from './effect-signal-factories';
+import { getEffectSignalsFactory } from './effect-signals-factory';
 import { Store } from './store';
 import { EffectType } from './store.utils';
 
