@@ -1,5 +1,5 @@
 import { combineLatest, Observable, of, throwError } from 'rxjs';
-import { catchError, filter, map, mapTo, switchMap } from 'rxjs/operators';
+import { catchError, filter, map, mapTo, switchMap, tap } from 'rxjs/operators';
 import { Signals, SignalsFactory, signalsFactoryBind, signalsFactoryMap } from './signals-factory';
 import { Store, TypeIdentifier } from './store';
 import { EffectType, getIdentifier } from './store.utils';
@@ -19,7 +19,6 @@ export interface EffectError<InputType> {
 export interface EffectSignalsType<InputType, ResultType> {
   readonly combinedBehavior: TypeIdentifier<CombinedEffectResult<InputType, ResultType>>;
   readonly errorEvents: TypeIdentifier<EffectError<InputType>>;
-  readonly pendingBehavior: TypeIdentifier<boolean>;
   readonly invalidateEvent: TypeIdentifier<void>;
 }
 
@@ -34,7 +33,6 @@ const getSignalIds = <InputType, ResultType>(): TriggeredEffectSignalsType<
 > => ({
   combinedBehavior: getIdentifier<CombinedEffectResult<InputType, ResultType>>(),
   errorEvents: getIdentifier<EffectError<InputType>>(),
-  pendingBehavior: getIdentifier<boolean>(),
   invalidateEvent: getIdentifier<void>(),
   triggerEvent: getIdentifier<void>(),
 });
@@ -176,12 +174,8 @@ const getEffectBuilder = <IT, RT, SignalsType>(): FactoryBuild<
                 (input !== resultState.resultInput || token !== resultState.resultToken)
               : input !== resultState.resultInput || token !== resultState.resultToken,
           })),
+          tap(s => console.log('effect output:', s)),
         ),
-      );
-
-      store.addLazyBehavior(
-        ids.pendingBehavior,
-        store.getBehavior(ids.combinedBehavior).pipe(map(s => s.resultPending)),
       );
     };
     const { triggerEvent, ...withoutTriggerID } = ids;
@@ -200,6 +194,9 @@ export interface EffectSignalsFactory<InputType, ResultType, SignalsType>
     ResultType,
     TriggeredEffectSignalsType<InputType, ResultType>
   >;
+  // withEffectDebounce: (debounceMS: number) => EffectSignalsFactory<InputType, ResultType, SignalsType>;
+  // withCustomEffectInputEquals: (inputEquals: (input: InputType) => boolean) => EffectSignalsFactory<InputType, ResultType, SignalsType>;
+  // withIsInputValid: isInputValid: (input: InputType) => boolean,
 }
 
 const getEffectSignalsFactoryIntern = <

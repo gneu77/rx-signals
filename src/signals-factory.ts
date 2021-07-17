@@ -12,7 +12,7 @@ interface SignalsTypeWrapper<SignalsType> {
 
 export type Signals<SignalsType> = SetupWithStore & SignalsTypeWrapper<SignalsType>;
 
-interface MappedSignalsType<SignalsType1, SignalsType2> {
+export interface MappedSignalsType<SignalsType1, SignalsType2> {
   readonly signals1: SignalsType1;
   readonly signals2: SignalsType2;
 }
