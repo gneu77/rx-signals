@@ -1,5 +1,5 @@
 import { combineLatest, Observable, of, throwError } from 'rxjs';
-import { catchError, filter, map, mapTo, shareReplay, switchMap } from 'rxjs/operators';
+import { catchError, debounceTime, filter, map, mapTo, switchMap } from 'rxjs/operators';
 import { Signals, SignalsFactory, signalsFactoryBind, signalsFactoryMap } from './signals-factory';
 import { NO_VALUE } from './source-observable';
 import { Store, TypeIdentifier } from './store';
@@ -43,6 +43,7 @@ interface EffectFactoryConfiguration<InputType, ResultType> {
   effect: EffectType<InputType, ResultType>;
   withTrigger?: boolean;
   initialResultGetter?: () => ResultType;
+  effectDebounceTime?: number;
 }
 
 type FactoryBuild<SignalsType, ConfigurationType> = (
@@ -68,6 +69,7 @@ const getEffectBuilder = <IT, RT, SignalsType>(): FactoryBuild<
         return throwError(error);
       }
     };
+
     const ids = getSignalIds<IT, RT>();
     const setup = (store: Store) => {
       const invalidateTokenBehavior = getIdentifier<object | null>();
@@ -103,19 +105,41 @@ const getEffectBuilder = <IT, RT, SignalsType>(): FactoryBuild<
         null,
       );
 
-      const combined = combineLatest([
-        config.inputGetter(store),
-        store.getBehavior(resultBehavior),
-        store.getBehavior(invalidateTokenBehavior),
-        store.getBehavior(triggeredInputBehavior),
-      ]).pipe(shareReplay({ bufferSize: 1, refCount: true }));
+      // It is important to setup the combined observable as behavior, because a simple shareReplay (event with refCount) creates a memory leak!!!
+      const combinedId = getIdentifier<
+        [
+          IT,
+          {
+            readonly result?: RT;
+            readonly resultInput?: IT;
+            readonly resultToken: object | null;
+          },
+          object | null,
+          IT,
+        ]
+      >();
+      store.addLazyBehavior(
+        combinedId,
+        combineLatest([
+          config.inputGetter(store),
+          store.getBehavior(resultBehavior),
+          store.getBehavior(invalidateTokenBehavior),
+          store.getBehavior(triggeredInputBehavior),
+        ]),
+      );
+      const combined = store.getBehavior(combinedId);
+
+      const eventSourceInput =
+        config.effectDebounceTime === undefined || config.effectDebounceTime < 1
+          ? combined
+          : combined.pipe(debounceTime(config.effectDebounceTime));
 
       store.add3TypedEventSource(
         Symbol(''),
         resultEvent,
         triggeredInputEvent,
         ids.errorEvents,
-        combined.pipe(
+        eventSourceInput.pipe(
           filter(
             ([input, resultState, token]) =>
               input !== resultState.resultInput || token !== resultState.resultToken,
@@ -206,7 +230,9 @@ export interface EffectSignalsFactory<InputType, ResultType, SignalsType>
   withInitialResult: (
     resultGetter: () => ResultType,
   ) => EffectSignalsFactory<InputType, ResultType, SignalsType>;
-  // withEffectDebounce: (debounceMS: number) => EffectSignalsFactory<InputType, ResultType, SignalsType>;
+  withEffectDebounce: (
+    debounceMS: number,
+  ) => EffectSignalsFactory<InputType, ResultType, SignalsType>;
   // withCustomEffectInputEquals: (inputEquals: (input: InputType) => boolean) => EffectSignalsFactory<InputType, ResultType, SignalsType>;
 }
 
@@ -239,12 +265,18 @@ const getEffectSignalsFactoryIntern = <
       ...config,
       initialResultGetter: resultGetter,
     });
+  const withEffectDebounce = (debounceMS: number) =>
+    getEffectSignalsFactoryIntern<InputType, ResultType, SignalsType>({
+      ...config,
+      effectDebounceTime: debounceMS,
+    });
   factory = {
     build,
     bind,
     fmap,
     withTrigger,
     withInitialResult,
+    withEffectDebounce,
   };
   return factory;
 };

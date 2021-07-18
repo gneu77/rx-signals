@@ -24,6 +24,7 @@ describe('effect signals factory', () => {
 
   const inputStateId = getIdentifier<InputModel>();
   const inputSubject = new Subject<InputModel>();
+  let effectCalled = 0;
 
   const resultEffect: EffectType<InputModel, ResultModel> = (
     input: InputModel,
@@ -31,6 +32,7 @@ describe('effect signals factory', () => {
     prevInput,
     prevResult,
   ) => {
+    effectCalled = effectCalled + 1;
     if (input.searchString === 'throw') {
       throw 'unhandled';
     }
@@ -53,6 +55,7 @@ describe('effect signals factory', () => {
   let store: Store;
 
   beforeEach(() => {
+    effectCalled = 0;
     store = new Store();
     store.addNonLazyBehavior(inputStateId, inputSubject.asObservable());
   });
@@ -112,6 +115,61 @@ describe('effect signals factory', () => {
           page: 2,
         });
         await sequence;
+      });
+
+      it('should not debounce the effect', async () => {
+        const sequence = expectSequence(observable, [
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 4,
+            },
+            resultPending: true,
+          },
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 3,
+            },
+            resultPending: true,
+          },
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            resultPending: true,
+          },
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            resultInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            result: {
+              results: [],
+              totalResults: 1,
+            },
+            resultPending: false,
+          },
+        ]);
+        inputSubject.next({
+          searchString: 'test',
+          page: 4,
+        });
+        inputSubject.next({
+          searchString: 'test',
+          page: 3,
+        });
+        inputSubject.next({
+          searchString: 'test',
+          page: 2,
+        });
+        await sequence;
+        expect(effectCalled).toBe(3);
       });
 
       it('should handle unhandled effect errors', async () => {
@@ -479,6 +537,73 @@ describe('effect signals factory', () => {
           page: 2,
         });
         await sequence;
+      });
+    });
+
+    describe('with effect debounce', () => {
+      let signals: EffectSignalsType<InputModel, ResultModel>;
+      let observable: Observable<CombinedEffectResult<InputModel, ResultModel>>;
+
+      beforeEach(() => {
+        const factoryResult = factory.withEffectDebounce(50).build();
+        signals = factoryResult.signals;
+        factoryResult.setup(store);
+        observable = store.getBehavior(signals.combinedBehavior);
+      });
+
+      it('should debounce the effect input', async () => {
+        const sequence = expectSequence(observable, [
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 4,
+            },
+            resultPending: true,
+          },
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 3,
+            },
+            resultPending: true,
+          },
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            resultPending: true,
+          },
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            resultInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            result: {
+              results: [],
+              totalResults: 1,
+            },
+            resultPending: false,
+          },
+        ]);
+        inputSubject.next({
+          searchString: 'test',
+          page: 4,
+        });
+        inputSubject.next({
+          searchString: 'test',
+          page: 3,
+        });
+        inputSubject.next({
+          searchString: 'test',
+          page: 2,
+        });
+        await sequence;
+        expect(effectCalled).toBe(1);
       });
     });
   });
