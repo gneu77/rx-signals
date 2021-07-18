@@ -12,7 +12,7 @@ import {
 } from './../src/validated-input-with-result-factory';
 import { expectSequence, withSubscription } from './test.utils';
 
-describe('prepareValidatedInputWithResultSignals', () => {
+describe('validated input with result signals factory', () => {
   interface InputModel {
     readonly searchString: string;
     readonly page: number;

@@ -11,7 +11,7 @@ import { Store } from '../src/store';
 import { EffectType, getIdentifier } from '../src/store.utils';
 import { expectSequence, withSubscription } from './test.utils';
 
-describe('signal factories', () => {
+describe('effect signals factory', () => {
   interface InputModel {
     readonly searchString: string;
     readonly page: number;
@@ -418,6 +418,66 @@ describe('signal factories', () => {
           page: 4,
         });
         store.dispatchEvent(signals.triggerEvent, null);
+        await sequence;
+      });
+    });
+
+    describe('with initial result', () => {
+      let signals: EffectSignalsType<InputModel, ResultModel>;
+      let observable: Observable<CombinedEffectResult<InputModel, ResultModel>>;
+
+      beforeEach(() => {
+        const factoryResult = factory
+          .withInitialResult(() => ({
+            results: [],
+            totalResults: 0,
+          }))
+          .build();
+        signals = factoryResult.signals;
+        factoryResult.setup(store);
+        observable = store.getBehavior(signals.combinedBehavior);
+      });
+
+      it('should have correct sequence for input', async () => {
+        const sequence = expectSequence(observable, [
+          {
+            resultPending: false,
+            result: {
+              results: [],
+              totalResults: 0,
+            },
+          },
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            resultPending: true,
+            result: {
+              results: [],
+              totalResults: 0,
+            },
+          },
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            resultInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            result: {
+              results: [],
+              totalResults: 1,
+            },
+            resultPending: false,
+          },
+        ]);
+        inputSubject.next({
+          searchString: 'test',
+          page: 2,
+        });
         await sequence;
       });
     });

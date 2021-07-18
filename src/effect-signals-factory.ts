@@ -89,7 +89,9 @@ const getEffectBuilder = <IT, RT, SignalsType>(): FactoryBuild<
         readonly resultInput?: IT;
         readonly resultToken: object | null;
       }>();
+      const initialResult = config.initialResultGetter ? config.initialResultGetter() : undefined;
       store.addLazyBehavior(resultBehavior, store.getEventStream(resultEvent), {
+        result: initialResult,
         resultToken: null,
       });
 
@@ -206,7 +208,6 @@ export interface EffectSignalsFactory<InputType, ResultType, SignalsType>
   ) => EffectSignalsFactory<InputType, ResultType, SignalsType>;
   // withEffectDebounce: (debounceMS: number) => EffectSignalsFactory<InputType, ResultType, SignalsType>;
   // withCustomEffectInputEquals: (inputEquals: (input: InputType) => boolean) => EffectSignalsFactory<InputType, ResultType, SignalsType>;
-  // withIsInputValid: isInputValid: (input: InputType) => boolean,
 }
 
 const getEffectSignalsFactoryIntern = <
