@@ -1,11 +1,12 @@
 import { combineLatest, Observable, of, throwError } from 'rxjs';
-import { catchError, filter, map, mapTo, switchMap, tap } from 'rxjs/operators';
+import { catchError, filter, map, mapTo, shareReplay, switchMap } from 'rxjs/operators';
 import { Signals, SignalsFactory, signalsFactoryBind, signalsFactoryMap } from './signals-factory';
+import { NO_VALUE } from './source-observable';
 import { Store, TypeIdentifier } from './store';
 import { EffectType, getIdentifier } from './store.utils';
 
 export interface CombinedEffectResult<InputType, ResultType> {
-  readonly currentInput: InputType;
+  readonly currentInput?: InputType;
   readonly result?: ResultType;
   readonly resultInput?: InputType;
   readonly resultPending: boolean;
@@ -41,6 +42,7 @@ interface EffectFactoryConfiguration<InputType, ResultType> {
   inputGetter: (store: Store) => Observable<InputType>;
   effect: EffectType<InputType, ResultType>;
   withTrigger?: boolean;
+  initialResultGetter?: () => ResultType;
 }
 
 type FactoryBuild<SignalsType, ConfigurationType> = (
@@ -104,7 +106,7 @@ const getEffectBuilder = <IT, RT, SignalsType>(): FactoryBuild<
         store.getBehavior(resultBehavior),
         store.getBehavior(invalidateTokenBehavior),
         store.getBehavior(triggeredInputBehavior),
-      ]);
+      ]).pipe(shareReplay({ bufferSize: 1, refCount: true }));
 
       store.add3TypedEventSource(
         Symbol(''),
@@ -174,8 +176,13 @@ const getEffectBuilder = <IT, RT, SignalsType>(): FactoryBuild<
                 (input !== resultState.resultInput || token !== resultState.resultToken)
               : input !== resultState.resultInput || token !== resultState.resultToken,
           })),
-          tap(s => console.log('effect output:', s)),
         ),
+        config.initialResultGetter
+          ? {
+              result: config.initialResultGetter(),
+              resultPending: false,
+            }
+          : NO_VALUE,
       );
     };
     const { triggerEvent, ...withoutTriggerID } = ids;
@@ -194,6 +201,9 @@ export interface EffectSignalsFactory<InputType, ResultType, SignalsType>
     ResultType,
     TriggeredEffectSignalsType<InputType, ResultType>
   >;
+  withInitialResult: (
+    resultGetter: () => ResultType,
+  ) => EffectSignalsFactory<InputType, ResultType, SignalsType>;
   // withEffectDebounce: (debounceMS: number) => EffectSignalsFactory<InputType, ResultType, SignalsType>;
   // withCustomEffectInputEquals: (inputEquals: (input: InputType) => boolean) => EffectSignalsFactory<InputType, ResultType, SignalsType>;
   // withIsInputValid: isInputValid: (input: InputType) => boolean,
@@ -223,11 +233,17 @@ const getEffectSignalsFactoryIntern = <
       ...config,
       withTrigger: true,
     });
+  const withInitialResult = (resultGetter: () => ResultType) =>
+    getEffectSignalsFactoryIntern<InputType, ResultType, SignalsType>({
+      ...config,
+      initialResultGetter: resultGetter,
+    });
   factory = {
     build,
     bind,
     fmap,
     withTrigger,
+    withInitialResult,
   };
   return factory;
 };

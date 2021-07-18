@@ -1,17 +1,17 @@
 import { combineLatest, Observable } from 'rxjs';
-import { distinctUntilChanged, filter, map, share, tap } from 'rxjs/operators';
+import { distinctUntilChanged, filter, map, startWith } from 'rxjs/operators';
 import {
   CombinedEffectResult,
   EffectError,
   EffectSignalsType,
-  getEffectSignalsFactory
+  getEffectSignalsFactory,
 } from './effect-signals-factory';
 import { MappedSignalsType, Signals, SignalsFactory } from './signals-factory';
 import { Store, TypeIdentifier } from './store';
 import { EffectType, getIdentifier } from './store.utils';
 
 export interface ValidatedInputWithResult<InputType, ValidationType, ResultType> {
-  readonly currentInput: InputType;
+  readonly currentInput?: InputType;
   readonly validationPending: boolean;
   readonly validatedInput?: InputType;
   readonly validationResult?: ValidationType;
@@ -64,15 +64,12 @@ const resultInputGetter = <InputType, ValidationType>(
   isValidationResultValid: (validationResult: ValidationType) => boolean,
 ) =>
   store.getBehavior(validationBehaviorId).pipe(
-    tap(s => console.log('vali:', s)),
     filter(c => c.resultInput !== undefined && c.result !== undefined),
     filter(c => c.currentInput === c.resultInput),
     filter(c => isValidationResultValid(c.result as ValidationType)), // cast is OK, cause we checked for undefined in the first filter
     map(c => c.resultInput),
     distinctUntilChanged(),
     map(resultInput => resultInput as InputType), // cast is OK, cause we checked for undefined in the first filter
-    share(),
-    tap(s => console.log('result effect input:', s)),
   );
 
 const mapBehaviors = <InputType, ValidationType, ResultType>(
@@ -82,11 +79,11 @@ const mapBehaviors = <InputType, ValidationType, ResultType>(
   ],
   isValidationResultValid: (validationResult: ValidationType) => boolean,
 ) => ({
-  currentInput: r.currentInput,
+  currentInput: v.currentInput,
   validationPending: v.resultPending,
   validatedInput: v.resultInput,
   validationResult: v.result,
-  isValid: v.result ? isValidationResultValid(v.result) : false,
+  isValid: v.result !== undefined ? isValidationResultValid(v.result) : false,
   resultPending: r.resultPending,
   resultInput: r.resultInput,
   result: r.result,
@@ -108,10 +105,34 @@ const setupCombinedBehavior = <InputType, ValidationType, ResultType>(
     id,
     combineLatest([
       store.getBehavior(signals.signals.signals1.combinedBehavior),
-      store.getBehavior(signals.signals.signals2.combinedBehavior),
+      store.getBehavior(signals.signals.signals2.combinedBehavior).pipe(
+        startWith({
+          currentInput: undefined,
+          resultInput: undefined,
+          result: undefined,
+          resultPending: false,
+        }),
+      ),
     ]).pipe(
-      filter(([v, r]) => v.currentInput === r.currentInput),
+      filter(
+        ([v, r]) =>
+          v.resultPending ||
+          r.currentInput === v.resultInput ||
+          v.result === undefined ||
+          !isValidationResultValid(v.result),
+      ),
       map(pair => mapBehaviors(pair, isValidationResultValid)),
+      distinctUntilChanged(
+        (a, b) =>
+          a.currentInput === b.currentInput &&
+          a.isValid === b.isValid &&
+          a.result === b.result &&
+          a.resultInput === b.resultInput &&
+          a.resultPending === b.resultPending &&
+          a.validatedInput === b.validatedInput &&
+          a.validationPending === b.validationPending &&
+          a.validationResult === b.validationResult,
+      ),
     ),
   );
 };
