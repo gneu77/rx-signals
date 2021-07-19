@@ -1,5 +1,5 @@
 import { Observable, of, Subject } from 'rxjs';
-import { delay, shareReplay } from 'rxjs/operators';
+import { delay } from 'rxjs/operators';
 import { Signals } from '../src/signals-factory';
 import { Store } from '../src/store';
 import { EffectType, getIdentifier } from '../src/store.utils';
@@ -378,9 +378,7 @@ describe('validated input with result signals factory', () => {
       ).withTrigger();
       signals = factory.build();
       signals.setup(store);
-      observable = store
-        .getBehavior(signals.signals.combinedBehavior)
-        .pipe(shareReplay({ bufferSize: 1, refCount: true }));
+      observable = store.getBehavior(signals.signals.combinedBehavior);
     });
 
     it('should have correct sequence for input with explicit result trigger', async () => {

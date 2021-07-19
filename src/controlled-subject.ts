@@ -1,6 +1,6 @@
 /* eslint no-underscore-dangle: ["error", { "allow": ["_rxs_id"] }] */
 import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
-import { distinctUntilChanged, filter, share, shareReplay } from 'rxjs/operators';
+import { distinctUntilChanged, filter, share } from 'rxjs/operators';
 import { ContextHandle } from './context-handle';
 import { DelayedEventQueue } from './delayed-event-queue';
 import { NO_VALUE, SourceObservable } from './source-observable';
@@ -183,7 +183,6 @@ export class ControlledSubject<T> {
       ? this.subject.pipe(
           filter(value => value !== ((NO_VALUE as unknown) as T)),
           distinctUntilChanged(),
-          shareReplay({ bufferSize: 1, refCount: true }),
         )
       : this.delayedEventQueue.getQueueDelayedObservable(this.subject).pipe(share());
     localSources.forEach(source => {
