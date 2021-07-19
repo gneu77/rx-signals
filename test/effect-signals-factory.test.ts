@@ -607,12 +607,14 @@ describe('effect signals factory', () => {
       });
     });
 
-    describe('with custom input euqals', () => {
+    describe('with custom input equals', () => {
       let signals: EffectSignalsType<InputModel, ResultModel>;
       let observable: Observable<CombinedEffectResult<InputModel, ResultModel>>;
 
       beforeEach(() => {
-        const factoryResult = factory.withCustomEffectInputEquals((a, b) => a.searchString === b.searchString).build();
+        const factoryResult = factory
+          .withCustomEffectInputEquals((a, b) => a.searchString === b.searchString)
+          .build();
         signals = factoryResult.signals;
         factoryResult.setup(store);
         observable = store.getBehavior(signals.combinedBehavior);

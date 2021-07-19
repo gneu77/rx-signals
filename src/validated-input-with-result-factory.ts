@@ -51,6 +51,9 @@ export interface ValidatedInputWithResultSignalsFactory<
   withInitialResult: (
     resultGetter?: () => ResultType,
   ) => ValidatedInputWithResultSignalsFactory<InputType, ValidationType, ResultType, SignalsType>;
+  withCustomResultEffectInputEquals: (
+    resultEffectInputEquals: (a: InputType, b: InputType) => boolean,
+  ) => ValidatedInputWithResultSignalsFactory<InputType, ValidationType, ResultType, SignalsType>;
 }
 
 interface FactoryConfiguration<InputType, ValidationType, ResultType> {
@@ -58,6 +61,7 @@ interface FactoryConfiguration<InputType, ValidationType, ResultType> {
   validationEffect: EffectType<InputType, ValidationType>;
   isValidationResultValid: (validationResult: ValidationType) => boolean;
   resultEffect: EffectType<InputType, ResultType>;
+  resultEffectInputEquals: (a: InputType, b: InputType) => boolean;
   withResultTrigger?: boolean;
   initialResultGetter?: () => ResultType;
 }
@@ -170,7 +174,8 @@ const getValidatedInputWithTriggeredResultSignalsFactoryIntern = <
         config.resultEffect,
       )
         .withTrigger()
-        .withInitialResult(config.initialResultGetter),
+        .withInitialResult(config.initialResultGetter)
+        .withCustomEffectInputEquals(config.resultEffectInputEquals),
     )
     .fmap(signals => {
       const combinedBehavior = getIdentifier<
@@ -202,6 +207,13 @@ const getValidatedInputWithTriggeredResultSignalsFactoryIntern = <
         ...config,
         initialResultGetter,
       }),
+    withCustomResultEffectInputEquals: (
+      resultEffectInputEquals: (a: InputType, b: InputType) => boolean,
+    ) =>
+      getValidatedInputWithTriggeredResultSignalsFactoryIntern({
+        ...config,
+        resultEffectInputEquals,
+      }),
   };
 };
 
@@ -227,7 +239,9 @@ const getValidatedInputWithResultSignalsFactoryIntern = <InputType, ValidationTy
             config.isValidationResultValid,
           ),
         config.resultEffect,
-      ).withInitialResult(config.initialResultGetter),
+      )
+        .withInitialResult(config.initialResultGetter)
+        .withCustomEffectInputEquals(config.resultEffectInputEquals),
     )
     .fmap(signals => {
       const combinedBehavior = getIdentifier<
@@ -258,6 +272,13 @@ const getValidatedInputWithResultSignalsFactoryIntern = <InputType, ValidationTy
         ...config,
         initialResultGetter,
       }),
+    withCustomResultEffectInputEquals: (
+      resultEffectInputEquals: (a: InputType, b: InputType) => boolean,
+    ) =>
+      getValidatedInputWithResultSignalsFactoryIntern({
+        ...config,
+        resultEffectInputEquals,
+      }),
   };
 };
 
@@ -272,4 +293,5 @@ export const getValidatedInputWithResultSignalsFactory = <InputType, ValidationT
     validationEffect,
     isValidationResultValid,
     resultEffect,
+    resultEffectInputEquals: (a, b) => a === b,
   });

@@ -694,4 +694,181 @@ describe('validated input with result signals factory', () => {
       await sequence;
     });
   });
+
+  describe('with custom result input equals', () => {
+    let factory: ValidatedInputWithResultSignalsFactory<
+      InputModel,
+      ValidationResult,
+      ResultModel,
+      ValidatedInputWithResultSignalsType<InputModel, ValidationResult, ResultModel>
+    >;
+    let observable: Observable<ValidatedInputWithResult<InputModel, ValidationResult, ResultModel>>;
+
+    beforeEach(() => {
+      factory = getValidatedInputWithResultSignalsFactory(
+        s => s.getBehavior(inputStateId),
+        validationEffect,
+        validationResult => (validationResult === null ? true : false),
+        resultEffect,
+      ).withCustomResultEffectInputEquals((a, b) => a.searchString === b.searchString);
+      const signals = factory.build();
+      signals.setup(store);
+      observable = store.getBehavior(signals.signals.combinedBehavior);
+    });
+
+    it('should ignore changes in the page argument', async () => {
+      const sequence = expectSequence(observable, [
+        {
+          currentInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          validationPending: true,
+          isValid: false,
+          resultPending: false,
+        },
+        {
+          currentInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          validationPending: false,
+          isValid: true,
+          validatedInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          validationResult: null,
+          resultPending: true,
+        },
+        {
+          currentInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          validationPending: false,
+          isValid: true,
+          validatedInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          validationResult: null,
+          resultInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          result: {
+            results: [],
+            totalResults: 1,
+          },
+          resultPending: false,
+        },
+      ]);
+      inputSubject.next({
+        searchString: 'test',
+        page: 2,
+      });
+      await sequence;
+
+      const sequence2 = expectSequence(observable, [
+        {
+          currentInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          validationPending: false,
+          isValid: true,
+          validatedInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          validationResult: null,
+          resultInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          result: {
+            results: [],
+            totalResults: 1,
+          },
+          resultPending: false,
+        },
+        {
+          currentInput: {
+            searchString: 'test',
+            page: 3,
+          },
+          validationPending: true,
+          isValid: true,
+          validatedInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          validationResult: null,
+          resultInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          result: {
+            results: [],
+            totalResults: 1,
+          },
+          resultPending: false,
+        },
+        {
+          currentInput: {
+            searchString: 'test',
+            page: 4,
+          },
+          validationPending: true,
+          isValid: true,
+          validatedInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          validationResult: null,
+          resultInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          result: {
+            results: [],
+            totalResults: 1,
+          },
+          resultPending: false,
+        },
+        {
+          currentInput: {
+            searchString: 'test',
+            page: 4,
+          },
+          validationPending: false,
+          isValid: true,
+          validatedInput: {
+            searchString: 'test',
+            page: 4,
+          },
+          validationResult: null,
+          resultInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          result: {
+            results: [],
+            totalResults: 1,
+          },
+          resultPending: false,
+        },
+      ]);
+      inputSubject.next({
+        searchString: 'test',
+        page: 3,
+      });
+      inputSubject.next({
+        searchString: 'test',
+        page: 4,
+      });
+      await sequence2;
+    });
+  });
 });
