@@ -606,5 +606,105 @@ describe('effect signals factory', () => {
         expect(effectCalled).toBe(1);
       });
     });
+
+    describe('with custom input euqals', () => {
+      let signals: EffectSignalsType<InputModel, ResultModel>;
+      let observable: Observable<CombinedEffectResult<InputModel, ResultModel>>;
+
+      beforeEach(() => {
+        const factoryResult = factory.withCustomEffectInputEquals((a, b) => a.searchString === b.searchString).build();
+        signals = factoryResult.signals;
+        factoryResult.setup(store);
+        observable = store.getBehavior(signals.combinedBehavior);
+      });
+
+      it('should ignore changes in the page argument', async () => {
+        const sequence = expectSequence(observable, [
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            resultPending: true,
+          },
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            resultInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            result: {
+              results: [],
+              totalResults: 1,
+            },
+            resultPending: false,
+          },
+        ]);
+        inputSubject.next({
+          searchString: 'test',
+          page: 2,
+        });
+        await sequence;
+        const sequence2 = expectSequence(observable, [
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            resultInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            result: {
+              results: [],
+              totalResults: 1,
+            },
+            resultPending: false,
+          },
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 3,
+            },
+            resultInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            result: {
+              results: [],
+              totalResults: 1,
+            },
+            resultPending: false,
+          },
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 4,
+            },
+            resultInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            result: {
+              results: [],
+              totalResults: 1,
+            },
+            resultPending: false,
+          },
+        ]);
+        inputSubject.next({
+          searchString: 'test',
+          page: 3,
+        });
+        inputSubject.next({
+          searchString: 'test',
+          page: 4,
+        });
+        await sequence2;
+      });
+    });
   });
 });

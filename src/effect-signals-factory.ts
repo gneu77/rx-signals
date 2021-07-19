@@ -41,6 +41,7 @@ const getSignalIds = <InputType, ResultType>(): TriggeredEffectSignalsType<
 interface EffectFactoryConfiguration<InputType, ResultType> {
   inputGetter: (store: Store) => Observable<InputType>;
   effect: EffectType<InputType, ResultType>;
+  effectInputEquals: (a: InputType, b: InputType) => boolean;
   withTrigger?: boolean;
   initialResultGetter?: () => ResultType;
   effectDebounceTime?: number;
@@ -142,7 +143,9 @@ const getEffectBuilder = <IT, RT, SignalsType>(): FactoryBuild<
         eventSourceInput.pipe(
           filter(
             ([input, resultState, token]) =>
-              input !== resultState.resultInput || token !== resultState.resultToken,
+              token !== resultState.resultToken ||
+              resultState.resultInput === undefined ||
+              !config.effectInputEquals(input, resultState.resultInput),
           ),
           switchMap(([input, resultState, token, triggeredInput]) =>
             config.withTrigger && input !== triggeredInput
@@ -199,8 +202,12 @@ const getEffectBuilder = <IT, RT, SignalsType>(): FactoryBuild<
             resultInput: resultState.resultInput,
             resultPending: config.withTrigger
               ? input === triggeredInput &&
-                (input !== resultState.resultInput || token !== resultState.resultToken)
-              : input !== resultState.resultInput || token !== resultState.resultToken,
+                (token !== resultState.resultToken ||
+                  resultState.resultInput === undefined ||
+                  !config.effectInputEquals(input, resultState.resultInput))
+              : token !== resultState.resultToken ||
+                resultState.resultInput === undefined ||
+                !config.effectInputEquals(input, resultState.resultInput),
           })),
         ),
         config.initialResultGetter
@@ -233,7 +240,9 @@ export interface EffectSignalsFactory<InputType, ResultType, SignalsType>
   withEffectDebounce: (
     debounceMS: number,
   ) => EffectSignalsFactory<InputType, ResultType, SignalsType>;
-  // withCustomEffectInputEquals: (inputEquals: (input: InputType) => boolean) => EffectSignalsFactory<InputType, ResultType, SignalsType>;
+  withCustomEffectInputEquals: (
+    effectInputEquals: (a: InputType, b: InputType) => boolean,
+  ) => EffectSignalsFactory<InputType, ResultType, SignalsType>;
 }
 
 const getEffectSignalsFactoryIntern = <
@@ -265,10 +274,17 @@ const getEffectSignalsFactoryIntern = <
       ...config,
       initialResultGetter: resultGetter,
     });
-  const withEffectDebounce = (debounceMS: number) =>
+  const withEffectDebounce = (effectDebounceTime: number) =>
     getEffectSignalsFactoryIntern<InputType, ResultType, SignalsType>({
       ...config,
-      effectDebounceTime: debounceMS,
+      effectDebounceTime,
+    });
+  const withCustomEffectInputEquals = (
+    effectInputEquals: (a: InputType, b: InputType) => boolean,
+  ) =>
+    getEffectSignalsFactoryIntern<InputType, ResultType, SignalsType>({
+      ...config,
+      effectInputEquals,
     });
   factory = {
     build,
@@ -277,6 +293,7 @@ const getEffectSignalsFactoryIntern = <
     withTrigger,
     withInitialResult,
     withEffectDebounce,
+    withCustomEffectInputEquals,
   };
   return factory;
 };
@@ -288,6 +305,7 @@ export const getEffectSignalsFactory = <InputType, ResultType>(
   const config: EffectFactoryConfiguration<InputType, ResultType> = {
     inputGetter,
     effect,
+    effectInputEquals: (a, b) => a === b,
   };
   return getEffectSignalsFactoryIntern<
     InputType,
