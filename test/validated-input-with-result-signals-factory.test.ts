@@ -1,8 +1,9 @@
 import { Observable, of, Subject } from 'rxjs';
 import { delay } from 'rxjs/operators';
+import { EffectType } from '../src/effect-signals-factory';
 import { Signals } from '../src/signals-factory';
 import { Store } from '../src/store';
-import { EffectType, getIdentifier } from '../src/store.utils';
+import { getIdentifier } from '../src/store.utils';
 import {
   getValidatedInputWithResultSignalsFactory,
   ValidatedInputWithResult,

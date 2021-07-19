@@ -1,6 +1,7 @@
 import { NEVER } from 'rxjs';
 import { take } from 'rxjs/operators';
-import { Store, TypeIdentifier } from './../src/store';
+import { TypeIdentifier } from '../src/store.utils';
+import { Store } from './../src/store';
 describe('use the store for dependency injection', () => {
   interface IMyService {
     execute: (callback: () => any) => void;

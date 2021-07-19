@@ -1,6 +1,7 @@
 import { combineLatest, of } from 'rxjs';
 import { debounceTime, filter, map, switchMap } from 'rxjs/operators';
-import { Store, TypeIdentifier } from './../src/store';
+import { TypeIdentifier } from '../src/store.utils';
+import { Store } from './../src/store';
 import { awaitStringifyEqualState, expectSequence } from './test.utils';
 describe('Lazy query pattern', () => {
   interface ResultType {

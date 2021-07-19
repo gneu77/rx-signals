@@ -1,6 +1,7 @@
 import { of } from 'rxjs';
 import { filter, switchMap } from 'rxjs/operators';
-import { Store, TypeIdentifier } from '../src/store';
+import { Store } from '../src/store';
+import { TypeIdentifier } from '../src/store.utils';
 import { expectSequence } from './test.utils';
 
 describe('Event order', () => {
@@ -43,7 +44,16 @@ describe('Event order', () => {
   });
 
   it('should preserve the order in which events are dispatched 2', async () => {
-    const counterSequence = expectSequence(store.getBehavior(counterState), [0, 3, 6, 24, 27, 81, 82, 83]);
+    const counterSequence = expectSequence(store.getBehavior(counterState), [
+      0,
+      3,
+      6,
+      24,
+      27,
+      81,
+      82,
+      83,
+    ]);
 
     store.dispatchEvent(addEvent, 3); // => 3
     store.dispatchEvent(addEvent, 3); // => 6

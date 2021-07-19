@@ -1,5 +1,6 @@
 import { map, tap, withLatestFrom } from 'rxjs/operators';
-import { Store, TypeIdentifier } from './../src/store';
+import { TypeIdentifier } from '../src/store.utils';
+import { Store } from './../src/store';
 import { expectSequence } from './test.utils';
 describe('Behaviors share and reset logic', () => {
   const rootBehavior: TypeIdentifier<number> = { symbol: Symbol('RootBehavior') };

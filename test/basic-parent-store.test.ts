@@ -1,5 +1,6 @@
 import { of } from 'rxjs';
-import { Store, TypeIdentifier } from '../src/store';
+import { Store } from '../src/store';
+import { TypeIdentifier } from '../src/store.utils';
 import { expectSequence } from './test.utils';
 
 describe('Parent store', () => {

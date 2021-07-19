@@ -1,6 +1,7 @@
 import { interval, NEVER, of } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
-import { Store, TypeIdentifier } from '../src/store';
+import { Store } from '../src/store';
+import { TypeIdentifier } from '../src/store.utils';
 import { awaitCompletion, awaitError, expectSequence } from './test.utils';
 
 describe('Behavior basics', () => {

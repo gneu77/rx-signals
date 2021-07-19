@@ -1,6 +1,7 @@
 import { merge, of } from 'rxjs';
 import { filter, map, switchMap, withLatestFrom } from 'rxjs/operators';
-import { Store, TypeIdentifier } from '../src/store';
+import { Store } from '../src/store';
+import { TypeIdentifier } from '../src/store.utils';
 import { expectSequence } from './test.utils';
 
 describe('Event order', () => {

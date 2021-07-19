@@ -1,6 +1,7 @@
 import { interval, of, Subject } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Store, TypedEvent, TypeIdentifier } from './../src/store';
+import { TypeIdentifier } from '../src/store.utils';
+import { Store, TypedEvent } from './../src/store';
 import { awaitError, expectSequence, getSequence } from './test.utils';
 describe('Event streams', () => {
   const testEvent: TypeIdentifier<string> = { symbol: Symbol('TestEvent') };

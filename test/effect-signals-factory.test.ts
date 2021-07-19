@@ -4,11 +4,12 @@ import {
   CombinedEffectResult,
   EffectSignalsFactory,
   EffectSignalsType,
+  EffectType,
   getEffectSignalsFactory,
   TriggeredEffectSignalsType
 } from '../src/effect-signals-factory';
 import { Store } from '../src/store';
-import { EffectType, getIdentifier } from '../src/store.utils';
+import { getIdentifier } from '../src/store.utils';
 import { expectSequence, withSubscription } from './test.utils';
 
 describe('effect signals factory', () => {

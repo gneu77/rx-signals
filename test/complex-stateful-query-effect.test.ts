@@ -1,6 +1,7 @@
 import { combineLatest, of } from 'rxjs';
 import { filter, map, switchMap, withLatestFrom } from 'rxjs/operators';
-import { Store, TypeIdentifier } from './../src/store';
+import { TypeIdentifier } from '../src/store.utils';
+import { Store } from './../src/store';
 import { awaitStringifyEqualState, expectSequence } from './test.utils';
 describe('Stateful query pattern', () => {
   interface QueryType {
