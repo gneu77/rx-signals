@@ -235,7 +235,7 @@ export interface EffectSignalsFactory<InputType, ResultType, SignalsType>
     TriggeredEffectSignalsType<InputType, ResultType>
   >;
   withInitialResult: (
-    resultGetter: () => ResultType,
+    resultGetter?: () => ResultType,
   ) => EffectSignalsFactory<InputType, ResultType, SignalsType>;
   withEffectDebounce: (
     debounceMS: number,
@@ -269,7 +269,7 @@ const getEffectSignalsFactoryIntern = <
       ...config,
       withTrigger: true,
     });
-  const withInitialResult = (resultGetter: () => ResultType) =>
+  const withInitialResult = (resultGetter?: () => ResultType) =>
     getEffectSignalsFactoryIntern<InputType, ResultType, SignalsType>({
       ...config,
       initialResultGetter: resultGetter,

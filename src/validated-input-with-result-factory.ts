@@ -48,6 +48,9 @@ export interface ValidatedInputWithResultSignalsFactory<
     ResultType,
     ValidatedInputWithTriggeredResultSignalsType<InputType, ValidationType, ResultType>
   >;
+  withInitialResult: (
+    resultGetter?: () => ResultType,
+  ) => ValidatedInputWithResultSignalsFactory<InputType, ValidationType, ResultType, SignalsType>;
 }
 
 interface FactoryConfiguration<InputType, ValidationType, ResultType> {
@@ -56,6 +59,7 @@ interface FactoryConfiguration<InputType, ValidationType, ResultType> {
   isValidationResultValid: (validationResult: ValidationType) => boolean;
   resultEffect: EffectType<InputType, ResultType>;
   withResultTrigger?: boolean;
+  initialResultGetter?: () => ResultType;
 }
 
 const resultInputGetter = <InputType, ValidationType>(
@@ -99,6 +103,7 @@ const setupCombinedBehavior = <InputType, ValidationType, ResultType>(
   >,
   id: TypeIdentifier<ValidatedInputWithResult<InputType, ValidationType, ResultType>>,
   isValidationResultValid: (validationResult: ValidationType) => boolean,
+  initialResultGetter?: () => ResultType,
 ) => {
   signals.setup(store);
   store.addLazyBehavior(
@@ -109,7 +114,7 @@ const setupCombinedBehavior = <InputType, ValidationType, ResultType>(
         startWith({
           currentInput: undefined,
           resultInput: undefined,
-          result: undefined,
+          result: initialResultGetter ? initialResultGetter() : undefined,
           resultPending: false,
         }),
       ),
@@ -163,7 +168,9 @@ const getValidatedInputWithTriggeredResultSignalsFactoryIntern = <
             config.isValidationResultValid,
           ),
         config.resultEffect,
-      ).withTrigger(),
+      )
+        .withTrigger()
+        .withInitialResult(config.initialResultGetter),
     )
     .fmap(signals => {
       const combinedBehavior = getIdentifier<
@@ -190,6 +197,11 @@ const getValidatedInputWithTriggeredResultSignalsFactoryIntern = <
         ...config,
         withResultTrigger: true,
       }),
+    withInitialResult: (initialResultGetter?: () => ResultType) =>
+      getValidatedInputWithTriggeredResultSignalsFactoryIntern({
+        ...config,
+        initialResultGetter,
+      }),
   };
 };
 
@@ -215,7 +227,7 @@ const getValidatedInputWithResultSignalsFactoryIntern = <InputType, ValidationTy
             config.isValidationResultValid,
           ),
         config.resultEffect,
-      ),
+      ).withInitialResult(config.initialResultGetter),
     )
     .fmap(signals => {
       const combinedBehavior = getIdentifier<
@@ -240,6 +252,11 @@ const getValidatedInputWithResultSignalsFactoryIntern = <InputType, ValidationTy
       getValidatedInputWithTriggeredResultSignalsFactoryIntern({
         ...config,
         withResultTrigger: true,
+      }),
+    withInitialResult: (initialResultGetter?: () => ResultType) =>
+      getValidatedInputWithResultSignalsFactoryIntern({
+        ...config,
+        initialResultGetter,
       }),
   };
 };
