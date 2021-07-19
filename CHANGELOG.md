@@ -1,8 +1,9 @@
-# 2.6.0 (2021-07)
+# 2.6.0-rc1 (2021-07-19)
 
 ### Fixes
 
 - Fixed a bug for x-typed event sources with subscribeObservableOnlyIfEventIsSubscribed parameter: It was possible that the source was not already switched for one of the sources, when an event was already dispatched after the subscribeObservableOnlyIfEventIsSubscribed event was subscribed.
+- Removed all usage of shareReplay, because even with refCount, a case was encountered where shareReplay lead to a memory leak.
 
 ### Features
 

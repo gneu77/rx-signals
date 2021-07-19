@@ -4,11 +4,12 @@ import {
   CombinedEffectResult,
   EffectError,
   EffectSignalsType,
+  EffectType,
   getEffectSignalsFactory,
 } from './effect-signals-factory';
 import { MappedSignalsType, Signals, SignalsFactory } from './signals-factory';
-import { Store, TypeIdentifier } from './store';
-import { EffectType, getIdentifier } from './store.utils';
+import { Store } from './store';
+import { getIdentifier, TypeIdentifier } from './store.utils';
 
 export interface ValidatedInputWithResult<InputType, ValidationType, ResultType> {
   readonly currentInput?: InputType;

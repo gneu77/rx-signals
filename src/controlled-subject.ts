@@ -3,7 +3,8 @@ import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, share } from 'rxjs/operators';
 import { ContextHandle } from './context-handle';
 import { DelayedEventQueue } from './delayed-event-queue';
-import { NO_VALUE, SourceObservable } from './source-observable';
+import { SourceObservable } from './source-observable';
+import { NO_VALUE } from './store.utils';
 
 export interface ResetHandle {
   removeSources(): void;

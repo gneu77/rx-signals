@@ -1,7 +1,6 @@
 import { Observable, Subject, Subscription } from 'rxjs';
 import { ContextHandle } from './context-handle';
-
-export const NO_VALUE: symbol = Symbol('NO_VALUE');
+import { NO_VALUE } from './store.utils';
 
 export class SourceObservable<T> {
   private subscription: Subscription | null = null;

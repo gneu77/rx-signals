@@ -1,9 +1,15 @@
 import { combineLatest, Observable, of, throwError } from 'rxjs';
 import { catchError, debounceTime, filter, map, mapTo, switchMap } from 'rxjs/operators';
 import { Signals, SignalsFactory, signalsFactoryBind, signalsFactoryMap } from './signals-factory';
-import { NO_VALUE } from './source-observable';
-import { Store, TypeIdentifier } from './store';
-import { EffectType, getIdentifier } from './store.utils';
+import { Store } from './store';
+import { getIdentifier, NO_VALUE, TypeIdentifier } from './store.utils';
+
+export type EffectType<InputModel, ResultModel> = (
+  input: InputModel,
+  store: Store,
+  previousInput?: InputModel,
+  previousResult?: ResultModel,
+) => Observable<ResultModel>;
 
 export interface CombinedEffectResult<InputType, ResultType> {
   readonly currentInput?: InputType;

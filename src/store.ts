@@ -12,21 +12,8 @@ import {
 } from 'rxjs/operators';
 import { ControlledSubject } from './controlled-subject';
 import { DelayedEventQueue } from './delayed-event-queue';
-import { NO_VALUE, SourceObservable } from './source-observable';
-
-/**
- * The RX-SIGNALS Store uses this type to uniquely identify all of its behaviors and events.
- * A TypeIdentifier<T> does not make any use of the generic T itself, but is given this
- * parameter only as a trick to let Typescript infer and thus enforce the correct types.
- *
- * @typedef {object} TypeIdentifier<T> - interface for an object used to identify a certain behavior or event
- * @template T - specifies the type for the corresponding behavior or event observable
- * @property {symbol} symbol - a symbol, making the TypeIdentifier unique
- */
-export interface TypeIdentifier<T> {
-  _typeTemplate?: T | undefined; // should always be undefined (just here to make TS happy)
-  readonly symbol: symbol;
-}
+import { SourceObservable } from './source-observable';
+import { NO_VALUE, TypeIdentifier } from './store.utils';
 
 /**
  * The RX-SIGNALS Store uses the TypedEvent<T> interface to bundle certain event and their
