@@ -1,13 +1,14 @@
-# 2.6.0-rc1 (2021-07-19)
+# 2.6.0 (2021-07)
 
 ### Fixes
 
 - Fixed a bug for x-typed event sources with subscribeObservableOnlyIfEventIsSubscribed parameter: It was possible that the source was not already switched for one of the sources, when an event was already dispatched after the subscribeObservableOnlyIfEventIsSubscribed event was subscribed.
 - Removed all usage of shareReplay, because even with refCount, a case was encountered where shareReplay lead to a memory leak.
 
-### Features
+### Improvements
 
-- Generalized and simplified the signal factories API
+- Generalized and simplified the signal factories API. The factories now compose naturally via bind (aka flatMap). The the validated-input-with-result-factory for an (admittedly complex) example.
+- Changed concept for usage of parent-child stores (yes, a breaking change in a minor version, but this was not yet used by anyone). Child stores must now be created via corresponding method on the parent. Child store behaviors now always use child sources, if available, else fall back on the parent.
 
 # 2.5.5 (2021-07-08)
 

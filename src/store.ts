@@ -68,10 +68,20 @@ export class Store {
     new Map<symbol, ControlledSubject<any>>(),
   );
 
-  constructor(private parentStore?: Store) {}
+  private parentStore: Store | null = null;
+
+  private setParentStore(parent: Store): void {
+    this.parentStore = parent;
+  }
 
   getParentStore(): Store | null {
     return this.parentStore ?? null;
+  }
+
+  createChildStore(): Store {
+    const childStore = new Store();
+    childStore.setParentStore(this);
+    return childStore;
   }
 
   /**
@@ -227,8 +237,17 @@ export class Store {
    * @returns {Observable<T>} - the behavior observable (shared and distinct)
    */
   getBehavior<T>(identifier: TypeIdentifier<T>): Observable<T> {
-    if (this.parentStore && this.parentStore.hasBehavior(identifier)) {
-      return this.parentStore.getBehavior(identifier);
+    if (this.parentStore) {
+      const parent: Store = this.parentStore;
+      return this.behaviorsSubject
+        .asObservable()
+        .pipe(
+          switchMap(s =>
+            (s.get(identifier.symbol)?.getNumberOfSources() ?? 0) > 0
+              ? this.getBehaviorControlledSubject(identifier).getObservable()
+              : parent.getBehavior(identifier),
+          ),
+        );
     }
     return this.getBehaviorControlledSubject(identifier).getObservable();
   }
@@ -648,10 +667,6 @@ export class Store {
    */
   getNumberOfEventSources<T>(eventIdentifier: TypeIdentifier<T>): number {
     return this.getEventStreamControlledSubject(eventIdentifier).getNumberOfSources();
-  }
-
-  private hasBehavior<T>(identifier: TypeIdentifier<T>): boolean {
-    return this.behaviors.has(identifier.symbol);
   }
 
   private getDependentObservable<T>(
