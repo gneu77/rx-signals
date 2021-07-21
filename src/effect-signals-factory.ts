@@ -23,9 +23,15 @@ export interface EffectError<InputType> {
   readonly errorInput: InputType;
 }
 
+export interface EffectSuccess<InputType, ResultType> {
+  readonly result: ResultType;
+  readonly resultInput: InputType;
+}
+
 export interface EffectSignalsType<InputType, ResultType> {
   readonly combinedBehavior: TypeIdentifier<CombinedEffectResult<InputType, ResultType>>;
   readonly errorEvents: TypeIdentifier<EffectError<InputType>>;
+  readonly successEvents: TypeIdentifier<EffectSuccess<InputType, ResultType>>;
   readonly invalidateEvent: TypeIdentifier<void>;
 }
 
@@ -40,6 +46,7 @@ const getSignalIds = <InputType, ResultType>(): TriggeredEffectSignalsType<
 > => ({
   combinedBehavior: getIdentifier<CombinedEffectResult<InputType, ResultType>>(),
   errorEvents: getIdentifier<EffectError<InputType>>(),
+  successEvents: getIdentifier<EffectSuccess<InputType, ResultType>>(),
   invalidateEvent: getIdentifier<void>(),
   triggerEvent: getIdentifier<void>(),
 });
@@ -141,11 +148,12 @@ const getEffectBuilder = <IT, RT, SignalsType>(): FactoryBuild<
           ? combined
           : combined.pipe(debounceTime(config.effectDebounceTime));
 
-      store.add3TypedEventSource(
+      store.add4TypedEventSource(
         Symbol(''),
         resultEvent,
         triggeredInputEvent,
         ids.errorEvents,
+        ids.successEvents,
         eventSourceInput.pipe(
           filter(
             ([input, resultState, token]) =>
@@ -167,14 +175,25 @@ const getEffectBuilder = <IT, RT, SignalsType>(): FactoryBuild<
                   resultState.resultInput,
                   resultState.result,
                 ).pipe(
-                  map(result => ({
-                    type: resultEvent,
-                    event: {
-                      result,
-                      resultInput: input,
-                      resultToken: token,
-                    },
-                  })),
+                  switchMap(result =>
+                    of(
+                      {
+                        type: resultEvent,
+                        event: {
+                          result,
+                          resultInput: input,
+                          resultToken: token,
+                        },
+                      },
+                      {
+                        type: ids.successEvents,
+                        event: {
+                          result,
+                          resultInput: input,
+                        },
+                      },
+                    ),
+                  ),
                   catchError(error =>
                     of(
                       {

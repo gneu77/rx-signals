@@ -320,6 +320,60 @@ describe('effect signals factory', () => {
         await sequence;
       });
 
+      it('should not subscribe the effect, if only the success event is subscribed', async () => {
+        const sequence3 = expectSequence(store.getEventStream(signals.successEvents), [
+          {
+            result: {
+              results: [],
+              totalResults: 1,
+            },
+            resultInput: {
+              searchString: 'test',
+              page: 4,
+            },
+          },
+        ]);
+        expect(store.isSubscribed(signals.combinedBehavior)).toBe(false);
+        inputSubject.next({
+          searchString: 'test',
+          page: 2,
+        });
+        inputSubject.next({
+          searchString: 'test',
+          page: 3,
+        });
+        inputSubject.next({
+          searchString: 'test',
+          page: 4,
+        });
+        const sequence = expectSequence(observable, [
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 4,
+            },
+            resultPending: true,
+          },
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 4,
+            },
+            resultPending: false,
+            resultInput: {
+              searchString: 'test',
+              page: 4,
+            },
+            result: {
+              results: [],
+              totalResults: 1,
+            },
+          },
+        ]);
+        await sequence3;
+        await sequence;
+      });
+
       it('should invalidate existing results while unsubscribed', async () => {
         const sequence = expectSequence(observable, [
           {

@@ -4,6 +4,7 @@ import {
   CombinedEffectResult,
   EffectError,
   EffectSignalsType,
+  EffectSuccess,
   EffectType,
   getEffectSignalsFactory,
 } from './effect-signals-factory';
@@ -27,8 +28,10 @@ export interface ValidatedInputWithResultSignalsType<InputType, ValidationType, 
     ValidatedInputWithResult<InputType, ValidationType, ResultType>
   >;
   readonly validationErrorEvents: TypeIdentifier<EffectError<InputType>>;
+  readonly validationSuccessEvents: TypeIdentifier<EffectSuccess<InputType, ValidationType>>;
   readonly validationInvalidateEvent: TypeIdentifier<void>;
   readonly resultErrorEvents: TypeIdentifier<EffectError<InputType>>;
+  readonly resultSuccessEvents: TypeIdentifier<EffectSuccess<InputType, ResultType>>;
   readonly resultInvalidateEvent: TypeIdentifier<void>;
 }
 
@@ -189,8 +192,10 @@ const getValidatedInputWithTriggeredResultSignalsFactoryIntern = <
         signals: {
           combinedBehavior,
           validationErrorEvents: signals.signals.signals1.errorEvents,
+          validationSuccessEvents: signals.signals.signals1.successEvents,
           validationInvalidateEvent: signals.signals.signals1.invalidateEvent,
           resultErrorEvents: signals.signals.signals2.errorEvents,
+          resultSuccessEvents: signals.signals.signals2.successEvents,
           resultInvalidateEvent: signals.signals.signals2.invalidateEvent,
           resultTriggerEvent: signals.signals.signals2.triggerEvent,
         },
@@ -255,8 +260,10 @@ const getValidatedInputWithResultSignalsFactoryIntern = <InputType, ValidationTy
         signals: {
           combinedBehavior,
           validationErrorEvents: signals.signals.signals1.errorEvents,
+          validationSuccessEvents: signals.signals.signals1.successEvents,
           validationInvalidateEvent: signals.signals.signals1.invalidateEvent,
           resultErrorEvents: signals.signals.signals2.errorEvents,
+          resultSuccessEvents: signals.signals.signals2.successEvents,
           resultInvalidateEvent: signals.signals.signals2.invalidateEvent,
         },
       };
