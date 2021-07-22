@@ -1,4 +1,4 @@
-import { asyncScheduler, BehaviorSubject, combineLatest, NEVER, Observable, of } from 'rxjs';
+import { asyncScheduler, BehaviorSubject, combineLatest, merge, NEVER, Observable, of } from 'rxjs';
 import {
   delay,
   distinctUntilChanged,
@@ -54,7 +54,7 @@ export type StateReducer<T, E> = (state: T, event: E) => T;
  * @class Store
  */
 export class Store {
-  private readonly delayedEventQueue = new DelayedEventQueue();
+  private delayedEventQueue = new DelayedEventQueue();
 
   private readonly behaviors = new Map<symbol, ControlledSubject<any>>();
 
@@ -70,17 +70,22 @@ export class Store {
 
   private parentStore: Store | null = null;
 
-  private setParentStore(parent: Store): void {
-    this.parentStore = parent;
-  }
-
   getParentStore(): Store | null {
     return this.parentStore ?? null;
   }
 
+  getRootStore(): Store {
+    let result: Store = this;
+    while (result.parentStore) {
+      result = result.parentStore;
+    }
+    return result;
+  }
+
   createChildStore(): Store {
     const childStore = new Store();
-    childStore.setParentStore(this);
+    childStore.parentStore = this;
+    childStore.delayedEventQueue = this.delayedEventQueue;
     return childStore;
   }
 
@@ -232,6 +237,9 @@ export class Store {
    * Please note, that all behaviors are shared and distinct value streams (hence you do not
    * have to pipe with distinctUntilChanged and shareReplay yourself). The sharing behaves like
    * shareReplay(1), but without the risk of a memory leak that would be possible with shareReplay(1).
+   * If this store has a parent store, then as long as no behavior source is added for the child, the
+   * behavior will be received from the parent. As soon, as a corresponding source is added to the child,
+   * you will receive the behavior values from the child.
    *
    * @param {TypeIdentifier<T>} identifier - the unique identifier for the behavior
    * @returns {Observable<T>} - the behavior observable (shared and distinct)
@@ -583,12 +591,16 @@ export class Store {
    * Please note, that all observables for the same identifier are already piped with delay(1, asyncScheduler)
    * and share(). So events will always be received asynchronously (expecting synchronous event dispatch would
    * be a strong indicator of flawed design, because it would mean your code is not reactive).
+   * If this store has a parent store, events from both, parent and child will be observed (merged).
    *
    * @param {TypeIdentifier<T>} identifier - the unique identifier for the event
    * @returns {Observable<T>} - the behavior observable for the events (with delay(1, asyncScheduler) and share())
    */
   getEventStream<T>(identifier: TypeIdentifier<T>): Observable<T> {
-    return this.getEventStreamControlledSubject(identifier).getObservable();
+    return merge(
+      this.getEventStreamControlledSubject(identifier).getObservable(),
+      this.parentStore ? this.parentStore.getEventStream(identifier) : NEVER,
+    );
   }
 
   /**
@@ -598,14 +610,17 @@ export class Store {
    * @returns {Observable<TypedEvent<T>>} - the observable for the typed events
    */
   getTypedEventStream<T>(identifier: TypeIdentifier<T>): Observable<TypedEvent<T>> {
-    return this.getEventStreamControlledSubject(identifier)
-      .getObservable()
-      .pipe(
-        map(event => ({
-          type: identifier,
-          event,
-        })),
-      );
+    return merge(
+      this.getEventStreamControlledSubject(identifier)
+        .getObservable()
+        .pipe(
+          map(event => ({
+            type: identifier,
+            event,
+          })),
+        ),
+      this.parentStore ? this.parentStore.getTypedEventStream(identifier) : NEVER,
+    );
   }
 
   /**
