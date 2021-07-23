@@ -1,16 +1,38 @@
 import { combineLatest, Observable, of, throwError } from 'rxjs';
 import { catchError, debounceTime, filter, map, mapTo, switchMap } from 'rxjs/operators';
-import { Signals, SignalsFactory, signalsFactoryBind, signalsFactoryMap } from './signals-factory';
+import { createSignalsFactory, Signals, SignalsFactory } from './signals-factory';
 import { Store } from './store';
 import { getIdentifier, NO_VALUE, TypeIdentifier } from './store.utils';
 
-export type EffectType<InputModel, ResultModel> = (
-  input: InputModel,
+/**
+ * This type specifies the effect function that must be supplied to create an EffectSignalsFactory
+ *
+ * @typedef {function} EffectType<InputModel, ResultModel> - function performing an effect and returning an observable with the result
+ * @template InputType - specifies the input type for the effect
+ * @template ResultType - specifies the result type for the effect
+ * @property {InputType} input - the effect input
+ * @property {Store} store - the Store instance that will be passed to the function
+ * @property {InputType | undefined} previousInput - the input of the previous function invocation, or undefined
+ * @property {ResultType | undefined} previousResult - the result of the previous function invocation, or undefined
+ */
+export type EffectType<InputType, ResultType> = (
+  input: InputType,
   store: Store,
-  previousInput?: InputModel,
-  previousResult?: ResultModel,
-) => Observable<ResultModel>;
+  previousInput?: InputType,
+  previousResult?: ResultType,
+) => Observable<ResultType>;
 
+/**
+ * This interface specifies the type for the lazy behavior produced by an EffectSignalsFactory.
+ *
+ * @typedef {object} CombinedEffectResult<InputType, ResultType> - interface for the behavior produced by effect signal factories
+ * @template InputType - specifies the input type for the effect
+ * @template ResultType - specifies the result type of the effect
+ * @property {InputType | undefined} currentInput - current input (which might differ from the resultInput)
+ * @property {InputType | undefined} resultInput - the input that produced the current result (or undefined, if result is undefined)
+ * @property {ResultType | undefined} result - the current result (or undefined, if no result was received yet)
+ * @property {boolean} resultPending - indicates whether the effect is currently running. (In case of a factory without trigger, this will be true whenever currentInput !== resultInput, or whenever an invalidation event has been sent)
+ */
 export interface CombinedEffectResult<InputType, ResultType> {
   readonly currentInput?: InputType;
   readonly result?: ResultType;
@@ -18,16 +40,44 @@ export interface CombinedEffectResult<InputType, ResultType> {
   readonly resultPending: boolean;
 }
 
+/**
+ * Interface for error events produced by an EffectSignalsFactory (unhandled effect errors).
+ *
+ * @typedef {object} EffectError<InputType> - interface for error events produced by effect signal factories
+ * @template InputType - specifies the input type for the effect
+ * @property {any} error - the unhandled error thrown by an effect
+ * @property {InputType} errorInput - the effect input that lead to the error
+ */
 export interface EffectError<InputType> {
   readonly error: any;
   readonly errorInput: InputType;
 }
 
+/**
+ * Interface for success events produced by an EffectSignalsFactory.
+ *
+ * @typedef {object} EffectSuccess<InputType, ResultType> - interface for success events produced by effect signal factories
+ * @template InputType - specifies the input type for the effect
+ * @template ResultType - specifies the result type of the effect
+ * @property {ResultType} result - the effect result
+ * @property {InputType} resultInput - the effect input that lead to the result
+ */
 export interface EffectSuccess<InputType, ResultType> {
   readonly result: ResultType;
   readonly resultInput: InputType;
 }
 
+/**
+ * Interface specifying the signals of an EffectSignalsFactory.
+ *
+ * @typedef {object} EffectSignalsType<InputType, ResultType> - object holding the signal identifiers of effect signal factories
+ * @template InputType - specifies the input type for the effect
+ * @template ResultType - specifies the result type of the effect
+ * @property {TypeIdentifier<CombinedEffectResult<InputType, ResultType>>} combinedBehavior - identifier for the produced combined effect result behavior
+ * @property {TypeIdentifier<EffectError<InputType>>} errorEvents - identifier for the produced error events
+ * @property {TypeIdentifier<EffectSuccess<InputType, ResultType>>} successEvents - identifier for the produced success events
+ * @property {TypeIdentifier<void>} invalidateEvent - identifier for the invalidation event that can be dispatched to trigger re-evaluation of the current input under the given effect
+ */
 export interface EffectSignalsType<InputType, ResultType> {
   readonly combinedBehavior: TypeIdentifier<CombinedEffectResult<InputType, ResultType>>;
   readonly errorEvents: TypeIdentifier<EffectError<InputType>>;
@@ -35,6 +85,14 @@ export interface EffectSignalsType<InputType, ResultType> {
   readonly invalidateEvent: TypeIdentifier<void>;
 }
 
+/**
+ * This interface extends the EffectSignalsType interface for manually triggered effects.
+ *
+ * @typedef {object} TriggeredEffectSignalsType<InputType, ResultType> - object holding the signal identifiers of effect signal factories with effect trigger event
+ * @template InputType - specifies the input type for the effect
+ * @template ResultType - specifies the result type of the effect
+ * @property {TypeIdentifier<void>} triggerEvent - identifier for the trigger event that can be dispatched to trigger the effect
+ */
 export interface TriggeredEffectSignalsType<InputType, ResultType>
   extends EffectSignalsType<InputType, ResultType> {
   readonly triggerEvent: TypeIdentifier<void>;
@@ -252,6 +310,30 @@ const getEffectBuilder = <IT, RT, SignalsType>(): FactoryBuild<
   return build;
 };
 
+/**
+ * This is interface specifies effect signal factories (extending signal factories). An effect signals factory is a signals factory
+ * to generically handle sideeffects. Futhermore, they are implemeted as builders to allow for easy custom configuration.
+ * An effect signals factory fulfills the following requirements:
+ * 1.) The produced CombinedEffectResult<InputType, ResultType> behavior must be lazy, hence, as long as it is not subscribed,
+ *     no effect will be triggered.
+ * 2.) Unhandled effect errors are caught by the factory and dispatched as EffectError<InputType>. As subscription of the corresponding
+ *     errors event stream will NOT subscribe the result behavior (see requirement 1).
+ * 3.) In addition to the result behavior, also an event stream for EffectSuccess<InputType, ResultType> is provided. This is important
+ *     in cases where an effect success should be used to trigger something else (e.g. close a popup), but you cannot use the result
+ *     behavior, because it would mean to always subscribe the result (in contrast, subscription of the success event stream will NOT
+ *     subscribe the result behavior).
+ *
+ * See the property descriptions for further configurable requirements.
+ *
+ * @typedef {object} EffectSignalsFactory<InputType, ResultType, SignalsType>
+ * @template InputType - specifies the input type for the effect
+ * @template ResultType - specifies the result type of the effect
+ * @template SignalsType - specifies the concrete signals type (depends on configuration)
+ * @property {function} withTrigger - returns a factory with TriggeredEffectSignalsType<InputType, ResultType>. In contrast to the factory without trigger, the resulting factory will pass input to the effect only if a corresponding trigger event is received (e.g. a save button has been clicked).
+ * @property {function} withInitialResult - resturns a factory that provides an initial result in the result behavior. For more flexibility, instead of the result itself, this function takes a function providing the initial result as argument.
+ * @property {function} withEffectDebounce - returns a factory that uses the specified time to debounce the result effect. This is different from debouncing the input yourself! If you debounce the input yourself, then also the currentInput in the result behavior will be debounced (hence the whole result behavior will be debounced). In contrast, if you use this function, then only the result effect itself will be debounced.
+ * @property {function} withCustomEffectInputEquals - by default, reference equals is used to make the effect input distinct. However, this functio will return a factory that uses the provided custom equals function instead.
+ */
 export interface EffectSignalsFactory<InputType, ResultType, SignalsType>
   extends SignalsFactory<SignalsType> {
   withTrigger: () => EffectSignalsFactory<
@@ -278,13 +360,7 @@ const getEffectSignalsFactoryIntern = <
   config: EffectFactoryConfiguration<InputType, ResultType>,
 ): EffectSignalsFactory<InputType, ResultType, SignalsType> => {
   const builder = getEffectBuilder<InputType, ResultType, SignalsType>();
-  let factory: EffectSignalsFactory<InputType, ResultType, SignalsType>;
   const build = (): Signals<SignalsType> => builder(config);
-  const bind = <SignalsType2>(
-    mapper: (signals: Signals<SignalsType>) => SignalsFactory<SignalsType2>,
-  ) => signalsFactoryBind(factory, mapper);
-  const fmap = <SignalsType2>(mapper: (signals: Signals<SignalsType>) => Signals<SignalsType2>) =>
-    signalsFactoryMap(factory, mapper);
   const withTrigger = () =>
     getEffectSignalsFactoryIntern<
       InputType,
@@ -311,18 +387,24 @@ const getEffectSignalsFactoryIntern = <
       ...config,
       effectInputEquals,
     });
-  factory = {
-    build,
-    bind,
-    fmap,
+  return {
+    ...createSignalsFactory(build),
     withTrigger,
     withInitialResult,
     withEffectDebounce,
     withCustomEffectInputEquals,
   };
-  return factory;
 };
 
+/**
+ * This function creates a configurable EffectSignalsFactory<InputType, ResultType, SignalsType>.
+ *
+ * @template InputType - specifies the input type for the effect
+ * @template ResultType - specifies the result type of the effect
+ * @param {function} inputGetter - a function providing an Observable<InputType>
+ * @param {function} effect - a function implementing EffectType<InputType, ResultType>
+ * @returns {EffectSignalsFactory<InputType, ResultType, EffectSignalsType<InputType, ResultType>>}
+ */
 export const getEffectSignalsFactory = <InputType, ResultType>(
   inputGetter: (store: Store) => Observable<InputType>,
   effect: EffectType<InputType, ResultType>,

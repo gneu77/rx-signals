@@ -8,8 +8,6 @@ export {
   TriggeredEffectSignalsType,
 } from './effect-signals-factory';
 export {
-  concreteFactoryBind,
-  concreteFactoryMap,
   MappedSignalsType,
   Signals,
   SignalsFactory,

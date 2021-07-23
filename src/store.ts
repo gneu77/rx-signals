@@ -70,10 +70,21 @@ export class Store {
 
   private parentStore: Store | null = null;
 
+  /**
+   * Get the parent store of this store, or null in case it has no parent store.
+   *
+   * @returns {Store | null}
+   */
   getParentStore(): Store | null {
     return this.parentStore ?? null;
   }
 
+  /**
+   * Get the root store of this store, in case this store is a child store in a hierarchy of parent-child stores.
+   * Return itself, if this store has no parent.
+   *
+   * @returns {Store}
+   */
   getRootStore(): Store {
     let result: Store = this;
     while (result.parentStore) {
@@ -82,6 +93,17 @@ export class Store {
     return result;
   }
 
+  /**
+   * Create and return a child store of this store. Event-subscribers of the child store will receive
+   * events from the parent (and its parents) and their own events (see getEventStream). However,
+   * events dispatched on the child will not propagate to the parent. The child will use the same event
+   * queue as the parent to ensure correct event order even between parent-child boundaries.
+   * Behavior-subscribers of the child will receive the observable from the parent, as long as no
+   * corresponding behavior source is added to the child. It will switch to the child, once a source is
+   * added there (see getBehavior).
+   *
+   * @returns {Store}
+   */
   createChildStore(): Store {
     const childStore = new Store();
     childStore.parentStore = this;

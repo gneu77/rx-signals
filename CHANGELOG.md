@@ -1,4 +1,4 @@
-# 2.6.0 (2021-07)
+# 2.6.0 (2021-07-23)
 
 ### Fixes
 
@@ -7,7 +7,7 @@
 
 ### Improvements
 
-- Generalized and simplified the signal factories API. The factories now compose naturally via bind (aka flatMap). The the validated-input-with-result-factory for an (admittedly complex) example.
+- Generalized and simplified the signal factories API. The factories are now monadic and naturally compose via bind (aka flatMap). See the validated-input-with-result-factory for an (admittedly complex) example.
 - Changed concept for usage of parent-child stores (yes, a breaking change in a minor version, but this was not yet used by anyone). Child stores must now be created via corresponding method on the parent. Child store behaviors now always use child sources, if available, else fall back on the parent.
 
 # 2.5.5 (2021-07-08)
