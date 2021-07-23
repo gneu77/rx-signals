@@ -8,6 +8,7 @@ export {
   TriggeredEffectSignalsType,
 } from './effect-signals-factory';
 export {
+  createSignalsFactory,
   MappedSignalsType,
   Signals,
   SignalsFactory,

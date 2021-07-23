@@ -1,3 +1,9 @@
+# 2.6.1 (2021-07-23)
+
+### Fixes
+
+- The new convenience function createSignalsFactory was missing in the index.ts
+
 # 2.6.0 (2021-07-23)
 
 ### Fixes
