@@ -252,6 +252,31 @@ export class Store {
   }
 
   /**
+   * This method removes all sources for all behaviors and all event
+   * streams and then completes them for all current subscribers.
+   * This should be used to end a stores lifetime (e.g. a child store), to make
+   * sure no non-lazy subscriptions keep the store a life (hence avoiding memory leaks).
+   *
+   * @returns {void}
+   */
+  completeAllSignals(): void {
+    [...this.behaviors.keys()].forEach(key => {
+      const behavior = this.behaviors.get(key);
+      behavior?.removeAllSources();
+      behavior?.complete();
+      this.behaviors.delete(key);
+    });
+    [...this.eventStreams.keys()].forEach(key => {
+      const eventStream = this.eventStreams.get(key);
+      eventStream?.removeAllSources();
+      eventStream?.complete();
+      this.eventStreams.delete(key);
+    });
+    this.behaviorsSubject.next(this.behaviors);
+    this.eventStreamsSubject.next(this.eventStreams);
+  }
+
+  /**
    * This method returns the behavior specified by identifier. It does not matter, if a source
    * for the behavior has already been added or not. If a source has already been added, a
    * subscriber will get the latest value from the source. Else, a subscriber will get the

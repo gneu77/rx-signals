@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs';
 import { map, withLatestFrom } from 'rxjs/operators';
 import { Store } from '../src/store';
-import { getIdentifier } from './../src/store.utils';
+import { getIdentifier } from '../src/store.utils';
 import { expectSequence } from './test.utils';
 
 describe('shared behavior state', () => {

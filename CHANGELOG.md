@@ -1,3 +1,9 @@
+# 2.6.2 ()
+
+### Features
+
+- added **completeAllSignals** to store API, to take care of store cleanup (e.g. if the lifetime of a child store ends)
+
 # 2.6.1 (2021-07-23)
 
 ### Fixes

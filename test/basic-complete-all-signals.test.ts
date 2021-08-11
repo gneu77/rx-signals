@@ -1,0 +1,56 @@
+import { merge, Observable } from 'rxjs';
+import { map, mapTo, withLatestFrom } from 'rxjs/operators';
+import { Store } from '../src/store';
+import { getIdentifier } from '../src/store.utils';
+import { expectSequence } from './test.utils';
+
+describe('completeAllSignals', () => {
+  let store: Store;
+  let calculationCalled = 0;
+
+  const calculator = (input: number) => {
+    calculationCalled = calculationCalled + 1;
+    return input * 2;
+  };
+
+  const id = getIdentifier<number>();
+  const calculateEvent = getIdentifier<void>();
+
+  let observable: Observable<number>;
+
+  beforeEach((): void => {
+    store = new Store();
+    calculationCalled = 0;
+
+    store.addNonLazyBehavior(
+      id,
+      store.getEventStream(calculateEvent).pipe(
+        withLatestFrom(store.getBehavior(id)),
+        map(pair => calculator(pair[1])),
+      ),
+      1,
+    );
+
+    observable = store.getBehavior(id);
+  });
+
+  it('should not do anything after a call to completeAllSignals', async () => {
+    const sequence = expectSequence(observable, [1, 2, 4, 8]);
+    store.dispatchEvent(calculateEvent, null);
+    store.dispatchEvent(calculateEvent, null);
+    store.dispatchEvent(calculateEvent, null);
+    await sequence;
+    await expectSequence(observable, [8]);
+    expect(calculationCalled).toBe(3);
+    expect(store.isSubscribed(calculateEvent)).toBe(true);
+
+    store.completeAllSignals();
+    expect(store.isSubscribed(calculateEvent)).toBe(false);
+    const sequence2 = expectSequence(merge(store.getEventStream(calculateEvent).pipe(mapTo(3)), observable), [3, 3]);
+    store.dispatchEvent(calculateEvent, null);
+    store.dispatchEvent(calculateEvent, null);
+    await sequence2;
+    expect(calculationCalled).toBe(3);
+    expect(store.isSubscribed(calculateEvent)).toBe(false);
+  });
+});
