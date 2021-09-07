@@ -177,7 +177,8 @@ const getEffectBuilder = <IT, RT, SignalsType>(): FactoryBuild<
         null,
       );
 
-      // It is important to setup the combined observable as behavior, because a simple shareReplay (event with refCount) creates a memory leak!!!
+      // It is important to setup the combined observable as behavior,
+      // because a simple shareReplay (event with refCount) would create a memory leak!!!
       const combinedId = getIdentifier<
         [
           IT,
@@ -311,12 +312,13 @@ const getEffectBuilder = <IT, RT, SignalsType>(): FactoryBuild<
 };
 
 /**
- * This is interface specifies effect signal factories (extending signal factories). An effect signals factory is a signals factory
- * to generically handle sideeffects. Futhermore, they are implemeted as builders to allow for easy custom configuration.
+ * This interface specifies effect signal factories (extending signal factories). An effect signals factory is a signals factory
+ * to generically handle sideeffects (hence, an abstraction over sideeffects). Furthermore, they are implemeted as builders to
+ * allow for easy custom configuration.
  * An effect signals factory fulfills the following requirements:
  * 1.) The produced CombinedEffectResult<InputType, ResultType> behavior must be lazy, hence, as long as it is not subscribed,
  *     no effect will be triggered.
- * 2.) Unhandled effect errors are caught by the factory and dispatched as EffectError<InputType>. As subscription of the corresponding
+ * 2.) Unhandled effect errors are caught by the factory and dispatched as EffectError<InputType>. A subscription of the corresponding
  *     errors event stream will NOT subscribe the result behavior (see requirement 1).
  * 3.) In addition to the result behavior, also an event stream for EffectSuccess<InputType, ResultType> is provided. This is important
  *     in cases where an effect success should be used to trigger something else (e.g. close a popup), but you cannot use the result
@@ -330,9 +332,9 @@ const getEffectBuilder = <IT, RT, SignalsType>(): FactoryBuild<
  * @template ResultType - specifies the result type of the effect
  * @template SignalsType - specifies the concrete signals type (depends on configuration)
  * @property {function} withTrigger - returns a factory with TriggeredEffectSignalsType<InputType, ResultType>. In contrast to the factory without trigger, the resulting factory will pass input to the effect only if a corresponding trigger event is received (e.g. a save button has been clicked).
- * @property {function} withInitialResult - resturns a factory that provides an initial result in the result behavior. For more flexibility, instead of the result itself, this function takes a function providing the initial result as argument.
+ * @property {function} withInitialResult - returns a factory that provides an initial result in the result behavior. For more flexibility, instead of the result itself, this function takes a function providing the initial result as argument.
  * @property {function} withEffectDebounce - returns a factory that uses the specified time to debounce the result effect. This is different from debouncing the input yourself! If you debounce the input yourself, then also the currentInput in the result behavior will be debounced (hence the whole result behavior will be debounced). In contrast, if you use this function, then only the result effect itself will be debounced.
- * @property {function} withCustomEffectInputEquals - by default, reference equals is used to make the effect input distinct. However, this functio will return a factory that uses the provided custom equals function instead.
+ * @property {function} withCustomEffectInputEquals - by default, reference equals is used to make the effect input distinct. However, this function will return a factory that uses the provided custom equals function instead.
  */
 export interface EffectSignalsFactory<InputType, ResultType, SignalsType>
   extends SignalsFactory<SignalsType> {

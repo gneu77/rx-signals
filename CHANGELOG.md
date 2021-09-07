@@ -1,4 +1,9 @@
-# 2.6.2 ()
+# 2.6.2 (2021-09-07)
+
+### Fixes
+
+- EffectSuccess interface was missing in the index.ts
+- Docstring typos
 
 ### Features
 

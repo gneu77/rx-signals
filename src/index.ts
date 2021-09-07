@@ -3,6 +3,7 @@ export {
   EffectError,
   EffectSignalsFactory,
   EffectSignalsType,
+  EffectSuccess,
   EffectType,
   getEffectSignalsFactory,
   TriggeredEffectSignalsType,
