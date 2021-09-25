@@ -1,23 +1,25 @@
 import { combineLatest, Observable, of } from 'rxjs';
 import { catchError, delay, filter, map, scan, startWith, take, timeout } from 'rxjs/operators';
 
-export const getSequence = async (
-  observable: Observable<any>,
+export const getSequence = async <T>(
+  observable: Observable<T>,
   length: number,
   timeoutAfter: number = 3000, // Jest can be slow sometimes...
-): Promise<any[]> => {
-  const accObservable = observable.pipe(
-    scan((acc: any[], next: any) => [...acc, next], []),
-    startWith([]),
+): Promise<T[]> => {
+  const accObservable: Observable<T[]> = observable.pipe(
+    scan((acc: T[], next: T) => [...acc, next], []),
+    startWith([] as T[]),
   );
   const timeoutObservable = of(true).pipe(delay(timeoutAfter), startWith(false));
-  return combineLatest([accObservable, timeoutObservable])
+  const combined: Observable<[T[], boolean]> = combineLatest([accObservable, timeoutObservable]);
+  return combined
     .pipe(
       filter(([result, timeout]) => timeout || result.length === length),
       map(([result]) => result),
       take(1),
     )
-    .toPromise();
+    .toPromise() as Promise<T[]>; // Deprecated and will be removed in rxjs8
+                                  // However, we must still support rxjs 6.x as peer dependency
 };
 
 export const expectSequence = async (

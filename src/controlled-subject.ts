@@ -178,11 +178,11 @@ export class ControlledSubject<T> {
       this.removeSource(source.getId());
     });
     this.subject = this.isBehavior
-      ? new BehaviorSubject<T>((NO_VALUE as unknown) as T)
+      ? new BehaviorSubject<T>(NO_VALUE as unknown as T)
       : new Subject<T>();
     this.pipe = this.isBehavior
       ? this.subject.pipe(
-          filter(value => value !== ((NO_VALUE as unknown) as T)),
+          filter(value => value !== (NO_VALUE as unknown as T)),
           distinctUntilChanged(),
         )
       : this.delayedEventQueue.getQueueDelayedObservable(this.subject).pipe(share());

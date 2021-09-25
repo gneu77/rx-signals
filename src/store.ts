@@ -334,7 +334,7 @@ export class Store {
           mapTo(true),
           delay(1, asyncScheduler),
         )
-        .toPromise();
+        .toPromise() as Promise<boolean>;
       controlledSubject.next(event);
       return result;
     }

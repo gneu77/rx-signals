@@ -307,7 +307,7 @@ const getEffectBuilder = <IT, RT, SignalsType>(): FactoryBuild<
     const { triggerEvent, ...withoutTriggerID } = ids;
     return {
       setup,
-      signals: ((config.withTrigger ? ids : withoutTriggerID) as unknown) as SignalsType,
+      signals: (config.withTrigger ? ids : withoutTriggerID) as unknown as SignalsType,
     };
   };
   return build;
@@ -338,31 +338,28 @@ const getEffectBuilder = <IT, RT, SignalsType>(): FactoryBuild<
  * @property {function} withEffectDebounce - returns a factory that uses the specified time to debounce the result effect. This is different from debouncing the input yourself! If you debounce the input yourself, then also the currentInput in the result behavior will be debounced (hence the whole result behavior will be debounced). In contrast, if you use this function, then only the result effect itself will be debounced.
  * @property {function} withCustomEffectInputEquals - by default, reference equals is used to make the effect input distinct. However, this function will return a factory that uses the provided custom equals function instead.
  */
-export type EffectSignalsFactory<
-  InputType,
-  ResultType,
-  SignalsType
-> = SignalsFactory<SignalsType> & {
-  withTrigger: () => EffectSignalsFactory<
-    InputType,
-    ResultType,
-    TriggeredEffectSignalsType<InputType, ResultType>
-  >;
-  withInitialResult: (
-    resultGetter?: () => ResultType,
-  ) => EffectSignalsFactory<InputType, ResultType, SignalsType>;
-  withEffectDebounce: (
-    debounceMS: number,
-  ) => EffectSignalsFactory<InputType, ResultType, SignalsType>;
-  withCustomEffectInputEquals: (
-    effectInputEquals: (a: InputType, b: InputType) => boolean,
-  ) => EffectSignalsFactory<InputType, ResultType, SignalsType>;
-};
+export type EffectSignalsFactory<InputType, ResultType, SignalsType> =
+  SignalsFactory<SignalsType> & {
+    withTrigger: () => EffectSignalsFactory<
+      InputType,
+      ResultType,
+      TriggeredEffectSignalsType<InputType, ResultType>
+    >;
+    withInitialResult: (
+      resultGetter?: () => ResultType,
+    ) => EffectSignalsFactory<InputType, ResultType, SignalsType>;
+    withEffectDebounce: (
+      debounceMS: number,
+    ) => EffectSignalsFactory<InputType, ResultType, SignalsType>;
+    withCustomEffectInputEquals: (
+      effectInputEquals: (a: InputType, b: InputType) => boolean,
+    ) => EffectSignalsFactory<InputType, ResultType, SignalsType>;
+  };
 
 const getEffectSignalsFactoryIntern = <
   InputType,
   ResultType,
-  SignalsType extends EffectSignalsType<InputType, ResultType>
+  SignalsType extends EffectSignalsType<InputType, ResultType>,
 >(
   config: EffectFactoryConfiguration<InputType, ResultType>,
 ): EffectSignalsFactory<InputType, ResultType, SignalsType> => {

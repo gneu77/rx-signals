@@ -33,19 +33,16 @@ export type ValidatedInputWithResultSignalsType<InputType, ValidationType, Resul
   resultInvalidateEvent: TypeIdentifier<void>;
 }>;
 
-export type ValidatedInputWithTriggeredResultSignalsType<
-  InputType,
-  ValidationType,
-  ResultType
-> = ValidatedInputWithResultSignalsType<InputType, ValidationType, ResultType> & {
-  readonly resultTriggerEvent: TypeIdentifier<void>;
-};
+export type ValidatedInputWithTriggeredResultSignalsType<InputType, ValidationType, ResultType> =
+  ValidatedInputWithResultSignalsType<InputType, ValidationType, ResultType> & {
+    readonly resultTriggerEvent: TypeIdentifier<void>;
+  };
 
 export type ValidatedInputWithResultSignalsFactory<
   InputType,
   ValidationType,
   ResultType,
-  SignalsType
+  SignalsType,
 > = SignalsFactory<SignalsType> & {
   withTrigger: () => ValidatedInputWithResultSignalsFactory<
     InputType,
@@ -154,7 +151,7 @@ const setupCombinedBehavior = <InputType, ValidationType, ResultType>(
 const getValidatedInputWithTriggeredResultSignalsFactoryIntern = <
   InputType,
   ValidationType,
-  ResultType
+  ResultType,
 >(
   config: FactoryConfiguration<InputType, ValidationType, ResultType>,
 ): ValidatedInputWithResultSignalsFactory<
@@ -183,9 +180,8 @@ const getValidatedInputWithTriggeredResultSignalsFactoryIntern = <
         .withCustomEffectInputEquals(config.resultEffectInputEquals),
     )
     .fmap(signals => {
-      const combinedBehavior = getIdentifier<
-        ValidatedInputWithResult<InputType, ValidationType, ResultType>
-      >();
+      const combinedBehavior =
+        getIdentifier<ValidatedInputWithResult<InputType, ValidationType, ResultType>>();
       const setup = (store: Store) =>
         setupCombinedBehavior(store, signals, combinedBehavior, config.isValidationResultValid);
       return {
@@ -251,9 +247,8 @@ const getValidatedInputWithResultSignalsFactoryIntern = <InputType, ValidationTy
         .withCustomEffectInputEquals(config.resultEffectInputEquals),
     )
     .fmap(signals => {
-      const combinedBehavior = getIdentifier<
-        ValidatedInputWithResult<InputType, ValidationType, ResultType>
-      >();
+      const combinedBehavior =
+        getIdentifier<ValidatedInputWithResult<InputType, ValidationType, ResultType>>();
       const setup = (store: Store) =>
         setupCombinedBehavior(store, signals, combinedBehavior, config.isValidationResultValid);
       return {
