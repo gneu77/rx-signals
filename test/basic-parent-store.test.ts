@@ -1,16 +1,14 @@
 import { of } from 'rxjs';
 import { Store } from '../src/store';
-import { TypeIdentifier } from '../src/store.utils';
+import { getIdentifier } from '../src/store.utils';
 import { expectSequence } from './test.utils';
 
 describe('Parent store', () => {
-  const idInParent: TypeIdentifier<number> = { symbol: Symbol('ParentBehavior') };
-  const idInChild: TypeIdentifier<number> = { symbol: Symbol('ChildBehavior') };
-  const idInParentAndChild: TypeIdentifier<number> = { symbol: Symbol('ParentAndChildBehavior') };
-  const idInParentAndLaterInChild: TypeIdentifier<number> = {
-    symbol: Symbol('ParentAndLaterInChildBehavior'),
-  };
-  const eventId: TypeIdentifier<number> = { symbol: Symbol('Event') };
+  const idInParent = getIdentifier<number>();
+  const idInChild = getIdentifier<number>();
+  const idInParentAndChild = getIdentifier<number>();
+  const idInParentAndLaterInChild = getIdentifier<number>();
+  const eventId = getIdentifier<number>();
 
   let store: Store;
   let childStore: Store;

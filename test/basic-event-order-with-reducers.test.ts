@@ -1,13 +1,13 @@
 import { of } from 'rxjs';
 import { filter, switchMap } from 'rxjs/operators';
 import { Store } from '../src/store';
-import { TypeIdentifier } from '../src/store.utils';
+import { getIdentifier } from '../src/store.utils';
 import { expectSequence } from './test.utils';
 
 describe('Event order', () => {
-  const counterState: TypeIdentifier<number> = { symbol: Symbol('COUNTER_STATE') };
-  const addEvent: TypeIdentifier<number> = { symbol: Symbol('ADD_EVENT') };
-  const multiplyEvent: TypeIdentifier<number> = { symbol: Symbol('MULTIPLY_EVENT') };
+  const counterState = getIdentifier<number>();
+  const addEvent = getIdentifier<number>();
+  const multiplyEvent = getIdentifier<number>();
   const addEffect = Symbol('ADD_EFFECT');
 
   let store: Store;

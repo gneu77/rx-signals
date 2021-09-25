@@ -1,13 +1,13 @@
 import { merge, of } from 'rxjs';
 import { filter, map, switchMap, withLatestFrom } from 'rxjs/operators';
 import { Store } from '../src/store';
-import { TypeIdentifier } from './../src/store.utils';
+import { getIdentifier } from './../src/store.utils';
 import { expectSequence } from './test.utils';
 
 describe('Effect loops', () => {
-  const counterState: TypeIdentifier<number> = { symbol: Symbol('COUNTER_STATE') };
-  const addEvent: TypeIdentifier<number> = { symbol: Symbol('ADD_STATE') };
-  const multiplyEvent: TypeIdentifier<number> = { symbol: Symbol('MULTIPLY_STATE') };
+  const counterState = getIdentifier<number>();
+  const addEvent = getIdentifier<number>();
+  const multiplyEvent = getIdentifier<number>();
 
   const addEffect = Symbol('ADD_EFFECT');
   const multiplyEffect = Symbol('MULTIPLY_EFFECT');

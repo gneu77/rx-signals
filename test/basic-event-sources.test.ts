@@ -1,10 +1,10 @@
 import { interval, of, Subject } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { TypeIdentifier } from '../src/store.utils';
+import { getIdentifier } from '../src/store.utils';
 import { Store, TypedEvent } from './../src/store';
 import { awaitError, expectSequence, getSequence } from './test.utils';
 describe('Event streams', () => {
-  const testEvent: TypeIdentifier<string> = { symbol: Symbol('TestEvent') };
+  const testEvent = getIdentifier<string>();
 
   let store: Store;
 
@@ -135,11 +135,11 @@ describe('Event streams', () => {
 
   describe('with typed sources', () => {
     const sourceId = Symbol('SourceId');
-    const testEvent2: TypeIdentifier<string> = { symbol: Symbol('TestEvent2') };
-    const testEvent3: TypeIdentifier<string> = { symbol: Symbol('TestEvent3') };
-    const testEvent4: TypeIdentifier<string> = { symbol: Symbol('TestEvent4') };
-    const testEvent5: TypeIdentifier<string> = { symbol: Symbol('TestEvent5') };
-    const testEvent6: TypeIdentifier<string> = { symbol: Symbol('TestEvent6') };
+    const testEvent2 = getIdentifier<string>();
+    const testEvent3 = getIdentifier<string>();
+    const testEvent4 = getIdentifier<string>();
+    const testEvent5 = getIdentifier<string>();
+    const testEvent6 = getIdentifier<string>();
 
     it('should work with event sources that emit 2 different event types', async () => {
       store.add2TypedEventSource(
@@ -283,9 +283,9 @@ describe('Event streams', () => {
 
   describe('with typed sources that are switched depending on subscription of an event', () => {
     const sourceId = Symbol('SourceId');
-    const testEvent2: TypeIdentifier<string> = { symbol: Symbol('TestEvent2') };
-    const testEvent3: TypeIdentifier<string> = { symbol: Symbol('TestEvent3') };
-    const testEvent4: TypeIdentifier<string> = { symbol: Symbol('TestEvent4') };
+    const testEvent2 = getIdentifier<string>();
+    const testEvent3 = getIdentifier<string>();
+    const testEvent4 = getIdentifier<string>();
     it('should NEVER dispatch testEvent2, if testEvent1 is not subscribed', async () => {
       store.add2TypedEventSource(
         sourceId,

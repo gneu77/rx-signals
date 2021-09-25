@@ -12,40 +12,41 @@ import { MappedSignalsType, Signals, SignalsFactory } from './signals-factory';
 import { Store } from './store';
 import { getIdentifier, TypeIdentifier } from './store.utils';
 
-export interface ValidatedInputWithResult<InputType, ValidationType, ResultType> {
-  readonly currentInput?: InputType;
-  readonly validationPending: boolean;
-  readonly validatedInput?: InputType;
-  readonly validationResult?: ValidationType;
-  readonly isValid: boolean;
-  readonly resultPending: boolean;
-  readonly resultInput?: InputType;
-  readonly result?: ResultType;
-}
+export type ValidatedInputWithResult<InputType, ValidationType, ResultType> = Readonly<{
+  currentInput?: InputType;
+  validationPending: boolean;
+  validatedInput?: InputType;
+  validationResult?: ValidationType;
+  isValid: boolean;
+  resultPending: boolean;
+  resultInput?: InputType;
+  result?: ResultType;
+}>;
 
-export interface ValidatedInputWithResultSignalsType<InputType, ValidationType, ResultType> {
-  readonly combinedBehavior: TypeIdentifier<
-    ValidatedInputWithResult<InputType, ValidationType, ResultType>
-  >;
-  readonly validationErrorEvents: TypeIdentifier<EffectError<InputType>>;
-  readonly validationSuccessEvents: TypeIdentifier<EffectSuccess<InputType, ValidationType>>;
-  readonly validationInvalidateEvent: TypeIdentifier<void>;
-  readonly resultErrorEvents: TypeIdentifier<EffectError<InputType>>;
-  readonly resultSuccessEvents: TypeIdentifier<EffectSuccess<InputType, ResultType>>;
-  readonly resultInvalidateEvent: TypeIdentifier<void>;
-}
+export type ValidatedInputWithResultSignalsType<InputType, ValidationType, ResultType> = Readonly<{
+  combinedBehavior: TypeIdentifier<ValidatedInputWithResult<InputType, ValidationType, ResultType>>;
+  validationErrorEvents: TypeIdentifier<EffectError<InputType>>;
+  validationSuccessEvents: TypeIdentifier<EffectSuccess<InputType, ValidationType>>;
+  validationInvalidateEvent: TypeIdentifier<void>;
+  resultErrorEvents: TypeIdentifier<EffectError<InputType>>;
+  resultSuccessEvents: TypeIdentifier<EffectSuccess<InputType, ResultType>>;
+  resultInvalidateEvent: TypeIdentifier<void>;
+}>;
 
-export interface ValidatedInputWithTriggeredResultSignalsType<InputType, ValidationType, ResultType>
-  extends ValidatedInputWithResultSignalsType<InputType, ValidationType, ResultType> {
+export type ValidatedInputWithTriggeredResultSignalsType<
+  InputType,
+  ValidationType,
+  ResultType
+> = ValidatedInputWithResultSignalsType<InputType, ValidationType, ResultType> & {
   readonly resultTriggerEvent: TypeIdentifier<void>;
-}
+};
 
-export interface ValidatedInputWithResultSignalsFactory<
+export type ValidatedInputWithResultSignalsFactory<
   InputType,
   ValidationType,
   ResultType,
   SignalsType
-> extends SignalsFactory<SignalsType> {
+> = SignalsFactory<SignalsType> & {
   withTrigger: () => ValidatedInputWithResultSignalsFactory<
     InputType,
     ValidationType,
@@ -58,9 +59,9 @@ export interface ValidatedInputWithResultSignalsFactory<
   withCustomResultEffectInputEquals: (
     resultEffectInputEquals: (a: InputType, b: InputType) => boolean,
   ) => ValidatedInputWithResultSignalsFactory<InputType, ValidationType, ResultType, SignalsType>;
-}
+};
 
-interface FactoryConfiguration<InputType, ValidationType, ResultType> {
+type FactoryConfiguration<InputType, ValidationType, ResultType> = {
   inputGetter: (store: Store) => Observable<InputType>;
   validationEffect: EffectType<InputType, ValidationType>;
   isValidationResultValid: (validationResult: ValidationType) => boolean;
@@ -68,7 +69,7 @@ interface FactoryConfiguration<InputType, ValidationType, ResultType> {
   resultEffectInputEquals: (a: InputType, b: InputType) => boolean;
   withResultTrigger?: boolean;
   initialResultGetter?: () => ResultType;
-}
+};
 
 const resultInputGetter = <InputType, ValidationType>(
   store: Store,

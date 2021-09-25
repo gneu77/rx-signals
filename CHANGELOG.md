@@ -1,3 +1,9 @@
+# 2.7.0
+
+### Breaking change (yes as minor version, because it's a simple refactoring)
+
+- changed definition for TypeIdentifier: From now on, you have to use getIdentifier<T>() to get your identifiers
+
 # 2.6.2 (2021-09-07)
 
 ### Fixes

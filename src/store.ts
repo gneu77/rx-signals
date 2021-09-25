@@ -16,26 +16,23 @@ import { SourceObservable } from './source-observable';
 import { NO_VALUE, TypeIdentifier } from './store.utils';
 
 /**
- * The RX-SIGNALS Store uses the TypedEvent<T> interface to bundle certain event and their
+ * The RX-SIGNALS Store uses the TypedEvent<T> to bundle certain events and their
  * corresponding TypeIdentifier<T>. This is used for EventSources that can dispatch events
- * of different types (see addXTypedEventSource mehtods) or for cases where you want to
+ * of different types (see addXTypedEventSource methods) or for cases where you want to
  * subscribe multiple event and need to differentiate between them at runtime.
  *
- * @typedef {object} TypedEvent<T> - interface for an object used to identify a certain behavior or event
+ * @typedef {object} TypedEvent<T> - type for an object bundling identifier and corresponding event.
  * @template T - specifies the type for the corresponding TypeIdentifier<T>
  * @property {TypeIdentifier<T>} type - the TypeIdentifier for the event
  * @property {T} event - the event itself
  */
-export interface TypedEvent<T> {
-  readonly type: TypeIdentifier<T>;
-  readonly event: T;
-}
+export type TypedEvent<T> = Readonly<{
+  type: TypeIdentifier<T>;
+  event: T;
+}>;
 
 /**
- * The RX-SIGNALS Store uses the TypedEvent<T> interface to bundle certain event and their
- * corresponding TypeIdentifier<T>. This is used for EventSources that can dispatch events
- * of different types (see addXTypedEventSource mehtods) or for cases where you want to
- * subscribe multiple event and need to differentiate between them at runtime.
+ * The state reducer type specifies the signature for reducers used by the store.
  *
  * @typedef {function} StateReducer<T, E> - type for a function that takes a state and an event and returns a new state
  * @template T - representing the type of the state
@@ -127,14 +124,9 @@ export class Store {
     subscribeLazy: boolean,
     initialValueOrValueGetter: T | (() => T) | symbol = NO_VALUE,
   ): void {
-    this.assertSourceExists(identifier.symbol, identifier.symbol);
+    this.assertSourceExists(identifier, identifier);
     this.getBehaviorControlledSubject(identifier).addSource(
-      new SourceObservable<T>(
-        identifier.symbol,
-        observable,
-        subscribeLazy,
-        initialValueOrValueGetter,
-      ),
+      new SourceObservable<T>(identifier, observable, subscribeLazy, initialValueOrValueGetter),
     );
   }
 
@@ -179,9 +171,9 @@ export class Store {
    * @returns {void}
    */
   addState<T>(identifier: TypeIdentifier<T>, initialValueOrValueGetter: T | (() => T)): void {
-    this.assertSourceExists(identifier.symbol, identifier.symbol);
+    this.assertSourceExists(identifier, identifier);
     this.getBehaviorControlledSubject(identifier).addSource(
-      new SourceObservable<T>(identifier.symbol, NEVER, false, initialValueOrValueGetter),
+      new SourceObservable<T>(identifier, NEVER, false, initialValueOrValueGetter),
     );
   }
 
@@ -205,7 +197,7 @@ export class Store {
       map(([event, state]) => reducer(state, event)),
     );
     this.getBehaviorControlledSubject(stateIdentifier).addSource(
-      new SourceObservable<T>(eventIdentifier.symbol, sourceObservable, false),
+      new SourceObservable<T>(eventIdentifier, sourceObservable, false),
     );
   }
 
@@ -220,7 +212,7 @@ export class Store {
     stateIdentifier: TypeIdentifier<T>,
     eventIdentifier: TypeIdentifier<E>,
   ): void {
-    this.getBehaviorControlledSubject(stateIdentifier).removeSource(eventIdentifier.symbol);
+    this.getBehaviorControlledSubject(stateIdentifier).removeSource(eventIdentifier);
   }
 
   /**
@@ -247,7 +239,7 @@ export class Store {
     const behavior = this.getBehaviorControlledSubject(identifier);
     behavior.removeAllSources();
     behavior.complete();
-    this.behaviors.delete(identifier.symbol);
+    this.behaviors.delete(identifier);
     this.behaviorsSubject.next(this.behaviors);
   }
 
@@ -298,7 +290,7 @@ export class Store {
         .asObservable()
         .pipe(
           switchMap(s =>
-            (s.get(identifier.symbol)?.getNumberOfSources() ?? 0) > 0
+            (s.get(identifier)?.getNumberOfSources() ?? 0) > 0
               ? this.getBehaviorControlledSubject(identifier).getObservable()
               : parent.getBehavior(identifier),
           ),
@@ -679,8 +671,8 @@ export class Store {
    */
   isSubscribed<T>(identifier: TypeIdentifier<T>): boolean {
     return (
-      this.behaviors.get(identifier.symbol)?.isObservableSubscribed() === true ||
-      this.eventStreams.get(identifier.symbol)?.isObservableSubscribed() === true
+      this.behaviors.get(identifier)?.isObservableSubscribed() === true ||
+      this.eventStreams.get(identifier)?.isObservableSubscribed() === true
     );
   }
 
@@ -694,7 +686,7 @@ export class Store {
    * @returns {Observable<boolean>} - upon subscription, lets you keep track whether the corresponding event or behavior is subscribed
    */
   getIsSubscribedObservable<T>(identifier: TypeIdentifier<T>): Observable<boolean> {
-    const sym = identifier.symbol;
+    const sym = identifier;
     return combineLatest([
       this.behaviorsSubject
         .asObservable()
@@ -759,7 +751,7 @@ export class Store {
 
   private createBehaviorControlledSubject<T>(identifier: TypeIdentifier<T>): ControlledSubject<T> {
     const controlledSubject = new ControlledSubject<T>(
-      identifier.symbol,
+      identifier,
       true,
       (_, error) => {
         // If the source errors, error for the target.
@@ -773,22 +765,20 @@ export class Store {
       },
       this.delayedEventQueue,
     );
-    this.behaviors.set(identifier.symbol, controlledSubject);
+    this.behaviors.set(identifier, controlledSubject);
     this.behaviorsSubject.next(this.behaviors);
     return controlledSubject;
   }
 
   private getBehaviorControlledSubject<T>(identifier: TypeIdentifier<T>): ControlledSubject<T> {
-    return (
-      this.behaviors.get(identifier.symbol) ?? this.createBehaviorControlledSubject(identifier)
-    );
+    return this.behaviors.get(identifier) ?? this.createBehaviorControlledSubject(identifier);
   }
 
   private createEventStreamControlledSubject<T>(
     identifier: TypeIdentifier<T>,
   ): ControlledSubject<T> {
     const controlledSubject = new ControlledSubject<T>(
-      identifier.symbol,
+      identifier,
       false,
       (_, error) => {
         // If a source errors, error for the target.
@@ -802,16 +792,13 @@ export class Store {
       },
       this.delayedEventQueue,
     );
-    this.eventStreams.set(identifier.symbol, controlledSubject);
+    this.eventStreams.set(identifier, controlledSubject);
     this.eventStreamsSubject.next(this.eventStreams);
     return controlledSubject;
   }
 
   private getEventStreamControlledSubject<T>(identifier: TypeIdentifier<T>): ControlledSubject<T> {
-    return (
-      this.eventStreams.get(identifier.symbol) ??
-      this.createEventStreamControlledSubject(identifier)
-    );
+    return this.eventStreams.get(identifier) ?? this.createEventStreamControlledSubject(identifier);
   }
 
   private assertSourceExists(symbol: symbol, sourceIdentifier: symbol): void {

@@ -1,6 +1,6 @@
 import { combineLatest, of } from 'rxjs';
 import { debounceTime, filter, map, switchMap } from 'rxjs/operators';
-import { TypeIdentifier } from '../src/store.utils';
+import { getIdentifier } from '../src/store.utils';
 import { Store } from './../src/store';
 import { awaitStringifyEqualState, expectSequence } from './test.utils';
 describe('Lazy query pattern', () => {
@@ -9,11 +9,11 @@ describe('Lazy query pattern', () => {
     resultQuery: string | null;
   }
 
-  const queryBehavior: TypeIdentifier<string | null> = { symbol: Symbol('QueryBehavior') };
-  const resultBehavior: TypeIdentifier<ResultType> = { symbol: Symbol('ResultBehavior') };
-  const loadingBehavior: TypeIdentifier<boolean> = { symbol: Symbol('LoadingBehavior') };
-  const queryEvent: TypeIdentifier<string | null> = { symbol: Symbol('QueryEvent') };
-  const resultEvent: TypeIdentifier<ResultType> = { symbol: Symbol('ResultEvent') };
+  const queryBehavior = getIdentifier<string | null>();
+  const resultBehavior = getIdentifier<ResultType>();
+  const loadingBehavior = getIdentifier<boolean>();
+  const queryEvent = getIdentifier<string | null>();
+  const resultEvent = getIdentifier<ResultType>();
   const resultEffect = Symbol('ResultEffect');
 
   let store: Store;

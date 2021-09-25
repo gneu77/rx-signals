@@ -1,13 +1,13 @@
 import { map, tap, withLatestFrom } from 'rxjs/operators';
-import { TypeIdentifier } from '../src/store.utils';
+import { getIdentifier } from '../src/store.utils';
 import { Store } from './../src/store';
 import { expectSequence } from './test.utils';
 describe('Behaviors share and reset logic', () => {
-  const rootBehavior: TypeIdentifier<number> = { symbol: Symbol('RootBehavior') };
-  const doubledBehavior: TypeIdentifier<number> = { symbol: Symbol('DoubledBehavior') };
-  const tripledBehavior: TypeIdentifier<number> = { symbol: Symbol('TripledBehavior') };
+  const rootBehavior = getIdentifier<number>();
+  const doubledBehavior = getIdentifier<number>();
+  const tripledBehavior = getIdentifier<number>();
 
-  const addToRootEvent: TypeIdentifier<number> = { symbol: Symbol('AddToRootEvent') };
+  const addToRootEvent = getIdentifier<number>();
 
   let store: Store;
   let doubledCalculated: number;

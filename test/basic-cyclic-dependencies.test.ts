@@ -1,11 +1,11 @@
 import { map, withLatestFrom } from 'rxjs/operators';
 import { Store } from '../src/store';
-import { TypeIdentifier } from '../src/store.utils';
+import { getIdentifier } from '../src/store.utils';
 import { expectSequence } from './test.utils';
 describe('Cyclic dependencies', () => {
-  const cyclicBehavior: TypeIdentifier<number> = { symbol: Symbol('CyclicBehavior') };
-  const derivedBehavior: TypeIdentifier<number> = { symbol: Symbol('DerivedBehavior') };
-  const inputEvent: TypeIdentifier<number> = { symbol: Symbol('InputEvent') };
+  const cyclicBehavior = getIdentifier<number>();
+  const derivedBehavior = getIdentifier<number>();
+  const inputEvent = getIdentifier<number>();
 
   let store: Store;
 
