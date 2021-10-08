@@ -11,6 +11,7 @@
     "declaration": true,
     "outDir": "./dist/esm",
     "strict": true,
+    "strictNullChecks": true,
     "alwaysStrict": true,
     "noImplicitAny": true,
     "noImplicitThis": true,
