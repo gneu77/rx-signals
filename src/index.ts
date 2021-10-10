@@ -10,11 +10,19 @@ export {
 } from './effect-signals-factory';
 export {
   createSignalsFactory,
-  MappedSignalsType,
+  FactoryBind,
+  FactoryBuild,
+  FactoryMap,
+  MappedSignalTypes,
+  SetupWithStore,
+  SignalIds,
   Signals,
   SignalsFactory,
   signalsFactoryBind,
   signalsFactoryMap,
+  SignalsMapper,
+  SignalsMapToFactory,
+  SignalTypes,
 } from './signals-factory';
 export { Store, TypedEvent } from './store';
 export { getIdentifier, NO_VALUE, TypeIdentifier } from './store.utils';

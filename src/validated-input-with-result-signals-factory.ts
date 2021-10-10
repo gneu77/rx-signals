@@ -8,7 +8,7 @@ import {
   EffectType,
   getEffectSignalsFactory,
 } from './effect-signals-factory';
-import { MappedSignalsType, Signals, SignalsFactory } from './signals-factory';
+import { MappedSignalTypes, SignalIds, Signals, SignalsFactory } from './signals-factory';
 import { Store } from './store';
 import { getIdentifier, TypeIdentifier } from './store.utils';
 
@@ -42,8 +42,8 @@ export type ValidatedInputWithResultSignalsFactory<
   InputType,
   ValidationType,
   ResultType,
-  SignalsType,
-> = SignalsFactory<SignalsType> & {
+  T extends SignalIds,
+> = SignalsFactory<T> & {
   withTrigger: () => ValidatedInputWithResultSignalsFactory<
     InputType,
     ValidationType,
@@ -52,10 +52,10 @@ export type ValidatedInputWithResultSignalsFactory<
   >;
   withInitialResult: (
     resultGetter?: () => ResultType,
-  ) => ValidatedInputWithResultSignalsFactory<InputType, ValidationType, ResultType, SignalsType>;
+  ) => ValidatedInputWithResultSignalsFactory<InputType, ValidationType, ResultType, T>;
   withCustomResultEffectInputEquals: (
     resultEffectInputEquals: (a: InputType, b: InputType) => boolean,
-  ) => ValidatedInputWithResultSignalsFactory<InputType, ValidationType, ResultType, SignalsType>;
+  ) => ValidatedInputWithResultSignalsFactory<InputType, ValidationType, ResultType, T>;
 };
 
 type FactoryConfiguration<InputType, ValidationType, ResultType> = {
@@ -102,7 +102,7 @@ const mapBehaviors = <InputType, ValidationType, ResultType>(
 const setupCombinedBehavior = <InputType, ValidationType, ResultType>(
   store: Store,
   signals: Signals<
-    MappedSignalsType<
+    MappedSignalTypes<
       EffectSignalsType<InputType, ValidationType>,
       EffectSignalsType<InputType, ResultType>
     >

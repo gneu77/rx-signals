@@ -114,7 +114,7 @@ export class Store {
    *
    * @param {TypeIdentifier<T>} identifier - the unique identifier for the behavior
    * @param {Observable<T>} observable - the source for the behavior
-   * @param {boolean} subscribeLazy - set this to false, if the behavior should always be subscribed (the Store will subscribe it in that case)
+   * @param {boolean} subscribeLazy - set this to false, if the behavior should always be subscribed (the Store will subscribe it in that case, immediately turning it into a hot observable)
    * @param {T | (() => T) | symbol} initialValueOrValueGetter - the initial value or value getter (for lazy initialization) or symbol NO_VALUE, if there is no initial value (default)
    * @returns {void}
    */
