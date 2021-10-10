@@ -18,8 +18,6 @@ export {
   SignalIds,
   Signals,
   SignalsFactory,
-  signalsFactoryBind,
-  signalsFactoryMap,
   SignalsMapper,
   SignalsMapToFactory,
   SignalTypes,
