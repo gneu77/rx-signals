@@ -86,6 +86,7 @@ You should start with my introduction to [Reactive Programming, State Management
 * you think you're doing RP, just because you're using something like _RxJs_ (no, you're not)
 * you think State Management is only about having a global state and how to modify it
 * you think Effects Management is only about managing async processes (like http calls)
+* you don't know that all these 3 things are tied together
 
 Otherwise, you may start with [Using rx-signals](https://github.com/gneu77/rx-signals/docs/rx-signals_start.md). Where necessary, it will still link to the corresponding passages of the formerly mentioned introduction.
 

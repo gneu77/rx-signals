@@ -1,5 +1,5 @@
 import { merge, of } from 'rxjs';
-import { filter, map, switchMap, withLatestFrom } from 'rxjs/operators';
+import { filter, map, mapTo, switchMap, tap, withLatestFrom } from 'rxjs/operators';
 import { Store } from '../src/store';
 import { getIdentifier } from '../src/store.utils';
 import { expectSequence } from './test.utils';
@@ -7,7 +7,7 @@ import { expectSequence } from './test.utils';
 describe('Event order', () => {
   const counterState = getIdentifier<number>();
   const addEvent = getIdentifier<number>();
-  const multiplyEvent= getIdentifier<number>();
+  const multiplyEvent = getIdentifier<number>();
   const addEffect = Symbol('ADD_EFFECT');
 
   let store: Store;
@@ -62,5 +62,32 @@ describe('Event order', () => {
     store.dispatchEvent(multiplyEvent, 2); // => 20
 
     await counterSequence;
+  });
+
+  describe('examples from documentation', () => {
+    it('should work as described in the documentation', async () => {
+      const myEvent = getIdentifier<number>();
+      const values: number[] = [];
+      const sequence = expectSequence(
+        store.getEventStream(myEvent).pipe(tap(v => values.push(v))),
+        [3, 4, 5, 6, 7],
+      );
+
+      store.addEventSource(
+        Symbol(),
+        myEvent,
+        store.getEventStream(myEvent).pipe(
+          filter(v => v === 3),
+          mapTo(7),
+        ),
+      );
+      store.addEventSource(Symbol(), myEvent, of(3, 4, 5));
+      values.push(1);
+      store.dispatchEvent(myEvent, 6);
+      values.push(2);
+
+      await sequence;
+      expect(values).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    });
   });
 });
