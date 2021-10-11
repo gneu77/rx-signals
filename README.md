@@ -44,9 +44,9 @@ This lib comes with a
 
 ## Getting started
 
-The impatiant reader may skip the terminology part and head on to "Directions".
+The impatiant reader may skip the terminology part and head on to [Directions](#directions).
 
-### Terminology
+### Terminology <a name="terminology"></a>
 
 What does _rx-signals_ mean anyway?
 Well the _rx_ stands for reactive extensions, so it's the same _rx_ as in _RxJs_.
@@ -79,7 +79,7 @@ The FRP-definitions of events and behaviors translate to the following definitio
 
 So an _RxJs_ example for behaviors would be a _BehaviorSubject_, while an example for event-streams would be _Subjects_. Thus, in _RxJs_-world you you translate _signal_ as _observable_. (Now that we arrived at _RxJs_ terminology: another difference between FRP and RP is that in RP, a signal can simply end, hence observables can complete.)
 
-### Directions
+### Directions <a name="directions"></a>
 
 You should start with my introduction to [Reactive Programming, State Management and Effects Management](https://github.com/gneu77/rx-signals/docs/rp_state_effects_start.md), if
 * you don't know what any of these terms mean
@@ -89,6 +89,6 @@ You should start with my introduction to [Reactive Programming, State Management
 
 Otherwise, you may start with [Using rx-signals](https://github.com/gneu77/rx-signals/docs/rx-signals_start.md). Where necessary, it will still link to the corresponding passages of the formerly mentioned introduction.
 
-The API-documentation as generated from the doc strings [can be found here]()
+The API-documentation (as generated from the doc strings) [can be found here](https://rawcdn.githack.com/gneu77/rx-signals/master/docs/tsdoc/index.html)
 
-An introduction for people coming from _NgRx_ [can be found here](https://github.com/gneu77/rx-signals/docs/ngrx_compare_start.md)
+An introduction for people with _NgRx_ background [can be found here](https://github.com/gneu77/rx-signals/docs/ngrx_compare_start.md)

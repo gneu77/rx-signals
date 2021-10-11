@@ -4,7 +4,7 @@
 
 ### Behaviors
 
-If you don't know what a behavior in the sense of RP is, then head back to [Terminology](https://github.com/gneu77/rx-signals/README.md#Terminology).
+If you don't know what a behavior in the sense of RP is, then head back to [Terminology](https://github.com/gneu77/rx-signals/README.md#terminology).
 
 So in _rx-signals_, a behavior is an _RxJs_-observable that always has the current value when subscribed.
 In addition to this definition, there are two more things you need to know about _rx-signals_-behaviors:
@@ -31,6 +31,7 @@ store.addNonLazyBehavior(id, observable, initialValueOrValueGetter);
 
 * The `identifier` is a unique symbol that you can obtain via `getIdentifier<T>(name?: string)`
 * The `observable`, is the source of the behavior
+  * A behavior can have only one source, so if you call `add(Non)LazyBehavior` two times with the same identifier, you will get an error on the second one (though you can remove a behavior source via `removeBehaviorSources` and then add a new source with the same identifier).
 * The `initialValueOrValueGetter` is optional. It can be an inital value or a function that yields the initial value (so if the behavior is never subscribed, then the function will never be called).
 
 No big surprise that getting a behavior just requires the identifier:
@@ -39,6 +40,7 @@ store.getBehavior(identifier);
 ```
 
 Adding and getting behaviors is type-safe, that is the type is encoded in the identifier.
+When you call `getBehavior` you're not just getting a piped observable of whatever you added as behavior-source. We will see later why this is important.
 
 Let's add some behaviors:
 ```typescript
