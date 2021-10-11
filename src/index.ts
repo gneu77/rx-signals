@@ -6,7 +6,7 @@ export {
   EffectSuccess,
   EffectType,
   getEffectSignalsFactory,
-  TriggeredEffectSignalsType
+  TriggeredEffectSignalsType,
 } from './effect-signals-factory';
 export {
   createSignalsFactory,
@@ -20,7 +20,7 @@ export {
   SignalsFactory,
   SignalsMapper,
   SignalsMapToFactory,
-  SignalTypes
+  SignalTypes,
 } from './signals-factory';
 export { StateReducer, Store, TypedEvent } from './store';
 export { getIdentifier, NO_VALUE, TypeIdentifier } from './store.utils';
@@ -29,6 +29,5 @@ export {
   ValidatedInputWithResult,
   ValidatedInputWithResultSignalsFactory,
   ValidatedInputWithResultSignalsType,
-  ValidatedInputWithTriggeredResultSignalsType
+  ValidatedInputWithTriggeredResultSignalsType,
 } from './validated-input-with-result-signals-factory';
-

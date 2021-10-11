@@ -44,7 +44,7 @@ This lib comes with a
 
 ## Getting started
 
-The impatiant reader may skip the terminology part and head on to [Directions](#directions).
+The impatient reader may skip the terminology part and head on to [Directions](#directions).
 
 ### Terminology <a name="terminology"></a>
 
