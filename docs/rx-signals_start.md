@@ -41,7 +41,7 @@ Under the hood, the returned identifier is a `symbol`. Thus, e.g. two calls of `
 
 ### Events <a name="events"></a>
 
-If you don't know what an event-stream in the sense of RP is, then head back to [Terminology](https://github.com/gneu77/rx-signals/README.md#terminology).
+If you don't know what an event-stream in the sense of RP is, then head back to [Terminology](https://github.com/gneu77/rx-signals/blob/master/README.md#terminology).
 
 So in _rx-signals_, an event-stream is an _RxJs_-observable that has no current value, but dispatches values to subscribers at dicrete points of time. In addition to this definition, _rx-signals_-event-streams
 1. always behave as hot observables piped with `share()`.
@@ -219,7 +219,7 @@ However, with the last parameter, we are telling the store to subscribe the sour
 
 ### Behaviors <a name="behaviors"></a>
 
-If you don't know what a behavior in the sense of RP is, then head back to [Terminology](https://github.com/gneu77/rx-signals/README.md#terminology).
+If you don't know what a behavior in the sense of RP is, then head back to [Terminology](https://github.com/gneu77/rx-signals/blob/master/README.md#terminology).
 
 So in _rx-signals_, a behavior is an _RxJs_-observable that always has the current value when subscribed.
 In addition to this definition, _rx-signals_-behaviors
