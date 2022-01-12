@@ -9,7 +9,7 @@ import {
   ValidatedInputWithResult,
   ValidatedInputWithResultSignalsFactory,
   ValidatedInputWithResultSignalsType,
-  ValidatedInputWithTriggeredResultSignalsType
+  ValidatedInputWithTriggeredResultSignalsType,
 } from './../src/validated-input-with-result-signals-factory';
 import { expectSequence, withSubscription } from './test.utils';
 
@@ -77,7 +77,7 @@ describe('validated input with result signals factory', () => {
       );
       const signals = factory.build();
       signals.setup(store);
-      observable = store.getBehavior(signals.signals.combinedBehavior);
+      observable = store.getBehavior(signals.ids.combinedBehavior);
     });
 
     it('should have correct sequence for valid input', async () => {
@@ -190,7 +190,7 @@ describe('validated input with result signals factory', () => {
       ).withTrigger();
       signals = factory.build();
       signals.setup(store);
-      observable = store.getBehavior(signals.signals.combinedBehavior);
+      observable = store.getBehavior(signals.ids.combinedBehavior);
     });
 
     it('should have correct sequence for input with explicit result trigger', async () => {
@@ -327,7 +327,7 @@ describe('validated input with result signals factory', () => {
           },
         },
       ]);
-      store.dispatchEvent(signals.signals.resultTriggerEvent, null);
+      store.dispatchEvent(signals.ids.resultTriggerEvent, null);
       await sequence3;
     });
 
@@ -364,7 +364,7 @@ describe('validated input with result signals factory', () => {
         });
         await sequence;
 
-        store.dispatchEvent(signals.signals.resultTriggerEvent, null);
+        store.dispatchEvent(signals.ids.resultTriggerEvent, null);
 
         const sequence2 = expectSequence(observable, [
           {
@@ -440,7 +440,7 @@ describe('validated input with result signals factory', () => {
       }));
       const signals = factory.build();
       signals.setup(store);
-      observable = store.getBehavior(signals.signals.combinedBehavior);
+      observable = store.getBehavior(signals.ids.combinedBehavior);
     });
 
     it('should have correct sequence for valid input', async () => {
@@ -525,7 +525,7 @@ describe('validated input with result signals factory', () => {
       ).withCustomResultEffectInputEquals((a, b) => a.searchString === b.searchString);
       const signals = factory.build();
       signals.setup(store);
-      observable = store.getBehavior(signals.signals.combinedBehavior);
+      observable = store.getBehavior(signals.ids.combinedBehavior);
     });
 
     it('should ignore changes in the page argument', async () => {

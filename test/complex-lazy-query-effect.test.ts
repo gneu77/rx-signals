@@ -171,4 +171,63 @@ describe('Lazy query pattern', () => {
       resultQuery: null,
     });
   });
+
+  describe('examples from documentation', () => {
+    it('should work as described in the documentation', async () => {
+      type QueryResult = Readonly<{
+        result: string[];
+        resultQuery: string | null;
+      }>;
+
+      const query = getIdentifier<string>();
+      const result = getIdentifier<QueryResult>();
+      const pending = getIdentifier<boolean>();
+      const setQuery = getIdentifier<string>();
+      const setResult = getIdentifier<QueryResult>();
+
+      store.addLazyBehavior(query, store.getEventStream(setQuery), '');
+      store.addLazyBehavior(result, store.getEventStream(setResult), {
+        result: [],
+        resultQuery: null,
+      });
+      store.addLazyBehavior(
+        pending,
+        combineLatest([store.getBehavior(query), store.getBehavior(result)]).pipe(
+          map(([q, r]) => q !== r.resultQuery),
+        ),
+      );
+      store.addEventSource(
+        Symbol('MockupQueryEffect'),
+        setResult,
+        combineLatest([store.getBehavior(query), store.getBehavior(result)]).pipe(
+          filter(([q, r]) => q !== r.resultQuery),
+          debounceTime(100),
+          switchMap(([q]) => of({ result: [`mock result for ${q}`], resultQuery: q })),
+        ),
+      );
+
+      const o = combineLatest([store.getBehavior(result), store.getBehavior(pending)]).pipe(
+        map(([r, p]) => ({
+          result: r.result,
+          pending: p,
+        })),
+      );
+      const resultSequence = expectSequence(o, [
+        {
+          result: [],
+          pending: true,
+        },
+        {
+          result: ['mock result for test'],
+          pending: true,
+        },
+        {
+          result: ['mock result for test'],
+          pending: false,
+        },
+      ]);
+      store.dispatchEvent(setQuery, 'test');
+      await resultSequence;
+    });
+  });
 });

@@ -4,12 +4,18 @@
 
 ### Documentation
 
-- **Finally** added the first version of a documentation!
+- **Finally** added the first version of a documentation (not yet complete)!
+
+### Features
+
+- Extended `EffectSuccess` type by `previousInput?` and `previousResult?` to aid in event transforms in some more complex scenarios.
+- Extended `SignalsFactory` type by `idsMap` and extended `createSignalsFactory` correspondingly (see documentation).
+- Extended `SignalsFactory` by `flattenIds` and extended `createSignalsFactory` correspondingly (see documentation).
 
 ### Improvements
 
 - Changed definition for `TypeIdentifier`: From now on, you should always use `getIdentifier<T>()` to get your identifiers
-- Improved type definitions `SignalsFactory` and types it depends on
+- Improved type definitions for `SignalsFactory` and types it depends on
 
 ## 2.6.2 (2021-09-07)
 

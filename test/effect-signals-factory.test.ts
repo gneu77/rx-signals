@@ -1,12 +1,12 @@
 import { Observable, of, Subject } from 'rxjs';
-import { delay } from 'rxjs/operators';
+import { delay, filter, take } from 'rxjs/operators';
 import {
   CombinedEffectResult,
   EffectSignalsFactory,
   EffectSignalsType,
   EffectType,
   getEffectSignalsFactory,
-  TriggeredEffectSignalsType
+  TriggeredEffectSignalsType,
 } from '../src/effect-signals-factory';
 import { Store } from '../src/store';
 import { getIdentifier } from '../src/store.utils';
@@ -81,7 +81,7 @@ describe('effect signals factory', () => {
 
       beforeEach(() => {
         const factoryResult = factory.build();
-        signals = factoryResult.signals;
+        signals = factoryResult.ids;
         factoryResult.setup(store);
         observable = store.getBehavior(signals.combinedBehavior);
       });
@@ -374,6 +374,61 @@ describe('effect signals factory', () => {
         await sequence;
       });
 
+      it('should provide previous input and result in the success event', async () => {
+        const sequence = expectSequence(store.getEventStream(signals.successEvents), [
+          {
+            result: {
+              results: ['test_result'],
+              totalResults: 1,
+            },
+            resultInput: {
+              searchString: 'test',
+              page: 0,
+            },
+          },
+          {
+            result: {
+              results: [],
+              totalResults: 1,
+            },
+            resultInput: {
+              searchString: 'test',
+              page: 1,
+            },
+            previousInput: {
+              searchString: 'test',
+              page: 0,
+            },
+            previousResult: {
+              results: ['test_result'],
+              totalResults: 1,
+            },
+          },
+        ]);
+        observable
+          .pipe(
+            filter(c => c.resultInput?.page === 0 && !c.resultPending),
+            take(1),
+          )
+          .subscribe(() => {
+            observable
+              .pipe(
+                filter(c => c.resultInput?.page === 1 && !c.resultPending),
+                take(1),
+              )
+              .subscribe();
+            inputSubject.next({
+              searchString: 'test',
+              page: 1,
+            });
+          });
+        inputSubject.next({
+          searchString: 'test',
+          page: 0,
+        });
+        await sequence;
+      });
+
       it('should invalidate existing results while unsubscribed', async () => {
         const sequence = expectSequence(observable, [
           {
@@ -467,7 +522,7 @@ describe('effect signals factory', () => {
 
       beforeEach(() => {
         const factoryResult = factory.withTrigger().build();
-        signals = factoryResult.signals;
+        signals = factoryResult.ids;
         factoryResult.setup(store);
         observable = store.getBehavior(signals.combinedBehavior);
       });
@@ -546,7 +601,7 @@ describe('effect signals factory', () => {
             totalResults: 0,
           }))
           .build();
-        signals = factoryResult.signals;
+        signals = factoryResult.ids;
         factoryResult.setup(store);
         observable = store.getBehavior(signals.combinedBehavior);
       });
@@ -601,7 +656,7 @@ describe('effect signals factory', () => {
 
       beforeEach(() => {
         const factoryResult = factory.withEffectDebounce(50).build();
-        signals = factoryResult.signals;
+        signals = factoryResult.ids;
         factoryResult.setup(store);
         observable = store.getBehavior(signals.combinedBehavior);
       });
@@ -670,7 +725,7 @@ describe('effect signals factory', () => {
         const factoryResult = factory
           .withCustomEffectInputEquals((a, b) => a.searchString === b.searchString)
           .build();
-        signals = factoryResult.signals;
+        signals = factoryResult.ids;
         factoryResult.setup(store);
         observable = store.getBehavior(signals.combinedBehavior);
       });

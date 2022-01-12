@@ -178,9 +178,9 @@ export class Store {
   }
 
   /**
-   * This adds a reducer to a bahavior. This is meant to be used together with the addState method.
+   * This adds a reducer to a behavior. This is meant to be used together with the addState method.
    * Technically, you can also add reducers to behaviors that were added with one of the addBevavior methods.
-   * However, this is strongly discouraged and might result in unexpected (literally) behavior.
+   * However, this is strongly discouraged and might result in unexpected behavior (literally).
    *
    * @param {TypeIdentifier<T>} stateIdentifier - the unique identifier for the behavior
    * @param {TypeIdentifier<T>} eventIdentifier - the unique identifier for the event reducing the state
@@ -200,6 +200,13 @@ export class Store {
       new SourceObservable<T>(eventIdentifier, sourceObservable, false),
     );
   }
+
+  // connectBehaviorIds<T>(
+  //   sourceIdentifier: TypeIdentifier<T>,
+  //   targetIdentifier: TypeIdentifier<T>,
+  // ): void {
+  //   this.addLazyBehavior(targetIdentifier, this.getBehavior(sourceIdentifier));
+  // }
 
   /**
    * This method can be used to remove a reducer from a behavior.

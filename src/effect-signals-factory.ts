@@ -1,5 +1,5 @@
 import { combineLatest, Observable, of, throwError } from 'rxjs';
-import { catchError, debounceTime, filter, map, mapTo, switchMap } from 'rxjs/operators';
+import { catchError, debounceTime, filter, map, mapTo, switchMap, take } from 'rxjs/operators';
 import { createSignalsFactory, SignalIds, Signals, SignalsFactory } from './signals-factory';
 import { Store } from './store';
 import { getIdentifier, NO_VALUE, TypeIdentifier } from './store.utils';
@@ -61,10 +61,14 @@ export type EffectError<InputType> = Readonly<{
  * @template ResultType - specifies the result type of the effect
  * @property {ResultType} result - the effect result
  * @property {InputType} resultInput - the effect input that lead to the result
+ * @property {InputType | undefined} previousInput - the input of the previous result, or undefined
+ * @property {ResultType | undefined} previousResult - the previous result, or undefined
  */
 export type EffectSuccess<InputType, ResultType> = Readonly<{
   result: ResultType;
   resultInput: InputType;
+  previousInput?: InputType;
+  previousResult?: ResultType;
 }>;
 
 /**
@@ -138,7 +142,7 @@ const getEffectBuilder = <IT, RT, T extends SignalIds>(): FactoryBuilder<
       previousResult?: RT,
     ) => {
       try {
-        return config.effect(input, store, previousInput, previousResult);
+        return config.effect(input, store, previousInput, previousResult).pipe(take(1));
       } catch (error) {
         return throwError(error);
       }
@@ -251,6 +255,8 @@ const getEffectBuilder = <IT, RT, T extends SignalIds>(): FactoryBuilder<
                         event: {
                           result,
                           resultInput: input,
+                          previousInput: resultState.resultInput,
+                          previousResult: resultState.result,
                         },
                       },
                     ),
@@ -307,7 +313,7 @@ const getEffectBuilder = <IT, RT, T extends SignalIds>(): FactoryBuilder<
     const { triggerEvent, ...withoutTriggerID } = ids;
     return {
       setup,
-      signals: (config.withTrigger ? ids : withoutTriggerID) as unknown as T,
+      ids: (config.withTrigger ? ids : withoutTriggerID) as unknown as T,
     };
   };
   return build;

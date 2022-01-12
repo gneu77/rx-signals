@@ -115,8 +115,8 @@ const setupCombinedBehavior = <InputType, ValidationType, ResultType>(
   store.addLazyBehavior(
     id,
     combineLatest([
-      store.getBehavior(signals.signals.signals1.combinedBehavior),
-      store.getBehavior(signals.signals.signals2.combinedBehavior).pipe(
+      store.getBehavior(signals.ids.ids1.combinedBehavior),
+      store.getBehavior(signals.ids.ids2.combinedBehavior).pipe(
         startWith({
           currentInput: undefined,
           resultInput: undefined,
@@ -170,7 +170,7 @@ const getValidatedInputWithTriggeredResultSignalsFactoryIntern = <
         (store: Store) =>
           resultInputGetter(
             store,
-            validationSignals.signals.combinedBehavior,
+            validationSignals.ids.combinedBehavior,
             config.isValidationResultValid,
           ),
         config.resultEffect,
@@ -186,15 +186,15 @@ const getValidatedInputWithTriggeredResultSignalsFactoryIntern = <
         setupCombinedBehavior(store, signals, combinedBehavior, config.isValidationResultValid);
       return {
         setup,
-        signals: {
+        ids: {
           combinedBehavior,
-          validationErrorEvents: signals.signals.signals1.errorEvents,
-          validationSuccessEvents: signals.signals.signals1.successEvents,
-          validationInvalidateEvent: signals.signals.signals1.invalidateEvent,
-          resultErrorEvents: signals.signals.signals2.errorEvents,
-          resultSuccessEvents: signals.signals.signals2.successEvents,
-          resultInvalidateEvent: signals.signals.signals2.invalidateEvent,
-          resultTriggerEvent: signals.signals.signals2.triggerEvent,
+          validationErrorEvents: signals.ids.ids1.errorEvents,
+          validationSuccessEvents: signals.ids.ids1.successEvents,
+          validationInvalidateEvent: signals.ids.ids1.invalidateEvent,
+          resultErrorEvents: signals.ids.ids2.errorEvents,
+          resultSuccessEvents: signals.ids.ids2.successEvents,
+          resultInvalidateEvent: signals.ids.ids2.invalidateEvent,
+          resultTriggerEvent: signals.ids.ids2.triggerEvent,
         },
       };
     });
@@ -238,7 +238,7 @@ const getValidatedInputWithResultSignalsFactoryIntern = <InputType, ValidationTy
         (store: Store) =>
           resultInputGetter(
             store,
-            validationSignals.signals.combinedBehavior,
+            validationSignals.ids.combinedBehavior,
             config.isValidationResultValid,
           ),
         config.resultEffect,
@@ -253,14 +253,14 @@ const getValidatedInputWithResultSignalsFactoryIntern = <InputType, ValidationTy
         setupCombinedBehavior(store, signals, combinedBehavior, config.isValidationResultValid);
       return {
         setup,
-        signals: {
+        ids: {
           combinedBehavior,
-          validationErrorEvents: signals.signals.signals1.errorEvents,
-          validationSuccessEvents: signals.signals.signals1.successEvents,
-          validationInvalidateEvent: signals.signals.signals1.invalidateEvent,
-          resultErrorEvents: signals.signals.signals2.errorEvents,
-          resultSuccessEvents: signals.signals.signals2.successEvents,
-          resultInvalidateEvent: signals.signals.signals2.invalidateEvent,
+          validationErrorEvents: signals.ids.ids1.errorEvents,
+          validationSuccessEvents: signals.ids.ids1.successEvents,
+          validationInvalidateEvent: signals.ids.ids1.invalidateEvent,
+          resultErrorEvents: signals.ids.ids2.errorEvents,
+          resultSuccessEvents: signals.ids.ids2.successEvents,
+          resultInvalidateEvent: signals.ids.ids2.invalidateEvent,
         },
       };
     });

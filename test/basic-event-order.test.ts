@@ -1,5 +1,5 @@
 import { merge, of } from 'rxjs';
-import { filter, map, mapTo, switchMap, tap, withLatestFrom } from 'rxjs/operators';
+import { filter, map, mapTo, switchMap, take, tap, withLatestFrom } from 'rxjs/operators';
 import { Store } from '../src/store';
 import { getIdentifier } from '../src/store.utils';
 import { expectSequence } from './test.utils';
@@ -65,7 +65,7 @@ describe('Event order', () => {
   });
 
   describe('examples from documentation', () => {
-    it('should work as described in the documentation', async () => {
+    it('should work as described in the first example of the documentation', async () => {
       const myEvent = getIdentifier<number>();
       const values: number[] = [];
       const sequence = expectSequence(
@@ -88,6 +88,33 @@ describe('Event order', () => {
 
       await sequence;
       expect(values).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    });
+
+    it('should work as described in the second example of the documentation', async () => {
+      const myEvent = getIdentifier<number>();
+      const sequence = expectSequence(
+        store.getEventStream(myEvent).pipe(take(14)),
+        [1, 2, 6, 21, 7, 22, 11, 26, 26, 41, 12, 27, 27, 42],
+      );
+
+      store.addEventSource(
+        Symbol('source1'),
+        myEvent,
+        store.getEventStream(myEvent).pipe(
+          map(e => e + 5), // 6, 7 -> 11, 26, 12, 27
+        ),
+      );
+      store.addEventSource(
+        Symbol('source2'),
+        myEvent,
+        store.getEventStream(myEvent).pipe(
+          map(e => e + 20), // 21, 22 -> 26, 41, 27, 42
+        ),
+      );
+      store.dispatchEvent(myEvent, 1);
+      store.dispatchEvent(myEvent, 2);
+
+      await sequence;
     });
   });
 });
