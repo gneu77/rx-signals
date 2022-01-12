@@ -14,13 +14,13 @@
 The _rx-signals_ store is a class to reactively manage global state and effects.
 It can also be used for local state and effects management via child stores.
 
-* With respect to [state management](https://github.com/gneu77/rx-signals/docs/rp_state_effects_start.md), the store is used
+* With respect to [state management](https://github.com/gneu77/rx-signals/blob/master/docs/rp_state_effects_start.md), the store is used
   * to define your explicit dependencies
   * to access state (including derived state)
-* With respect to [reactivity](https://github.com/gneu77/rx-signals/docs/rp_state_effects_start.md), the store is used
+* With respect to [reactivity](https://github.com/gneu77/rx-signals/blob/master/docs/rp_state_effects_start.md), the store is used
   * for change propagation
   * for reactive dependency injection
-* With respect to [effects management](https://github.com/gneu77/rx-signals/docs/rp_state_effects_start.md), the store
+* With respect to [effects management](https://github.com/gneu77/blob/master/rx-signals/docs/rp_state_effects_start.md), the store
   * is the _world_ in pure function transformation
   * is the _runtime_ in effects isolation
 
@@ -90,7 +90,7 @@ Of course, even if all added event-sources for a given _event-type_ complete, th
 
 There are some important **guarantees** concerning event-dispatch (whether manually or via event-sources):
 * The store always dispatches events asynchronously
-  * Relying on synchronous dispatch would be bad, cause it would break reactive design (remember that one purpose of RP is to [abstract away the need to think about time](https://github.com/gneu77/rx-signals/docs/rp_state_effects_start.md#abstract_away_time))
+  * Relying on synchronous dispatch would be bad, cause it would break reactive design (remember that one purpose of RP is to [abstract away the need to think about time](https://github.com/gneu77/rx-signals/blob/master/docs/rp_state_effects_start.md#abstract_away_time))
 * Though async, the order in which events are dispatched will always be preserved
   * So dispatching e.g. two events `A`, `B`, the `B` will be dispatched only after **all** subscribers got the `A`
   * This holds true even for the dispatch-order between parent- and child-stores (cause they're using a shared dispatch-queue)
@@ -228,7 +228,7 @@ In addition to this definition, _rx-signals_-behaviors
     1. Lazy behaviors will **not** be subscribed by the store. However, as soon as there are one or more subscribers, the store turns them into a hot observable.
 1. <a name="distinct_pipe"></a> always behave as if piped with `distinctUntilChanged()` and `shareReplay(1)`. However, internally they do **not** use `shareReplay(1)` and thus, there is **no** risk of the memory-leaks that are possible with `shareReplay`.
 
-Behaviors are used to model application state. Make sure to understand the importance of [modeling dependencies in your state explicitly](https://github.com/gneu77/rx-signals/docs/rp_state_effects_start.md).
+Behaviors are used to model application state. Make sure to understand the importance of [modeling dependencies in your state explicitly](https://github.com/gneu77/rx-signals/blob/master/docs/rp_state_effects_start.md).
 As a rule of thumb, those parts of the state that have no dependencies should be non-lazy, while dependent state should be modeled using lazy behaviors. (It is however also possible to make the complete state lazy, as well as it's possible to have non-lazy dependent state.)
 
 #### Basic behaviors
@@ -356,7 +356,7 @@ DI as you know it from classic OO-programming, is used to decouple usage and cre
 It thus allows for different concrete types without breaking dependencies, e.g. to allow for simple testability.
 But there's a problem with classic DI. All dependencies still need to be available at the time of object creation (class instantiation), because they are used in imperative instead of reactive code.
 Some DI-implementations even have problems with cyclic dependencies (which is no issue at all for our reactive DI).
-Again, remember that one feature of RP is to [abstract away the need to think about time](https://github.com/gneu77/rx-signals/docs/rp_state_effects_start.md#abstract_away_time).
+Again, remember that one feature of RP is to [abstract away the need to think about time](https://github.com/gneu77/rx-signals/blob/master/docs/rp_state_effects_start.md#abstract_away_time).
 
 Well, using _rx-signals_ your dependencies are just behaviors, it's as simple as that.
 If you separate the setup of all other behaviors and event-streams, from the setup of behaviors for non-rx-signals-dependencies (like e.g. Angular HTTP-services), you can run a single integration test over all those other signals without the need to mock anything at all!

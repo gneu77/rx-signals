@@ -91,7 +91,7 @@ Thus, in _RxJs_-world you can translate _signal_ as _observable_. (Now that we a
 
 ### Directions <a name="directions"></a>
 
-You should start with my introduction to [MVU, State Management, Reactive Programming and Effects Management](https://github.com/gneu77/rx-signals/docs/rp_state_effects_start.md), if
+You should start with my introduction to [MVU, State Management, Reactive Programming and Effects Management](https://github.com/gneu77/rx-signals/blob/master/docs/rp_state_effects_start.md), if
 * you don't know what any of these terms mean
 * you like to understand the basis for the _rx-signals_ architecture
 * you think State Management is only about having a global state and how to modify it
@@ -99,9 +99,9 @@ You should start with my introduction to [MVU, State Management, Reactive Progra
 * you think Effects Management is only about managing async processes (like http calls)
 * you don't know that all these things are tied together
 
-Otherwise, you may start with [**Using _rx-signals_**](https://github.com/gneu77/rx-signals/docs/rx-signals_start.md). 
+Otherwise, you may start with [**Using _rx-signals_**](https://github.com/gneu77/rx-signals/blob/master/docs/rx-signals_start.md). 
 Where necessary, it will still link to the corresponding passages of the formerly mentioned introduction.
 
 The API-documentation (as generated from the doc strings) [can be found here](https://rawcdn.githack.com/gneu77/rx-signals/master/docs/tsdoc/index.html)
 
-An introduction for people with _NgRx_ background [can be found here](https://github.com/gneu77/rx-signals/docs/ngrx_compare_start.md)
+An introduction for people with _NgRx_ background [can be found here](https://github.com/gneu77/rx-signals/blob/master/docs/ngrx_compare_start.md)

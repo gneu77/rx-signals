@@ -63,7 +63,7 @@ Considering the dependencies of state, we can differentiate into the following h
 ![State to View](./images/state-by-dependencies.svg)
 
 Strictly speaking, constants are of course no state, but in the context of _rx-signals_, it helps to think **State == Behavior** and as it is totally valid to put constants into an _rx-signals_ behavior, we consider constants just as a special case of state here.
-It's not only valid, but also useful to model constants as behavior, in cases where constants are not immediately available (see [reactive DI](https://github.com/gneu77/rx-signals/docs/rx-signals_start.md#reactive-di)).
+It's not only valid, but also useful to model constants as behavior, in cases where constants are not immediately available (see [reactive DI](https://github.com/gneu77/rx-signals/blob/master/docs/rx-signals_start.md#reactive-di)).
 
 So the **Root State** corresponds to the **Model** in MVU.
 This means, in MVU, all logic for **Derived State** must be part of the _View_ function.
@@ -300,14 +300,14 @@ An `Observable<T>` is a value-stream from the _RxJs_ library that corresponds to
 It's a specific implementation of the more general [Publish-subscribe-pattern](https://en.wikipedia.org/wiki/Publish%E2%80%93subscribe_pattern), hence the `Observable` is a registry that _Observers_ (aka _Subscribers_, aka _whoever is interested in value changes_) can subscribe to (register a callback).
 Mastering _RxJs_ is beyond this introduction, but essential for _rx-signals_.
 You can learn it [from here](https://rxjs.dev/guide/overview), but some important key aspects will also follow within this document.
-Even more aspects and details will be covered as part of the [Using _rx-signals_ guide](https://github.com/gneu77/rx-signals/docs/rx-signals_start.md)
+Even more aspects and details will be covered as part of the [Using _rx-signals_ guide](https://github.com/gneu77/rx-signals/blob/master/docs/rx-signals_start.md)
 
 We no longer need mutable variables to model state, but instead we wrap immutable values into `Observables`.
 In contrast to transient properties that we used in one of the initial examples, we can now define all identifiers immutably and declaratively with included change propagation.
 Immutability makes comparison and thus, detection of which parts of the state-tree have been changed trivial, hence more performant.
 It also helps a lot in reasoning, debugging, time-travel-logic, etc.
 
-Actually, keeping your state immutable is even mandatory in _rx-signals_, due to the fact that all [_behaviors_ are auto-piped with _distinctUntilChanged()_](https://github.com/gneu77/rx-signals/docs/rx-signals_start.md#distinct_pipe).
+Actually, keeping your state immutable is even mandatory in _rx-signals_, due to the fact that all [_behaviors_ are auto-piped with _distinctUntilChanged()_](https://github.com/gneu77/rx-signals/blob/master/docs/rx-signals_start.md#distinct_pipe).
 
 :warning: Properties defining state must always be immutable!
 
@@ -380,7 +380,7 @@ This is what "isolated" means in the context of this section.
 In a pure functional language (like e.g. Elm or Haskell), the side-effects are pulled up into the runtime.
 In a multi-paradigm language like JS/TS, we cannot go that far, but we can still separate/isolate side-effects from the rest of our code in a clean way.
 
-In the [**Using _rx-signals_**](https://github.com/gneu77/rx-signals/docs/rx-signals_start.md) documentation, you will see how side-effect isolation by event-sources works (especially in the testing section).
+In the [**Using _rx-signals_**](https://github.com/gneu77/rx-signals/blob/master/docs/rx-signals_start.md) documentation, you will see how side-effect isolation by event-sources works (especially in the testing section).
 
 
 ## Big Picture
