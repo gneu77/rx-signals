@@ -1,6 +1,6 @@
 # Changes
 
-## 2.7.0
+## 2.7.0 (2022-01-13)
 
 ### Documentation
 

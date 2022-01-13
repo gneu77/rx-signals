@@ -186,7 +186,7 @@ Even more important, if you violate it, you are making the life of your co-devel
 
 > Sometimes programmers tend to write imperative instead of declarative code, because they are concerned about performance.
 > While declarative code might be slower in some cases, it rarely is a bottleneck.
-> If it is, you can still code the critical part imperatively and properly encapsulate it in a pure function (if you do, please give your fellow devs some more detailed information than the dev of [this famous example](https://en.wikipedia.org/wiki/Fast_inverse_square_root) did).
+> If it is, you can still code the critical part imperatively and properly encapsulate it in a pure function (if you do, please give your fellow devs some more detailed information than the dev of [this famous example](https://en.wikipedia.org/wiki/Fast_inverse_square_root#Overview_of_the_code) did).
 > Using imperative code instead of declarative code is _Premature Optimization_.
 > The same holds true for using mutable instead of immutable data.
 
