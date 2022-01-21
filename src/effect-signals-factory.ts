@@ -1,6 +1,6 @@
 import { combineLatest, Observable, of, throwError } from 'rxjs';
 import { catchError, debounceTime, filter, map, mapTo, switchMap, take } from 'rxjs/operators';
-import { createSignalsFactory, Signals, SignalsFactory } from './signals-factory';
+import { Signals, SignalsFactory } from './signals-factory';
 import { Store } from './store';
 import { BehaviorId, EventId, getBehaviorId, getEventId, NO_VALUE } from './store-utils';
 
@@ -351,4 +351,9 @@ export type EffectSignalsFactory<InputType, ResultType> = SignalsFactory<
 export const getEffectSignalsFactory = <InputType, ResultType>(): EffectSignalsFactory<
   InputType,
   ResultType
-> => createSignalsFactory(getEffectBuilder);
+> =>
+  new SignalsFactory<
+    EffectInputSignals<InputType>,
+    EffectOutputSignals<InputType, ResultType>,
+    EffectFactoryConfiguration<InputType, ResultType>
+  >(getEffectBuilder);

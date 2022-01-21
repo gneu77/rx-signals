@@ -52,7 +52,7 @@ describe('Cyclic dependencies', () => {
     expect(store.isSubscribed(derivedBehavior)).toBe(true);
     expect(store.isSubscribed(inputEvent)).toBe(true);
 
-    store.dispatchEvent(inputEvent, 1);
+    store.dispatch(inputEvent, 1);
 
     await sequence;
 
@@ -64,11 +64,11 @@ describe('Cyclic dependencies', () => {
   it('should not change, if second event sent while unsubscribed', async () => {
     const sequence = expectSequence(store.getBehavior(derivedBehavior), [10, 1000]);
 
-    store.dispatchEvent(inputEvent, 1);
+    store.dispatch(inputEvent, 1);
 
     await sequence;
 
-    await store.dispatchEvent(inputEvent, 2);
+    await store.dispatch(inputEvent, 2);
 
     await expectSequence(store.getBehavior(derivedBehavior), [1000]);
   });
@@ -76,15 +76,15 @@ describe('Cyclic dependencies', () => {
   it('should get correct value on dispatch after resubscribe', async () => {
     const sequence = expectSequence(store.getBehavior(derivedBehavior), [10, 1000]);
 
-    store.dispatchEvent(inputEvent, 1);
+    store.dispatch(inputEvent, 1);
 
     await sequence;
 
-    await store.dispatchEvent(inputEvent, 2);
+    await store.dispatch(inputEvent, 2);
 
     const sequence2 = expectSequence(store.getBehavior(derivedBehavior), [1000, 300000]);
 
-    await store.dispatchEvent(inputEvent, 3);
+    await store.dispatch(inputEvent, 3);
 
     await sequence2;
   });

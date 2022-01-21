@@ -325,7 +325,7 @@ describe('validated input with result signals factory', () => {
           },
         },
       ]);
-      store.dispatchEvent(signals.input.resultTrigger, null);
+      store.dispatch(signals.input.resultTrigger, null);
       await sequence3;
     });
 
@@ -362,7 +362,7 @@ describe('validated input with result signals factory', () => {
         });
         await sequence;
 
-        store.dispatchEvent(signals.input.resultTrigger, null);
+        store.dispatch(signals.input.resultTrigger, null);
 
         const sequence2 = expectSequence(observable, [
           {

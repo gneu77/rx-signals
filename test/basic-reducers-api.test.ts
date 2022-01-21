@@ -20,20 +20,20 @@ describe('Reducers', () => {
     store.addReducer(counterState, decreaseEvent, (state, event) => state - event);
     expect(store.getNumberOfBehaviorSources(counterState)).toBe(1);
 
-    await store.dispatchEvent(increaseEvent, 7); // => 100
-    await store.dispatchEvent(decreaseEvent, 5); // => 100
+    await store.dispatch(increaseEvent, 7); // => 100
+    await store.dispatch(decreaseEvent, 5); // => 100
 
     store.addState(counterState, 100);
     expect(store.getNumberOfBehaviorSources(counterState)).toBe(2);
 
-    await store.dispatchEvent(increaseEvent, 17); // => 100
-    await store.dispatchEvent(decreaseEvent, 9); // => 91
+    await store.dispatch(increaseEvent, 17); // => 100
+    await store.dispatch(decreaseEvent, 9); // => 91
 
     store.addReducer(counterState, increaseEvent, (state, event) => state + event);
     expect(store.getNumberOfBehaviorSources(counterState)).toBe(3);
 
-    await store.dispatchEvent(increaseEvent, 27); // => 118
-    await store.dispatchEvent(decreaseEvent, 2); // => 116
+    await store.dispatch(increaseEvent, 27); // => 118
+    await store.dispatch(decreaseEvent, 2); // => 116
 
     await counterSequence;
   });
@@ -47,8 +47,8 @@ describe('Reducers', () => {
     store.addReducer(counterState, decreaseEvent, (state, event) => state - event);
     expect(store.getNumberOfBehaviorSources(counterState)).toBe(3);
 
-    await store.dispatchEvent(increaseEvent, 17); // => 117
-    await store.dispatchEvent(decreaseEvent, 9); // => 108
+    await store.dispatch(increaseEvent, 17); // => 117
+    await store.dispatch(decreaseEvent, 9); // => 108
 
     expect(store.isSubscribed(increaseEvent)).toBe(true);
     expect(store.isSubscribed(decreaseEvent)).toBe(true);
@@ -59,8 +59,8 @@ describe('Reducers', () => {
     expect(store.isSubscribed(increaseEvent)).toBe(false);
     expect(store.isSubscribed(decreaseEvent)).toBe(true);
 
-    await store.dispatchEvent(increaseEvent, 30); // => 108
-    await store.dispatchEvent(decreaseEvent, 1); // => 107
+    await store.dispatch(increaseEvent, 30); // => 108
+    await store.dispatch(decreaseEvent, 1); // => 107
 
     await counterSequence;
   });

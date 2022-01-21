@@ -350,7 +350,7 @@ export class Store {
    * @param {T} event - the event of the type specified by the identifier
    * @returns {Promise<boolean>} - a promise that resolves to true, if the event was subscribed, else to false
    */
-  dispatchEvent<T>(identifier: EventId<T>, event: T): Promise<boolean> {
+  dispatch<T>(identifier: EventId<T>, event: T): Promise<boolean> {
     const controlledSubject = this.getEventStreamControlledSubject(identifier);
     if (controlledSubject.isObservableSubscribed()) {
       const result: Promise<boolean> = this.getEventStream(identifier)
@@ -809,7 +809,7 @@ export class Store {
       },
       id => {
         // If the source completes, we can remove it.
-        // However, we cannot complete the target, even if it was the last source, because store.dispatchEvent
+        // However, we cannot complete the target, even if it was the last source, because store.dispatch
         // is also a valid (never completing) source. Also, new sources might be added at a later point of time.
         controlledSubject.removeSource(id);
       },

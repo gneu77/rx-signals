@@ -24,7 +24,7 @@ describe('Event streams', () => {
     });
     it('should not dispatch event, if not subscribed', async () => {
       store.getEventStream(testEvent);
-      const dispatched = await store.dispatchEvent(testEvent, 'TEST');
+      const dispatched = await store.dispatch(testEvent, 'TEST');
       expect(dispatched).toBe(false);
     });
 
@@ -32,13 +32,13 @@ describe('Event streams', () => {
       const eventStream = store.getEventStream(testEvent);
       const sequence = expectSequence(eventStream, ['TEST1', 'TEST2']);
 
-      const dispatched1 = await store.dispatchEvent(testEvent, 'TEST1');
+      const dispatched1 = await store.dispatch(testEvent, 'TEST1');
       expect(dispatched1).toBe(true);
-      const dispatched2 = await store.dispatchEvent(testEvent, 'TEST2');
+      const dispatched2 = await store.dispatch(testEvent, 'TEST2');
       expect(dispatched2).toBe(true);
 
       await sequence;
-      const dispatched3 = await store.dispatchEvent(testEvent, 'TEST3');
+      const dispatched3 = await store.dispatch(testEvent, 'TEST3');
       expect(dispatched3).toBe(false);
     });
 
@@ -49,8 +49,8 @@ describe('Event streams', () => {
         { type: testEvent, event: 'TEST2' },
       ]);
 
-      store.dispatchEvent(testEvent, 'TEST1');
-      store.dispatchEvent(testEvent, 'TEST2');
+      store.dispatch(testEvent, 'TEST1');
+      store.dispatch(testEvent, 'TEST2');
 
       await sequence;
     });

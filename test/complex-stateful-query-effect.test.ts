@@ -85,7 +85,7 @@ describe('Stateful query pattern', () => {
   });
 
   it('should reduce query and trigger effect', async () => {
-    await store.dispatchEvent(queryEvent, { firstName: 'test' });
+    await store.dispatch(queryEvent, { firstName: 'test' });
     await awaitStringifyEqualState(store.getBehavior(loadingBehavior), false);
     await expectSequence(store.getBehavior(resultBehavior), [
       {
@@ -96,7 +96,7 @@ describe('Stateful query pattern', () => {
   });
 
   it('should reset correctly', async () => {
-    await store.dispatchEvent(queryEvent, { firstName: 'test' });
+    await store.dispatch(queryEvent, { firstName: 'test' });
     await awaitStringifyEqualState(store.getBehavior(loadingBehavior), false);
     const resultSequence = expectSequence(store.getBehavior(resultBehavior), [
       {

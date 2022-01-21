@@ -46,9 +46,9 @@ describe('Event order', () => {
     const counterSequence = expectSequence(store.getBehavior(counterState), [0, 3, 9, 18, 19]);
 
     // as we do not await the dispatches, the last multiply is dispatched before the dispatch in the effect (add 1) is dispatched
-    store.dispatchEvent(addEvent, 3); // => 3
-    store.dispatchEvent(multiplyEvent, 3); // => 9
-    store.dispatchEvent(multiplyEvent, 2); // => 18
+    store.dispatch(addEvent, 3); // => 3
+    store.dispatch(multiplyEvent, 3); // => 9
+    store.dispatch(multiplyEvent, 2); // => 18
 
     await counterSequence;
   });
@@ -57,9 +57,9 @@ describe('Event order', () => {
     const counterSequence = expectSequence(store.getBehavior(counterState), [0, 3, 9, 10, 20]);
 
     // now we await the *3 dispatch and thus, the +1 dispatch from the effect comes before the *2 dispatch
-    store.dispatchEvent(addEvent, 3); // => 3
-    await store.dispatchEvent(multiplyEvent, 3); // => 9 => 10
-    store.dispatchEvent(multiplyEvent, 2); // => 20
+    store.dispatch(addEvent, 3); // => 3
+    await store.dispatch(multiplyEvent, 3); // => 9 => 10
+    store.dispatch(multiplyEvent, 2); // => 20
 
     await counterSequence;
   });
@@ -83,7 +83,7 @@ describe('Event order', () => {
       );
       store.addEventSource(Symbol(), myEvent, of(3, 4, 5));
       values.push(1);
-      store.dispatchEvent(myEvent, 6);
+      store.dispatch(myEvent, 6);
       values.push(2);
 
       await sequence;
@@ -111,8 +111,8 @@ describe('Event order', () => {
           map(e => e + 20), // 21, 22 -> 26, 41, 27, 42
         ),
       );
-      store.dispatchEvent(myEvent, 1);
-      store.dispatchEvent(myEvent, 2);
+      store.dispatch(myEvent, 1);
+      store.dispatch(myEvent, 2);
 
       await sequence;
     });

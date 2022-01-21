@@ -56,9 +56,9 @@ describe('Effect loops', () => {
       ),
     );
 
-    await store.dispatchEvent(addEvent, 5); // => 5
-    await store.dispatchEvent(addEvent, 5); // => 10 => 23
-    await store.dispatchEvent(addEvent, 2); // => 25 => 50
+    await store.dispatch(addEvent, 5); // => 5
+    await store.dispatch(addEvent, 5); // => 10 => 23
+    await store.dispatch(addEvent, 2); // => 25 => 50
 
     await counterSequence;
   });
@@ -88,9 +88,9 @@ describe('Effect loops', () => {
       ),
     );
 
-    await store.dispatchEvent(addEvent, 5); // => 5
-    await store.dispatchEvent(addEvent, 5); // => 10 => 23
-    await store.dispatchEvent(addEvent, 2); // => 25 => 50
+    await store.dispatch(addEvent, 5); // => 5
+    await store.dispatch(addEvent, 5); // => 10 => 23
+    await store.dispatch(addEvent, 2); // => 25 => 50
 
     await counterSequence;
   });

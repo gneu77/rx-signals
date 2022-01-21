@@ -1,7 +1,7 @@
 import { combineLatest } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Store } from '../src/store';
-import { createSignalsFactory, Signals, SignalsFactory } from './../src/signals-factory';
+import { Signals, SignalsFactory } from './../src/signals-factory';
 import { BehaviorId, EventId, getBehaviorId, getEventId } from './../src/store-utils';
 import { expectSequence } from './test.utils';
 
@@ -89,14 +89,14 @@ describe('signals factories documentation', () => {
     };
 
     it('should createSignalsFactory for counters', async () => {
-      const counterFactory = createSignalsFactory(getCounterSignals);
-      const { input, output, setup } = counterFactory.build(undefined);
+      const counterFactory = new SignalsFactory(getCounterSignals);
+      const { input, output, setup } = counterFactory.build({});
       setup(store);
 
       const sequence = expectSequence(store.getBehavior(output.counterState), [0, 1, 6, 4]);
-      store.dispatchEvent(input.increaseBy, 1);
-      store.dispatchEvent(input.increaseBy, 5);
-      store.dispatchEvent(input.decreaseBy, 2);
+      store.dispatch(input.increaseBy, 1);
+      store.dispatch(input.increaseBy, 5);
+      store.dispatch(input.decreaseBy, 2);
 
       await sequence;
     });
@@ -129,10 +129,10 @@ describe('signals factories documentation', () => {
       setup(store);
 
       const sequence = expectSequence(store.getBehavior(output.counterSum), [0, 1, 6, 8, 5]);
-      store.dispatchEvent(input.inputA.increaseBy, 1);
-      store.dispatchEvent(input.inputA.increaseBy, 5);
-      store.dispatchEvent(input.inputB.increaseBy, 2);
-      store.dispatchEvent(input.inputA.decreaseBy, 3);
+      store.dispatch(input.inputA.increaseBy, 1);
+      store.dispatch(input.inputA.increaseBy, 5);
+      store.dispatch(input.inputB.increaseBy, 2);
+      store.dispatch(input.inputA.decreaseBy, 3);
 
       await sequence;
     });
@@ -170,23 +170,17 @@ describe('signals factories documentation', () => {
       setup(store);
 
       const sequence = expectSequence(store.getBehavior(output.counterSum), [0, 1, 6, 8, 5]);
-      store.dispatchEvent(input.inputA.increaseBy, 1);
-      store.dispatchEvent(input.inputA.increaseBy, 5);
-      store.dispatchEvent(input.inputB.increaseBy, 2);
-      store.dispatchEvent(input.inputA.decreaseBy, 3);
+      store.dispatch(input.inputA.increaseBy, 1);
+      store.dispatch(input.inputA.increaseBy, 5);
+      store.dispatch(input.inputB.increaseBy, 2);
+      store.dispatch(input.inputA.decreaseBy, 3);
 
       await sequence;
     });
 
     it('should compose', async () => {
-      const counterFactory = createSignalsFactory<CounterInput, CounterOutput, undefined>(
-        getCounterSignals,
-      );
-      const sumFactory = createSignalsFactory<SumInput, SumOutput, undefined>(getSumSignals2);
-
-      // const t1: SignalsFactory<Merged<>, SumOutput> = counterFactory
-      // .bind(() => counterFactory);
-
+      const counterFactory = new SignalsFactory(getCounterSignals);
+      const sumFactory = new SignalsFactory(getSumSignals2);
       const getCounterWithSumSignalsFactory: SignalsFactory<ComposedInput, SumOutput> =
         counterFactory
           .bind(() => counterFactory)
@@ -203,14 +197,14 @@ describe('signals factories documentation', () => {
             counterSum: ids.counterSum,
           }));
 
-      const { input, output, setup } = getCounterWithSumSignalsFactory.build(undefined);
+      const { input, output, setup } = getCounterWithSumSignalsFactory.build({});
       setup(store);
 
       const sequence = expectSequence(store.getBehavior(output.counterSum), [0, 1, 6, 8, 5]);
-      store.dispatchEvent(input.inputA.increaseBy, 1);
-      store.dispatchEvent(input.inputA.increaseBy, 5);
-      store.dispatchEvent(input.inputB.increaseBy, 2);
-      store.dispatchEvent(input.inputA.decreaseBy, 3);
+      store.dispatch(input.inputA.increaseBy, 1);
+      store.dispatch(input.inputA.increaseBy, 5);
+      store.dispatch(input.inputB.increaseBy, 2);
+      store.dispatch(input.inputA.decreaseBy, 3);
 
       await sequence;
     });

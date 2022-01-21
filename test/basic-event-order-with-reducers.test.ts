@@ -34,11 +34,11 @@ describe('Event order', () => {
   it('should preserve the order in which events are dispatched 1', async () => {
     const counterSequence = expectSequence(store.getBehavior(counterState), [0, 3, 6, 18, 21, 63]);
 
-    store.dispatchEvent(addEvent, 3); // => 3
-    store.dispatchEvent(addEvent, 3); // => 6
-    store.dispatchEvent(multiplyEvent, 3); // => 18
-    store.dispatchEvent(addEvent, 3); // => 21
-    store.dispatchEvent(multiplyEvent, 3); // => 63
+    store.dispatch(addEvent, 3); // => 3
+    store.dispatch(addEvent, 3); // => 6
+    store.dispatch(multiplyEvent, 3); // => 18
+    store.dispatch(addEvent, 3); // => 21
+    store.dispatch(multiplyEvent, 3); // => 63
 
     await counterSequence;
   });
@@ -49,11 +49,11 @@ describe('Event order', () => {
       [0, 3, 6, 24, 27, 81, 82, 83],
     );
 
-    store.dispatchEvent(addEvent, 3); // => 3
-    store.dispatchEvent(addEvent, 3); // => 6
-    store.dispatchEvent(multiplyEvent, 4); // => 24 (Queuing effect that adds +1 two times)
-    store.dispatchEvent(addEvent, 3); // => 27
-    store.dispatchEvent(multiplyEvent, 3); // => 81 => 82 => 83 (82 and 83 from effect)
+    store.dispatch(addEvent, 3); // => 3
+    store.dispatch(addEvent, 3); // => 6
+    store.dispatch(multiplyEvent, 4); // => 24 (Queuing effect that adds +1 two times)
+    store.dispatch(addEvent, 3); // => 27
+    store.dispatch(multiplyEvent, 3); // => 81 => 82 => 83 (82 and 83 from effect)
 
     await counterSequence;
   });

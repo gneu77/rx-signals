@@ -102,69 +102,18 @@ export const merge = <T1 extends Record<string, any>, T2 extends Record<string, 
   return result as Merged<T1, T2>;
 };
 
-// ##########################################
+export type Configuration = Readonly<Record<string, any>>;
 
-export type Configuration = Readonly<Record<string, any>> | undefined;
+type NM<T1 extends Configuration, T2 extends Configuration> = T1 & T2;
 
-export type MergedConfiguration<T1 extends Configuration, T2 extends Configuration> = T1 &
-  T2 extends undefined
-  ? undefined
+export type MergedConfiguration<T1 extends Configuration, T2 extends Configuration> = keyof NM<
+  T1,
+  T2
+> extends never
+  ? NM<T1, T2>
   : Readonly<{
       c1: T1;
       c2: T2;
     }>;
 
-// ##########################################
-
-/*
-type TestMerge<T1 extends Record<string, any>, T2 extends Record<string, any>> = Merged<T1, T2>;
-
-const tmerged = <T1 extends Record<string, any>, T2 extends Record<string, any>>(
-  t1: T1,
-  t2: T2,
-): TestMerge<T1, T2> => {
-  return {} as TestMerge<T1, T2>;
-};
-
-type Test1 = {
-  uniqueTest1: string;
-  a: string;
-};
-type Test2 = {
-  uniqueTest2: number;
-  a: number;
-};
-type Test3 = {
-  b: number;
-};
-type Test4 = {
-  a: boolean;
-  conflicts1: {
-    a: number;
-  };
-};
-
-const test1: Test1 = {
-  uniqueTest1: 'test1',
-  a: 'test1',
-};
-const test2: Test2 = {
-  uniqueTest2: 242,
-  a: 242,
-};
-const test3: Test3 = {
-  b: 342,
-};
-const test4: Test4 = {
-  a: true,
-  conflicts1: {
-    a: 442,
-  },
-};
-
-const merged12: TestMerge<Test1, Test2> = tmerged(test1, test2); // prev.a: string
-const merged13: TestMerge<Test1, Test3> = tmerged(test1, test3); // NO prev
-const merged14: TestMerge<Test1, Test4> = tmerged(test1, test4); // prev.a: string
-                                                                 // prev.prev2.a: number
-const merged34: TestMerge<Test3, Test4> = tmerged(test3, test4); // prev.a: number
-*/
+export type EmptyObject<T extends Record<string, any>> = keyof T extends never ? T : never;
