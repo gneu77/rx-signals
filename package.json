@@ -1,6 +1,6 @@
 {
   "name": "@rx-signals/store",
-  "version": "2.7.0",
+  "version": "3.0.0-rc1",
   "description": "Reactive effects management with behaviors and event streams",
   "author": "Gerd Neudert",
   "license": "MIT",
@@ -18,7 +18,8 @@
     "test-coverage": "jest --config jestconfig.json --coverage",
     "lint": "eslint --ext .ts \"src/**\"",
     "generate-docs": "typedoc --out docs/tsdoc src",
-    "pre-publish": "rm -rf dist && rm -rf docs/tsdoc && rm -rf coverage && npm run format && npm run lint && npm run test && npm run build && npm run generate-docs"
+    "pre-wip": "rm -rf dist && rm -rf coverage && npm run format && npm run lint && npm run test && npm run build",
+    "pre-publish": "rm -rf docs/tsdoc && npm run pre-wip && npm run generate-docs"
   },
   "keywords": [
     "rxjs",

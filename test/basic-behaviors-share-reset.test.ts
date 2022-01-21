@@ -1,13 +1,13 @@
 import { map, tap, withLatestFrom } from 'rxjs/operators';
-import { getIdentifier } from '../src/store.utils';
+import { getBehaviorId, getEventId } from '../src/store-utils';
 import { Store } from './../src/store';
 import { expectSequence } from './test.utils';
 describe('Behaviors share and reset logic', () => {
-  const rootBehavior = getIdentifier<number>();
-  const doubledBehavior = getIdentifier<number>();
-  const tripledBehavior = getIdentifier<number>();
+  const rootBehavior = getBehaviorId<number>();
+  const doubledBehavior = getBehaviorId<number>();
+  const tripledBehavior = getBehaviorId<number>();
 
-  const addToRootEvent = getIdentifier<number>();
+  const addToRootEvent = getEventId<number>();
 
   let store: Store;
   let doubledCalculated: number;

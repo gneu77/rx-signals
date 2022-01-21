@@ -1,10 +1,10 @@
 import { interval, of, Subject } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { getIdentifier } from '../src/store.utils';
+import { getEventId } from '../src/store-utils';
 import { Store, TypedEvent } from './../src/store';
 import { awaitError, expectSequence, getSequence } from './test.utils';
 describe('Event streams', () => {
-  const testEvent = getIdentifier<string>();
+  const testEvent = getEventId<string>();
 
   let store: Store;
 
@@ -135,11 +135,11 @@ describe('Event streams', () => {
 
   describe('with typed sources', () => {
     const sourceId = Symbol('SourceId');
-    const testEvent2 = getIdentifier<string>();
-    const testEvent3 = getIdentifier<string>();
-    const testEvent4 = getIdentifier<string>();
-    const testEvent5 = getIdentifier<string>();
-    const testEvent6 = getIdentifier<string>();
+    const testEvent2 = getEventId<string>();
+    const testEvent3 = getEventId<string>();
+    const testEvent4 = getEventId<string>();
+    const testEvent5 = getEventId<string>();
+    const testEvent6 = getEventId<string>();
 
     it('should work with event sources that emit 2 different event types', async () => {
       store.add2TypedEventSource(
@@ -283,9 +283,9 @@ describe('Event streams', () => {
 
   describe('with typed sources that are switched depending on subscription of an event', () => {
     const sourceId = Symbol('SourceId');
-    const testEvent2 = getIdentifier<string>();
-    const testEvent3 = getIdentifier<string>();
-    const testEvent4 = getIdentifier<string>();
+    const testEvent2 = getEventId<string>();
+    const testEvent3 = getEventId<string>();
+    const testEvent4 = getEventId<string>();
     it('should NEVER dispatch testEvent2, if testEvent1 is not subscribed', async () => {
       store.add2TypedEventSource(
         sourceId,

@@ -1,6 +1,6 @@
 import { combineLatest, of } from 'rxjs';
 import { filter, map, switchMap, withLatestFrom } from 'rxjs/operators';
-import { getIdentifier } from '../src/store.utils';
+import { getBehaviorId, getEventId } from '../src/store-utils';
 import { Store } from './../src/store';
 import { awaitStringifyEqualState, expectSequence } from './test.utils';
 describe('Stateful query pattern', () => {
@@ -14,11 +14,11 @@ describe('Stateful query pattern', () => {
     resultQuery: QueryType | null;
   }
 
-  const queryBehavior = getIdentifier<QueryType>();
-  const resultBehavior = getIdentifier<ResultType>();
-  const loadingBehavior = getIdentifier<boolean>();
-  const queryEvent = getIdentifier<Partial<QueryType>>();
-  const resultEvent = getIdentifier<ResultType>();
+  const queryBehavior = getBehaviorId<QueryType>();
+  const resultBehavior = getBehaviorId<ResultType>();
+  const loadingBehavior = getBehaviorId<boolean>();
+  const queryEvent = getEventId<Partial<QueryType>>();
+  const resultEvent = getEventId<ResultType>();
   const resultEffect = Symbol('ResultEffect');
 
   let store: Store;

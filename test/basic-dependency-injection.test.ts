@@ -1,12 +1,12 @@
 import { NEVER } from 'rxjs';
 import { take } from 'rxjs/operators';
-import { getIdentifier } from '../src/store.utils';
+import { getBehaviorId } from '../src/store-utils';
 import { Store } from './../src/store';
 describe('use the store for dependency injection', () => {
   interface IMyService {
     execute: (callback: () => any) => void;
   }
-  const IMyServiceIdentifier = getIdentifier<IMyService>();
+  const IMyServiceIdentifier = getBehaviorId<IMyService>();
 
   let constructed = 0;
   const concreteServiceConstructor = () => {

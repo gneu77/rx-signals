@@ -2,14 +2,14 @@ import { Observable, of, Subject } from 'rxjs';
 import { delay, filter, take } from 'rxjs/operators';
 import {
   CombinedEffectResult,
+  EffectInputSignals,
+  EffectOutputSignals,
   EffectSignalsFactory,
-  EffectSignalsType,
   EffectType,
   getEffectSignalsFactory,
-  TriggeredEffectSignalsType,
 } from '../src/effect-signals-factory';
 import { Store } from '../src/store';
-import { getIdentifier } from '../src/store.utils';
+import { getBehaviorId } from '../src/store-utils';
 import { expectSequence, withSubscription } from './test.utils';
 
 describe('effect signals factory', () => {
@@ -23,7 +23,7 @@ describe('effect signals factory', () => {
     readonly totalResults: number;
   }
 
-  const inputStateId = getIdentifier<InputModel>();
+  const inputStateId = getBehaviorId<InputModel>();
   const inputSubject = new Subject<InputModel>();
   let effectCalled = 0;
 
@@ -62,28 +62,25 @@ describe('effect signals factory', () => {
   });
 
   describe('getEffectSignalsFactory', () => {
-    let factory: EffectSignalsFactory<
-      InputModel,
-      ResultModel,
-      EffectSignalsType<InputModel, ResultModel>
-    >;
+    let factory: EffectSignalsFactory<InputModel, ResultModel>;
 
     beforeEach(() => {
-      factory = getEffectSignalsFactory<InputModel, ResultModel>(
-        store => store.getBehavior(inputStateId),
-        resultEffect,
-      );
+      factory = getEffectSignalsFactory<InputModel, ResultModel>();
     });
 
     describe('default settings', () => {
-      let signals: EffectSignalsType<InputModel, ResultModel>;
+      let inIds: EffectInputSignals<InputModel>;
+      let outIds: EffectOutputSignals<InputModel, ResultModel>;
       let observable: Observable<CombinedEffectResult<InputModel, ResultModel>>;
 
       beforeEach(() => {
-        const factoryResult = factory.build();
-        signals = factoryResult.ids;
+        const factoryResult = factory
+          .extendSetup((store, inIds) => store.connect(inputStateId, inIds.input))
+          .build({ effect: resultEffect });
+        inIds = factoryResult.input;
+        outIds = factoryResult.output;
         factoryResult.setup(store);
-        observable = store.getBehavior(signals.combinedBehavior);
+        observable = store.getBehavior(outIds.combined);
       });
 
       it('should have correct sequence for input', async () => {
@@ -245,7 +242,7 @@ describe('effect signals factory', () => {
           });
           await sequence2;
 
-          const sequence3 = expectSequence(store.getEventStream(signals.errorEvents), [
+          const sequence3 = expectSequence(store.getEventStream(outIds.errors), [
             {
               error: 'unhandled',
               errorInput: {
@@ -274,7 +271,7 @@ describe('effect signals factory', () => {
       });
 
       it('should not subscribe the effect, if only the error event is subscribed', async () => {
-        const sequence3 = expectSequence(store.getEventStream(signals.errorEvents), [
+        const sequence3 = expectSequence(store.getEventStream(outIds.errors), [
           {
             error: 'unhandled',
             errorInput: {
@@ -283,7 +280,7 @@ describe('effect signals factory', () => {
             },
           },
         ]);
-        expect(store.isSubscribed(signals.combinedBehavior)).toBe(false);
+        expect(store.isSubscribed(outIds.combined)).toBe(false);
         inputSubject.next({
           searchString: 'throw',
           page: 2,
@@ -321,7 +318,7 @@ describe('effect signals factory', () => {
       });
 
       it('should not subscribe the effect, if only the success event is subscribed', async () => {
-        const sequence3 = expectSequence(store.getEventStream(signals.successEvents), [
+        const sequence3 = expectSequence(store.getEventStream(outIds.successes), [
           {
             result: {
               results: [],
@@ -333,7 +330,7 @@ describe('effect signals factory', () => {
             },
           },
         ]);
-        expect(store.isSubscribed(signals.combinedBehavior)).toBe(false);
+        expect(store.isSubscribed(outIds.combined)).toBe(false);
         inputSubject.next({
           searchString: 'test',
           page: 2,
@@ -375,7 +372,7 @@ describe('effect signals factory', () => {
       });
 
       it('should provide previous input and result in the success event', async () => {
-        const sequence = expectSequence(store.getEventStream(signals.successEvents), [
+        const sequence = expectSequence(store.getEventStream(outIds.successes), [
           {
             result: {
               results: ['test_result'],
@@ -512,19 +509,23 @@ describe('effect signals factory', () => {
           page: 2,
         });
         await sequence2;
-        store.dispatchEvent(signals.invalidateEvent, null);
+        store.dispatchEvent(inIds.invalidate, null);
       });
     });
 
     describe('with trigger', () => {
-      let signals: TriggeredEffectSignalsType<InputModel, ResultModel>;
+      let inIds: EffectInputSignals<InputModel>;
+      let outIds: EffectOutputSignals<InputModel, ResultModel>;
       let observable: Observable<CombinedEffectResult<InputModel, ResultModel>>;
 
       beforeEach(() => {
-        const factoryResult = factory.withTrigger().build();
-        signals = factoryResult.ids;
+        const factoryResult = factory
+          .extendSetup((store, inIds) => store.connect(inputStateId, inIds.input))
+          .build({ effect: resultEffect, withTrigger: true });
+        inIds = factoryResult.input;
+        outIds = factoryResult.output;
         factoryResult.setup(store);
-        observable = store.getBehavior(signals.combinedBehavior);
+        observable = store.getBehavior(outIds.combined);
       });
 
       it('should have correct sequence for input', async () => {
@@ -585,25 +586,28 @@ describe('effect signals factory', () => {
           searchString: 'test',
           page: 4,
         });
-        store.dispatchEvent(signals.triggerEvent, null);
+        store.dispatchEvent(inIds.trigger, null);
         await sequence;
       });
     });
 
     describe('with initial result', () => {
-      let signals: EffectSignalsType<InputModel, ResultModel>;
+      let outIds: EffectOutputSignals<InputModel, ResultModel>;
       let observable: Observable<CombinedEffectResult<InputModel, ResultModel>>;
 
       beforeEach(() => {
         const factoryResult = factory
-          .withInitialResult(() => ({
-            results: [],
-            totalResults: 0,
-          }))
-          .build();
-        signals = factoryResult.ids;
+          .extendSetup((store, inIds) => store.connect(inputStateId, inIds.input))
+          .build({
+            effect: resultEffect,
+            initialResultGetter: () => ({
+              results: [],
+              totalResults: 0,
+            }),
+          });
+        outIds = factoryResult.output;
         factoryResult.setup(store);
-        observable = store.getBehavior(signals.combinedBehavior);
+        observable = store.getBehavior(outIds.combined);
       });
 
       it('should have correct sequence for input', async () => {
@@ -651,14 +655,19 @@ describe('effect signals factory', () => {
     });
 
     describe('with effect debounce', () => {
-      let signals: EffectSignalsType<InputModel, ResultModel>;
+      let outIds: EffectOutputSignals<InputModel, ResultModel>;
       let observable: Observable<CombinedEffectResult<InputModel, ResultModel>>;
 
       beforeEach(() => {
-        const factoryResult = factory.withEffectDebounce(50).build();
-        signals = factoryResult.ids;
+        const factoryResult = factory
+          .extendSetup((store, inIds) => store.connect(inputStateId, inIds.input))
+          .build({
+            effect: resultEffect,
+            effectDebounceTime: 50,
+          });
+        outIds = factoryResult.output;
         factoryResult.setup(store);
-        observable = store.getBehavior(signals.combinedBehavior);
+        observable = store.getBehavior(outIds.combined);
       });
 
       it('should debounce the effect input', async () => {
@@ -718,16 +727,19 @@ describe('effect signals factory', () => {
     });
 
     describe('with custom input equals', () => {
-      let signals: EffectSignalsType<InputModel, ResultModel>;
+      let outIds: EffectOutputSignals<InputModel, ResultModel>;
       let observable: Observable<CombinedEffectResult<InputModel, ResultModel>>;
 
       beforeEach(() => {
         const factoryResult = factory
-          .withCustomEffectInputEquals((a, b) => a.searchString === b.searchString)
-          .build();
-        signals = factoryResult.ids;
+          .extendSetup((store, inIds) => store.connect(inputStateId, inIds.input))
+          .build({
+            effect: resultEffect,
+            effectInputEquals: (a, b) => a.searchString === b.searchString,
+          });
+        outIds = factoryResult.output;
         factoryResult.setup(store);
-        observable = store.getBehavior(signals.combinedBehavior);
+        observable = store.getBehavior(outIds.combined);
       });
 
       it('should ignore changes in the page argument', async () => {

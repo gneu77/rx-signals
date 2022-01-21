@@ -1,13 +1,13 @@
 import { merge, of } from 'rxjs';
 import { filter, map, mapTo, switchMap, take, tap, withLatestFrom } from 'rxjs/operators';
 import { Store } from '../src/store';
-import { getIdentifier } from '../src/store.utils';
+import { getBehaviorId, getEventId } from '../src/store-utils';
 import { expectSequence } from './test.utils';
 
 describe('Event order', () => {
-  const counterState = getIdentifier<number>();
-  const addEvent = getIdentifier<number>();
-  const multiplyEvent = getIdentifier<number>();
+  const counterState = getBehaviorId<number>();
+  const addEvent = getEventId<number>();
+  const multiplyEvent = getEventId<number>();
   const addEffect = Symbol('ADD_EFFECT');
 
   let store: Store;
@@ -66,7 +66,7 @@ describe('Event order', () => {
 
   describe('examples from documentation', () => {
     it('should work as described in the first example of the documentation', async () => {
-      const myEvent = getIdentifier<number>();
+      const myEvent = getEventId<number>();
       const values: number[] = [];
       const sequence = expectSequence(
         store.getEventStream(myEvent).pipe(tap(v => values.push(v))),
@@ -91,7 +91,7 @@ describe('Event order', () => {
     });
 
     it('should work as described in the second example of the documentation', async () => {
-      const myEvent = getIdentifier<number>();
+      const myEvent = getEventId<number>();
       const sequence = expectSequence(
         store.getEventStream(myEvent).pipe(take(14)),
         [1, 2, 6, 21, 7, 22, 11, 26, 26, 41, 12, 27, 27, 42],

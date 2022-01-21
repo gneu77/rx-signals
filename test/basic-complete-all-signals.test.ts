@@ -1,7 +1,7 @@
 import { merge, Observable } from 'rxjs';
 import { map, mapTo, withLatestFrom } from 'rxjs/operators';
 import { Store } from '../src/store';
-import { getIdentifier } from '../src/store.utils';
+import { getBehaviorId, getEventId } from '../src/store-utils';
 import { expectSequence } from './test.utils';
 
 describe('completeAllSignals', () => {
@@ -13,8 +13,8 @@ describe('completeAllSignals', () => {
     return input * 2;
   };
 
-  const id = getIdentifier<number>();
-  const calculateEvent = getIdentifier<void>();
+  const id = getBehaviorId<number>();
+  const calculateEvent = getEventId<void>();
 
   let observable: Observable<number>;
 
@@ -46,7 +46,10 @@ describe('completeAllSignals', () => {
 
     store.completeAllSignals();
     expect(store.isSubscribed(calculateEvent)).toBe(false);
-    const sequence2 = expectSequence(merge(store.getEventStream(calculateEvent).pipe(mapTo(3)), observable), [3, 3]);
+    const sequence2 = expectSequence(
+      merge(store.getEventStream(calculateEvent).pipe(mapTo(3)), observable),
+      [3, 3],
+    );
     store.dispatchEvent(calculateEvent, null);
     store.dispatchEvent(calculateEvent, null);
     await sequence2;

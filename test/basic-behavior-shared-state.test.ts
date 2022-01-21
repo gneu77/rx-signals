@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs';
 import { map, withLatestFrom } from 'rxjs/operators';
 import { Store } from '../src/store';
-import { getIdentifier } from '../src/store.utils';
+import { getBehaviorId, getEventId } from '../src/store-utils';
 import { expectSequence } from './test.utils';
 
 describe('shared behavior state', () => {
@@ -13,8 +13,8 @@ describe('shared behavior state', () => {
     return input * 2;
   };
 
-  const id = getIdentifier<number>();
-  const calculateEvent = getIdentifier<void>();
+  const id = getBehaviorId<number>();
+  const calculateEvent = getEventId<void>();
 
   let observable: Observable<number>;
 

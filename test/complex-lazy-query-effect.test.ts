@@ -1,6 +1,6 @@
 import { combineLatest, of } from 'rxjs';
 import { debounceTime, filter, map, switchMap } from 'rxjs/operators';
-import { getIdentifier } from '../src/store.utils';
+import { getBehaviorId, getEventId } from '../src/store-utils';
 import { Store } from './../src/store';
 import { awaitStringifyEqualState, expectSequence } from './test.utils';
 describe('Lazy query pattern', () => {
@@ -9,11 +9,11 @@ describe('Lazy query pattern', () => {
     resultQuery: string | null;
   }
 
-  const queryBehavior = getIdentifier<string | null>();
-  const resultBehavior = getIdentifier<ResultType>();
-  const loadingBehavior = getIdentifier<boolean>();
-  const queryEvent = getIdentifier<string | null>();
-  const resultEvent = getIdentifier<ResultType>();
+  const queryBehavior = getBehaviorId<string | null>();
+  const resultBehavior = getBehaviorId<ResultType>();
+  const loadingBehavior = getBehaviorId<boolean>();
+  const queryEvent = getEventId<string | null>();
+  const resultEvent = getEventId<ResultType>();
   const resultEffect = Symbol('ResultEffect');
 
   let store: Store;
@@ -179,11 +179,11 @@ describe('Lazy query pattern', () => {
         resultQuery: string | null;
       }>;
 
-      const query = getIdentifier<string>();
-      const result = getIdentifier<QueryResult>();
-      const pending = getIdentifier<boolean>();
-      const setQuery = getIdentifier<string>();
-      const setResult = getIdentifier<QueryResult>();
+      const query = getBehaviorId<string>();
+      const result = getBehaviorId<QueryResult>();
+      const pending = getBehaviorId<boolean>();
+      const setQuery = getEventId<string>();
+      const setResult = getEventId<QueryResult>();
 
       store.addLazyBehavior(query, store.getEventStream(setQuery), '');
       store.addLazyBehavior(result, store.getEventStream(setResult), {

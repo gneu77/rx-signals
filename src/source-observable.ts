@@ -1,6 +1,6 @@
 import { Observable, Subject, Subscription } from 'rxjs';
 import { ContextHandle } from './context-handle';
-import { NO_VALUE } from './store.utils';
+import { NO_VALUE } from './store-utils';
 
 export class SourceObservable<T> {
   private subscription: Subscription | null = null;

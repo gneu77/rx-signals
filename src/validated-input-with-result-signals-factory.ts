@@ -1,16 +1,17 @@
-import { combineLatest, Observable } from 'rxjs';
+import { combineLatest } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith } from 'rxjs/operators';
 import {
   CombinedEffectResult,
   EffectError,
-  EffectSignalsType,
+  EffectOutputSignals,
   EffectSuccess,
   EffectType,
   getEffectSignalsFactory,
 } from './effect-signals-factory';
-import { MappedSignalTypes, SignalIds, Signals, SignalsFactory } from './signals-factory';
+import { SignalsFactory } from './signals-factory';
 import { Store } from './store';
-import { getIdentifier, TypeIdentifier } from './store.utils';
+import { BehaviorId, EventId, getBehaviorId } from './store-utils';
+import { Merged } from './type-utils';
 
 export type ValidatedInputWithResult<InputType, ValidationType, ResultType> = Readonly<{
   currentInput?: InputType;
@@ -23,54 +24,39 @@ export type ValidatedInputWithResult<InputType, ValidationType, ResultType> = Re
   result?: ResultType;
 }>;
 
-export type ValidatedInputWithResultSignalsType<InputType, ValidationType, ResultType> = Readonly<{
-  combinedBehavior: TypeIdentifier<ValidatedInputWithResult<InputType, ValidationType, ResultType>>;
-  validationErrorEvents: TypeIdentifier<EffectError<InputType>>;
-  validationSuccessEvents: TypeIdentifier<EffectSuccess<InputType, ValidationType>>;
-  validationInvalidateEvent: TypeIdentifier<void>;
-  resultErrorEvents: TypeIdentifier<EffectError<InputType>>;
-  resultSuccessEvents: TypeIdentifier<EffectSuccess<InputType, ResultType>>;
-  resultInvalidateEvent: TypeIdentifier<void>;
+export type ValidatedInputWithResultInput<InputType> = Readonly<{
+  input: BehaviorId<InputType>;
+  validationInvalidate: EventId<void>;
+  resultInvalidate: EventId<void>;
+  resultTrigger: EventId<void>;
 }>;
 
-export type ValidatedInputWithTriggeredResultSignalsType<InputType, ValidationType, ResultType> =
-  ValidatedInputWithResultSignalsType<InputType, ValidationType, ResultType> & {
-    readonly resultTriggerEvent: TypeIdentifier<void>;
-  };
+export type ValidatedInputWithResultOutput<InputType, ValidationType, ResultType> = Readonly<{
+  combined: BehaviorId<ValidatedInputWithResult<InputType, ValidationType, ResultType>>;
+  validationErrors: EventId<EffectError<InputType>>;
+  validationSuccesses: EventId<EffectSuccess<InputType, ValidationType>>;
+  resultErrors: EventId<EffectError<InputType>>;
+  resultSuccesses: EventId<EffectSuccess<InputType, ResultType>>;
+}>;
 
-export type ValidatedInputWithResultSignalsFactory<
-  InputType,
-  ValidationType,
-  ResultType,
-  T extends SignalIds,
-> = SignalsFactory<T> & {
-  withTrigger: () => ValidatedInputWithResultSignalsFactory<
-    InputType,
-    ValidationType,
-    ResultType,
-    ValidatedInputWithTriggeredResultSignalsType<InputType, ValidationType, ResultType>
-  >;
-  withInitialResult: (
-    resultGetter?: () => ResultType,
-  ) => ValidatedInputWithResultSignalsFactory<InputType, ValidationType, ResultType, T>;
-  withCustomResultEffectInputEquals: (
-    resultEffectInputEquals: (a: InputType, b: InputType) => boolean,
-  ) => ValidatedInputWithResultSignalsFactory<InputType, ValidationType, ResultType, T>;
-};
-
-type FactoryConfiguration<InputType, ValidationType, ResultType> = {
-  inputGetter: (store: Store) => Observable<InputType>;
+export type ValidatedInputWithResultConfig<InputType, ValidationType, ResultType> = Readonly<{
   validationEffect: EffectType<InputType, ValidationType>;
-  isValidationResultValid: (validationResult: ValidationType) => boolean;
+  isValidationResultValid?: (validationResult: ValidationType) => boolean;
   resultEffect: EffectType<InputType, ResultType>;
-  resultEffectInputEquals: (a: InputType, b: InputType) => boolean;
-  withResultTrigger?: boolean;
   initialResultGetter?: () => ResultType;
-};
+  withResultTrigger?: boolean;
+  resultEffectInputEquals?: (a: InputType, b: InputType) => boolean;
+}>;
+
+export type ValidatedInputWithResultFactory<InputType, ValidationType, ResultType> = SignalsFactory<
+  ValidatedInputWithResultInput<InputType>,
+  ValidatedInputWithResultOutput<InputType, ValidationType, ResultType>,
+  ValidatedInputWithResultConfig<InputType, ValidationType, ResultType>
+>;
 
 const resultInputGetter = <InputType, ValidationType>(
   store: Store,
-  validationBehaviorId: TypeIdentifier<CombinedEffectResult<InputType, ValidationType>>,
+  validationBehaviorId: BehaviorId<CombinedEffectResult<InputType, ValidationType>>,
   isValidationResultValid: (validationResult: ValidationType) => boolean,
 ) =>
   store.getBehavior(validationBehaviorId).pipe(
@@ -101,22 +87,19 @@ const mapBehaviors = <InputType, ValidationType, ResultType>(
 
 const setupCombinedBehavior = <InputType, ValidationType, ResultType>(
   store: Store,
-  signals: Signals<
-    MappedSignalTypes<
-      EffectSignalsType<InputType, ValidationType>,
-      EffectSignalsType<InputType, ResultType>
-    >
+  outIds: Merged<
+    EffectOutputSignals<InputType, ValidationType>,
+    EffectOutputSignals<InputType, ResultType>
   >,
-  id: TypeIdentifier<ValidatedInputWithResult<InputType, ValidationType, ResultType>>,
+  id: BehaviorId<ValidatedInputWithResult<InputType, ValidationType, ResultType>>,
   isValidationResultValid: (validationResult: ValidationType) => boolean,
   initialResultGetter?: () => ResultType,
 ) => {
-  signals.setup(store);
   store.addLazyBehavior(
     id,
     combineLatest([
-      store.getBehavior(signals.ids.ids1.combinedBehavior),
-      store.getBehavior(signals.ids.ids2.combinedBehavior).pipe(
+      store.getBehavior(outIds.conflicts1.combined),
+      store.getBehavior(outIds.conflicts2.combined).pipe(
         startWith({
           currentInput: undefined,
           resultInput: undefined,
@@ -148,154 +131,62 @@ const setupCombinedBehavior = <InputType, ValidationType, ResultType>(
   );
 };
 
-const getValidatedInputWithTriggeredResultSignalsFactoryIntern = <
+export const getValidatedInputWithResultSignalsFactory = <
   InputType,
   ValidationType,
   ResultType,
->(
-  config: FactoryConfiguration<InputType, ValidationType, ResultType>,
-): ValidatedInputWithResultSignalsFactory<
-  InputType,
-  ValidationType,
-  ResultType,
-  ValidatedInputWithTriggeredResultSignalsType<InputType, ValidationType, ResultType>
-> => {
-  const validationFactory = getEffectSignalsFactory<InputType, ValidationType>(
-    config.inputGetter,
-    config.validationEffect,
-  );
-  const factory = validationFactory
-    .bind(validationSignals =>
-      getEffectSignalsFactory<InputType, ResultType>(
-        (store: Store) =>
-          resultInputGetter(
-            store,
-            validationSignals.ids.combinedBehavior,
-            config.isValidationResultValid,
-          ),
-        config.resultEffect,
-      )
-        .withTrigger()
-        .withInitialResult(config.initialResultGetter)
-        .withCustomEffectInputEquals(config.resultEffectInputEquals),
-    )
-    .fmap(signals => {
-      const combinedBehavior =
-        getIdentifier<ValidatedInputWithResult<InputType, ValidationType, ResultType>>();
-      const setup = (store: Store) =>
-        setupCombinedBehavior(store, signals, combinedBehavior, config.isValidationResultValid);
+>(): ValidatedInputWithResultFactory<InputType, ValidationType, ResultType> =>
+  getEffectSignalsFactory<InputType, ValidationType>()
+    .bind(() => getEffectSignalsFactory<InputType, ResultType>())
+    .mapConfig((config: ValidatedInputWithResultConfig<InputType, ValidationType, ResultType>) => ({
+      c1: {
+        effect: config.validationEffect,
+      },
+      c2: {
+        effect: config.resultEffect,
+        initialResultGetter: config.initialResultGetter,
+        withTrigger: config.withResultTrigger,
+        effectInputEquals: config.resultEffectInputEquals,
+      },
+    }))
+    .extendSetup((store, inIds, outIds, config) => {
+      store.connectObservable(
+        resultInputGetter(
+          store,
+          outIds.conflicts1.combined,
+          config.isValidationResultValid ?? (validationResult => validationResult === null),
+        ),
+        inIds.conflicts2.input,
+        true,
+      );
+    })
+    .fmap((signals, config) => {
+      const combined =
+        getBehaviorId<ValidatedInputWithResult<InputType, ValidationType, ResultType>>();
+      const setup = (store: Store) => {
+        signals.setup(store);
+        setupCombinedBehavior(
+          store,
+          signals.output,
+          combined,
+          config.isValidationResultValid ?? (validationResult => validationResult === null),
+          config.initialResultGetter,
+        );
+      };
       return {
         setup,
-        ids: {
-          combinedBehavior,
-          validationErrorEvents: signals.ids.ids1.errorEvents,
-          validationSuccessEvents: signals.ids.ids1.successEvents,
-          validationInvalidateEvent: signals.ids.ids1.invalidateEvent,
-          resultErrorEvents: signals.ids.ids2.errorEvents,
-          resultSuccessEvents: signals.ids.ids2.successEvents,
-          resultInvalidateEvent: signals.ids.ids2.invalidateEvent,
-          resultTriggerEvent: signals.ids.ids2.triggerEvent,
+        input: {
+          input: signals.input.conflicts1.input,
+          validationInvalidate: signals.input.conflicts1.invalidate,
+          resultInvalidate: signals.input.conflicts2.invalidate,
+          resultTrigger: signals.input.conflicts2.trigger,
+        },
+        output: {
+          combined,
+          validationErrors: signals.output.conflicts1.errors,
+          validationSuccesses: signals.output.conflicts1.successes,
+          resultErrors: signals.output.conflicts2.errors,
+          resultSuccesses: signals.output.conflicts2.successes,
         },
       };
     });
-  return {
-    ...factory,
-    withTrigger: () =>
-      getValidatedInputWithTriggeredResultSignalsFactoryIntern({
-        ...config,
-        withResultTrigger: true,
-      }),
-    withInitialResult: (initialResultGetter?: () => ResultType) =>
-      getValidatedInputWithTriggeredResultSignalsFactoryIntern({
-        ...config,
-        initialResultGetter,
-      }),
-    withCustomResultEffectInputEquals: (
-      resultEffectInputEquals: (a: InputType, b: InputType) => boolean,
-    ) =>
-      getValidatedInputWithTriggeredResultSignalsFactoryIntern({
-        ...config,
-        resultEffectInputEquals,
-      }),
-  };
-};
-
-const getValidatedInputWithResultSignalsFactoryIntern = <InputType, ValidationType, ResultType>(
-  config: FactoryConfiguration<InputType, ValidationType, ResultType>,
-): ValidatedInputWithResultSignalsFactory<
-  InputType,
-  ValidationType,
-  ResultType,
-  ValidatedInputWithResultSignalsType<InputType, ValidationType, ResultType>
-> => {
-  const validationFactory = getEffectSignalsFactory<InputType, ValidationType>(
-    config.inputGetter,
-    config.validationEffect,
-  );
-  const factory = validationFactory
-    .bind(validationSignals =>
-      getEffectSignalsFactory<InputType, ResultType>(
-        (store: Store) =>
-          resultInputGetter(
-            store,
-            validationSignals.ids.combinedBehavior,
-            config.isValidationResultValid,
-          ),
-        config.resultEffect,
-      )
-        .withInitialResult(config.initialResultGetter)
-        .withCustomEffectInputEquals(config.resultEffectInputEquals),
-    )
-    .fmap(signals => {
-      const combinedBehavior =
-        getIdentifier<ValidatedInputWithResult<InputType, ValidationType, ResultType>>();
-      const setup = (store: Store) =>
-        setupCombinedBehavior(store, signals, combinedBehavior, config.isValidationResultValid);
-      return {
-        setup,
-        ids: {
-          combinedBehavior,
-          validationErrorEvents: signals.ids.ids1.errorEvents,
-          validationSuccessEvents: signals.ids.ids1.successEvents,
-          validationInvalidateEvent: signals.ids.ids1.invalidateEvent,
-          resultErrorEvents: signals.ids.ids2.errorEvents,
-          resultSuccessEvents: signals.ids.ids2.successEvents,
-          resultInvalidateEvent: signals.ids.ids2.invalidateEvent,
-        },
-      };
-    });
-  return {
-    ...factory,
-    withTrigger: () =>
-      getValidatedInputWithTriggeredResultSignalsFactoryIntern({
-        ...config,
-        withResultTrigger: true,
-      }),
-    withInitialResult: (initialResultGetter?: () => ResultType) =>
-      getValidatedInputWithResultSignalsFactoryIntern({
-        ...config,
-        initialResultGetter,
-      }),
-    withCustomResultEffectInputEquals: (
-      resultEffectInputEquals: (a: InputType, b: InputType) => boolean,
-    ) =>
-      getValidatedInputWithResultSignalsFactoryIntern({
-        ...config,
-        resultEffectInputEquals,
-      }),
-  };
-};
-
-export const getValidatedInputWithResultSignalsFactory = <InputType, ValidationType, ResultType>(
-  inputGetter: (store: Store) => Observable<InputType>,
-  validationEffect: EffectType<InputType, ValidationType>,
-  isValidationResultValid: (validationResult: ValidationType) => boolean,
-  resultEffect: EffectType<InputType, ResultType>,
-) =>
-  getValidatedInputWithResultSignalsFactoryIntern({
-    inputGetter,
-    validationEffect,
-    isValidationResultValid,
-    resultEffect,
-    resultEffectInputEquals: (a, b) => a === b,
-  });

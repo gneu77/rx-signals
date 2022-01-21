@@ -1,11 +1,11 @@
 import { interval, NEVER, of } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { Store } from '../src/store';
-import { getIdentifier } from '../src/store.utils';
+import { getBehaviorId } from '../src/store-utils';
 import { awaitCompletion, awaitError, expectSequence } from './test.utils';
 
 describe('Behavior basics', () => {
-  const testId = getIdentifier<number>();
+  const testId = getBehaviorId<number>();
 
   let store: Store;
 
@@ -19,7 +19,7 @@ describe('Behavior basics', () => {
       expect(() => {
         store.addLazyBehavior(testId, NEVER);
       }).toThrowError(
-        'A behavior or event source with the given identifier was already added with a source: Symbol()',
+        'A behavior or event source with the given identifier was already added with a source: Symbol(b_)',
       );
     });
     it('should be possible to add behavior sources again, after initial source has completed', async () => {
@@ -58,7 +58,7 @@ describe('Behavior basics', () => {
       expect(() => {
         store.addNonLazyBehavior(testId, NEVER);
       }).toThrowError(
-        'A behavior or event source with the given identifier was already added with a source: Symbol()',
+        'A behavior or event source with the given identifier was already added with a source: Symbol(b_)',
       );
     });
 

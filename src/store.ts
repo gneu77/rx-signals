@@ -1,4 +1,4 @@
-import { asyncScheduler, BehaviorSubject, combineLatest, merge, NEVER, Observable, of } from 'rxjs';
+import { asyncScheduler, BehaviorSubject, merge, NEVER, Observable, of } from 'rxjs';
 import {
   delay,
   distinctUntilChanged,
@@ -13,21 +13,21 @@ import {
 import { ControlledSubject } from './controlled-subject';
 import { DelayedEventQueue } from './delayed-event-queue';
 import { SourceObservable } from './source-observable';
-import { NO_VALUE, TypeIdentifier } from './store.utils';
+import { BehaviorId, EventId, isBehaviorId, NO_VALUE, SignalId } from './store-utils';
 
 /**
- * The RX-SIGNALS Store uses the TypedEvent<T> to bundle certain events and their
- * corresponding TypeIdentifier<T>. This is used for EventSources that can dispatch events
+ * The rx-signals Store uses the TypedEvent<T> to bundle certain events and their
+ * corresponding EventId<T>. This is used for EventSources that can dispatch events
  * of different types (see addXTypedEventSource methods) or for cases where you want to
- * subscribe multiple event and need to differentiate between them at runtime.
+ * subscribe multiple events and need to differentiate between them at runtime.
  *
  * @typedef {object} TypedEvent<T> - type for an object bundling identifier and corresponding event.
- * @template T - specifies the type for the corresponding TypeIdentifier<T>
- * @property {TypeIdentifier<T>} type - the TypeIdentifier for the event
+ * @template T - specifies the type for the corresponding EventId<T>
+ * @property {EventId<T>} type - the EventId for the event
  * @property {T} event - the event itself
  */
 export type TypedEvent<T> = Readonly<{
-  type: TypeIdentifier<T>;
+  type: EventId<T>;
   event: T;
 }>;
 
@@ -44,9 +44,9 @@ export type TypedEvent<T> = Readonly<{
 export type StateReducer<T, E> = (state: T, event: E) => T;
 
 /**
- * The RX-SIGNALS Store provides RxJs-Observables for RP (reactive programming) BehaviorStreams
+ * The rx-signals Store provides RxJs-Observables for RP (reactive programming) BehaviorStreams
  * and EventStreams (in original FRP, behaviors and events are the two different types of signals).
- * What the Store really does for you is separating the sources of these streams from the streams itself.
+ * The Store separates the sources of these streams from the streams itself.
  *
  * @class Store
  */
@@ -112,14 +112,14 @@ export class Store {
    * This method adds the given observable as source for the behavior identified by the
    * given identifier.
    *
-   * @param {TypeIdentifier<T>} identifier - the unique identifier for the behavior
+   * @param {BehaviorId<T>} identifier - the unique identifier for the behavior
    * @param {Observable<T>} observable - the source for the behavior
    * @param {boolean} subscribeLazy - set this to false, if the behavior should always be subscribed (the Store will subscribe it in that case, immediately turning it into a hot observable)
    * @param {T | (() => T) | symbol} initialValueOrValueGetter - the initial value or value getter (for lazy initialization) or symbol NO_VALUE, if there is no initial value (default)
    * @returns {void}
    */
   addBehavior<T>(
-    identifier: TypeIdentifier<T>,
+    identifier: BehaviorId<T>,
     observable: Observable<T>,
     subscribeLazy: boolean,
     initialValueOrValueGetter: T | (() => T) | symbol = NO_VALUE,
@@ -133,13 +133,13 @@ export class Store {
   /**
    * The same as calling addBehavior with parameter subscribeLazy = true
    *
-   * @param {TypeIdentifier<T>} identifier - the unique identifier for the behavior
+   * @param {BehaviorId<T>} identifier - the unique identifier for the behavior
    * @param {Observable<T>} observable - the source for the behavior
    * @param {T | (() => T) | symbol} initialValueOrValueGetter - the initial value or value getter (for lazy initialization) or symbol NO_VALUE, if there is no initial value (default)
    * @returns {void}
    */
   addLazyBehavior<T>(
-    identifier: TypeIdentifier<T>,
+    identifier: BehaviorId<T>,
     observable: Observable<T>,
     initialValueOrValueGetter: T | (() => T) | symbol = NO_VALUE,
   ): void {
@@ -149,13 +149,13 @@ export class Store {
   /**
    * The same as calling addBehavior with parameter subscribeLazy = false
    *
-   * @param {TypeIdentifier<T>} identifier - the unique identifier for the behavior
+   * @param {BehaviorId<T>} identifier - the unique identifier for the behavior
    * @param {Observable<T>} observable - the source for the behavior
    * @param {T | (() => T) | symbol} initialValueOrValueGetter - the initial value or value getter (for lazy initialization) or symbol NO_VALUE, if there is no initial value (default)
    * @returns {void}
    */
   addNonLazyBehavior<T>(
-    identifier: TypeIdentifier<T>,
+    identifier: BehaviorId<T>,
     observable: Observable<T>,
     initialValueOrValueGetter: T | (() => T) | symbol = NO_VALUE,
   ): void {
@@ -166,11 +166,11 @@ export class Store {
    * This method adds a source for the non-lazy behavior specified by the given identifier, that provides the
    * given value as initial value for the behavior. It will be the only value, as long as no reducer is added.
    *
-   * @param {TypeIdentifier<T>} identifier - the unique identifier for the behavior
+   * @param {BehaviorId<T>} identifier - the unique identifier for the behavior
    * @param {T | (() => T)} initialValueOrValueGetter - the initial value or value getter (for lazy initialization)
    * @returns {void}
    */
-  addState<T>(identifier: TypeIdentifier<T>, initialValueOrValueGetter: T | (() => T)): void {
+  addState<T>(identifier: BehaviorId<T>, initialValueOrValueGetter: T | (() => T)): void {
     this.assertSourceExists(identifier, identifier);
     this.getBehaviorControlledSubject(identifier).addSource(
       new SourceObservable<T>(identifier, NEVER, false, initialValueOrValueGetter),
@@ -182,14 +182,14 @@ export class Store {
    * Technically, you can also add reducers to behaviors that were added with one of the addBevavior methods.
    * However, this is strongly discouraged and might result in unexpected behavior (literally).
    *
-   * @param {TypeIdentifier<T>} stateIdentifier - the unique identifier for the behavior
-   * @param {TypeIdentifier<T>} eventIdentifier - the unique identifier for the event reducing the state
+   * @param {BehaviorId<T>} stateIdentifier - the unique identifier for the behavior
+   * @param {EventId<T>} eventIdentifier - the unique identifier for the event reducing the state
    * @param {StateReducer<T, E>} reducer - pure function that takes the previous state and the event and returns a new state
    * @returns {void}
    */
   addReducer<T, E>(
-    stateIdentifier: TypeIdentifier<T>,
-    eventIdentifier: TypeIdentifier<E>,
+    stateIdentifier: BehaviorId<T>,
+    eventIdentifier: EventId<E>,
     reducer: StateReducer<T, E>,
   ): void {
     const sourceObservable = this.getEventStream(eventIdentifier).pipe(
@@ -201,12 +201,34 @@ export class Store {
     );
   }
 
-  // connectBehaviorIds<T>(
-  //   sourceIdentifier: TypeIdentifier<T>,
-  //   targetIdentifier: TypeIdentifier<T>,
-  // ): void {
-  //   this.addLazyBehavior(targetIdentifier, this.getBehavior(sourceIdentifier));
-  // }
+  /**
+   * This connects the source event or behavior with the target event or behavior.
+   * If the targetId is a BehaviorId, a corresponding behavior will be added to the store,
+   * considering the optional lazy-parameter.
+   * In case the sourceId is an EventId, the optional lazy-parameter defaults to false, else to true.
+   * If the targetId is an EventId, a corresponding EventSource will be added to the store and the optional
+   * lazy-parameter has no meaning.
+   *
+   * @param {SignalId<T>} sourceId - the unique identifier for the source event or behavior
+   * @param {SignalId<T>} targetId - the unique identifier for the target event or behavior
+   * @param {boolean} lazy - optional parameter that defaults to false, if the source is an event, else to true. If the target is a behavior, lazy defines whether its lazy or not, else the parameter is meaningless.
+   * @returns {void}
+   */
+  connect<T>(sourceId: SignalId<T>, targetId: SignalId<T>, lazy?: boolean): void {
+    const source = isBehaviorId(sourceId)
+      ? this.getBehavior(sourceId as BehaviorId<T>)
+      : this.getEventStream(sourceId as EventId<T>);
+    const lazyParam = (lazy ?? null) === null ? isBehaviorId(sourceId) : (lazy as boolean);
+    this.connectObservable(source, targetId, lazyParam);
+  }
+
+  connectObservable<T>(source: Observable<T>, targetId: SignalId<T>, lazy: boolean): void {
+    if (isBehaviorId(targetId)) {
+      this.addBehavior(targetId as BehaviorId<T>, source, lazy, NO_VALUE);
+    } else {
+      this.addEventSource(Symbol(''), targetId as EventId<T>, source);
+    }
+  }
 
   /**
    * This method can be used to remove a reducer from a behavior.
@@ -215,10 +237,7 @@ export class Store {
    * @param {TypeIdentifier<T>} eventIdentifier - the unique identifier for the event the reducer is handling
    * @returns {void}
    */
-  removeReducer<T, E>(
-    stateIdentifier: TypeIdentifier<T>,
-    eventIdentifier: TypeIdentifier<E>,
-  ): void {
+  removeReducer<T, E>(stateIdentifier: BehaviorId<T>, eventIdentifier: EventId<E>): void {
     this.getBehaviorControlledSubject(stateIdentifier).removeSource(eventIdentifier);
   }
 
@@ -227,10 +246,10 @@ export class Store {
    * (Yes, from the API-point-of-view, there can be only one source for a behavior. However, technically
    *  each reducer added for a behavior also represents a source.)
    *
-   * @param {TypeIdentifier<T>} identifier - the unique identifier for the behavior
+   * @param {BehaviorId<T>} identifier - the unique identifier for the behavior
    * @returns {void}
    */
-  removeBehaviorSources<T>(identifier: TypeIdentifier<T>): void {
+  removeBehaviorSources<T>(identifier: BehaviorId<T>): void {
     const behavior = this.getBehaviorControlledSubject(identifier);
     behavior.removeAllSources();
   }
@@ -239,10 +258,10 @@ export class Store {
    * This method removes all sources for a behavior and then completes the behavior for all
    * current subscribers.
    *
-   * @param {TypeIdentifier<T>} identifier - the unique identifier for the behavior
+   * @param {BehaviorId<T>} identifier - the unique identifier for the behavior
    * @returns {void}
    */
-  completeBehavior<T>(identifier: TypeIdentifier<T>): void {
+  completeBehavior<T>(identifier: BehaviorId<T>): void {
     const behavior = this.getBehaviorControlledSubject(identifier);
     behavior.removeAllSources();
     behavior.complete();
@@ -253,7 +272,7 @@ export class Store {
   /**
    * This method removes all sources for all behaviors and all event
    * streams and then completes them for all current subscribers.
-   * This should be used to end a stores lifetime (e.g. a child store), to make
+   * This should be used to end a stores lifetime (e.g. for a child store), to make
    * sure no non-lazy subscriptions keep the store a life (hence avoiding memory leaks).
    *
    * @returns {void}
@@ -287,10 +306,10 @@ export class Store {
    * behavior will be received from the parent. As soon, as a corresponding source is added to the child,
    * you will receive the behavior values from the child.
    *
-   * @param {TypeIdentifier<T>} identifier - the unique identifier for the behavior
+   * @param {BehaviorId<T>} identifier - the unique identifier for the behavior
    * @returns {Observable<T>} - the behavior observable (shared and distinct)
    */
-  getBehavior<T>(identifier: TypeIdentifier<T>): Observable<T> {
+  getBehavior<T>(identifier: BehaviorId<T>): Observable<T> {
     if (this.parentStore) {
       const parent: Store = this.parentStore;
       return this.behaviorsSubject
@@ -327,11 +346,11 @@ export class Store {
    * and the only way to know an effect has been finished is to receive a corresponding message,
    * either in form of another event, or in form of a corresponding new state).
    *
-   * @param {TypeIdentifier<T>} identifier - the unique identifier for the event
+   * @param {EventId<T>} identifier - the unique identifier for the event
    * @param {T} event - the event of the type specified by the identifier
    * @returns {Promise<boolean>} - a promise that resolves to true, if the event was subscribed, else to false
    */
-  dispatchEvent<T>(identifier: TypeIdentifier<T>, event: T): Promise<boolean> {
+  dispatchEvent<T>(identifier: EventId<T>, event: T): Promise<boolean> {
     const controlledSubject = this.getEventStreamControlledSubject(identifier);
     if (controlledSubject.isObservableSubscribed()) {
       const result: Promise<boolean> = this.getEventStream(identifier)
@@ -355,13 +374,13 @@ export class Store {
    * Event sources are effects.
    *
    * @param {symbol} sourceIdentifier - each source must be uniquely identified by a symbol
-   * @param {TypeIdentifier<T>} eventIdentifier - the unique identifier for the event
+   * @param {EventId<T>} eventIdentifier - the unique identifier for the event
    * @param {Observable<T>} observable - the event source
    * @returns {void}
    */
   addEventSource<T>(
     sourceIdentifier: symbol,
-    eventIdentifier: TypeIdentifier<T>,
+    eventIdentifier: EventId<T>,
     observable: Observable<T>,
   ): void {
     this.assertSourceExists(sourceIdentifier, sourceIdentifier);
@@ -382,18 +401,18 @@ export class Store {
    * to eventIdentifierA, then the whole source will only be subscribed as long as A is subscribed.
    *
    * @param {symbol} sourceIdentifier - each source must be uniquely identified by a symbol
-   * @param {TypeIdentifier<A>} eventIdentifierA - the unique identifier for event type A
-   * @param {TypeIdentifier<B>} eventIdentifierB - the unique identifier for event type B
+   * @param {EventId<A>} eventIdentifierA - the unique identifier for event type A
+   * @param {EventId<B>} eventIdentifierB - the unique identifier for event type B
    * @param {Observable<TypedEvent<A> | TypedEvent<B>>} observable - the event source
-   * @param {TypeIdentifier<any> | null} subscribeObservableOnlyIfEventIsSubscribed - defaults to null
+   * @param {EventId<any> | null} subscribeObservableOnlyIfEventIsSubscribed - defaults to null
    * @returns {void}
    */
   add2TypedEventSource<A, B>(
     sourceIdentifier: symbol,
-    eventIdentifierA: TypeIdentifier<A>,
-    eventIdentifierB: TypeIdentifier<B>,
+    eventIdentifierA: EventId<A>,
+    eventIdentifierB: EventId<B>,
     observable: Observable<TypedEvent<A> | TypedEvent<B>>,
-    subscribeObservableOnlyIfEventIsSubscribed: TypeIdentifier<any> | null = null,
+    subscribeObservableOnlyIfEventIsSubscribed: EventId<any> | null = null,
   ): void {
     this.assertSourceExists(sourceIdentifier, sourceIdentifier);
     const sharedSource = this.getDependentObservable(
@@ -425,11 +444,11 @@ export class Store {
    */
   add3TypedEventSource<A, B, C>(
     sourceIdentifier: symbol,
-    eventIdentifierA: TypeIdentifier<A>,
-    eventIdentifierB: TypeIdentifier<B>,
-    eventIdentifierC: TypeIdentifier<C>,
+    eventIdentifierA: EventId<A>,
+    eventIdentifierB: EventId<B>,
+    eventIdentifierC: EventId<C>,
     observable: Observable<TypedEvent<A> | TypedEvent<B> | TypedEvent<C>>,
-    subscribeObservableOnlyIfEventIsSubscribed: TypeIdentifier<any> | null = null,
+    subscribeObservableOnlyIfEventIsSubscribed: EventId<any> | null = null,
   ): void {
     this.assertSourceExists(sourceIdentifier, sourceIdentifier);
     const sharedSource = this.getDependentObservable(
@@ -467,12 +486,12 @@ export class Store {
    */
   add4TypedEventSource<A, B, C, D>(
     sourceIdentifier: symbol,
-    eventIdentifierA: TypeIdentifier<A>,
-    eventIdentifierB: TypeIdentifier<B>,
-    eventIdentifierC: TypeIdentifier<C>,
-    eventIdentifierD: TypeIdentifier<D>,
+    eventIdentifierA: EventId<A>,
+    eventIdentifierB: EventId<B>,
+    eventIdentifierC: EventId<C>,
+    eventIdentifierD: EventId<D>,
     observable: Observable<TypedEvent<A> | TypedEvent<B> | TypedEvent<C> | TypedEvent<D>>,
-    subscribeObservableOnlyIfEventIsSubscribed: TypeIdentifier<any> | null = null,
+    subscribeObservableOnlyIfEventIsSubscribed: EventId<any> | null = null,
   ): void {
     this.assertSourceExists(sourceIdentifier, sourceIdentifier);
     const sharedSource = this.getDependentObservable(
@@ -516,15 +535,15 @@ export class Store {
    */
   add5TypedEventSource<A, B, C, D, E>(
     sourceIdentifier: symbol,
-    eventIdentifierA: TypeIdentifier<A>,
-    eventIdentifierB: TypeIdentifier<B>,
-    eventIdentifierC: TypeIdentifier<C>,
-    eventIdentifierD: TypeIdentifier<D>,
-    eventIdentifierE: TypeIdentifier<E>,
+    eventIdentifierA: EventId<A>,
+    eventIdentifierB: EventId<B>,
+    eventIdentifierC: EventId<C>,
+    eventIdentifierD: EventId<D>,
+    eventIdentifierE: EventId<E>,
     observable: Observable<
       TypedEvent<A> | TypedEvent<B> | TypedEvent<C> | TypedEvent<D> | TypedEvent<E>
     >,
-    subscribeObservableOnlyIfEventIsSubscribed: TypeIdentifier<any> | null = null,
+    subscribeObservableOnlyIfEventIsSubscribed: EventId<any> | null = null,
   ): void {
     this.assertSourceExists(sourceIdentifier, sourceIdentifier);
     const sharedSource = this.getDependentObservable(
@@ -574,16 +593,16 @@ export class Store {
    */
   add6TypedEventSource<A, B, C, D, E, F>(
     sourceIdentifier: symbol,
-    eventIdentifierA: TypeIdentifier<A>,
-    eventIdentifierB: TypeIdentifier<B>,
-    eventIdentifierC: TypeIdentifier<C>,
-    eventIdentifierD: TypeIdentifier<D>,
-    eventIdentifierE: TypeIdentifier<E>,
-    eventIdentifierF: TypeIdentifier<F>,
+    eventIdentifierA: EventId<A>,
+    eventIdentifierB: EventId<B>,
+    eventIdentifierC: EventId<C>,
+    eventIdentifierD: EventId<D>,
+    eventIdentifierE: EventId<E>,
+    eventIdentifierF: EventId<F>,
     observable: Observable<
       TypedEvent<A> | TypedEvent<B> | TypedEvent<C> | TypedEvent<D> | TypedEvent<E> | TypedEvent<F>
     >,
-    subscribeObservableOnlyIfEventIsSubscribed: TypeIdentifier<any> | null = null,
+    subscribeObservableOnlyIfEventIsSubscribed: EventId<any> | null = null,
   ): void {
     this.assertSourceExists(sourceIdentifier, sourceIdentifier);
     const sharedSource = this.getDependentObservable(
@@ -639,10 +658,10 @@ export class Store {
    * be a strong indicator of flawed design, because it would mean your code is not reactive).
    * If this store has a parent store, events from both, parent and child will be observed (merged).
    *
-   * @param {TypeIdentifier<T>} identifier - the unique identifier for the event
+   * @param {EventId<T>} identifier - the unique identifier for the event
    * @returns {Observable<T>} - the behavior observable for the events (with delay(1, asyncScheduler) and share())
    */
-  getEventStream<T>(identifier: TypeIdentifier<T>): Observable<T> {
+  getEventStream<T>(identifier: EventId<T>): Observable<T> {
     return merge(
       this.getEventStreamControlledSubject(identifier).getObservable(),
       this.parentStore ? this.parentStore.getEventStream(identifier) : NEVER,
@@ -652,10 +671,10 @@ export class Store {
   /**
    * Like getEventStream, but receiving TypedEvent<T> instead of T.
    *
-   * @param {TypeIdentifier<T>} identifier - the unique identifier for the event
+   * @param {EventId<T>} identifier - the unique identifier for the event
    * @returns {Observable<TypedEvent<T>>} - the observable for the typed events
    */
-  getTypedEventStream<T>(identifier: TypeIdentifier<T>): Observable<TypedEvent<T>> {
+  getTypedEventStream<T>(identifier: EventId<T>): Observable<TypedEvent<T>> {
     return merge(
       this.getEventStreamControlledSubject(identifier)
         .getObservable()
@@ -673,14 +692,14 @@ export class Store {
    * The isSubscribed method is a convenience method for testing and debugging and should
    * not serve any purpose in real program logic.
    *
-   * @param {TypeIdentifier<T>} identifier - the unique identifier for the behavior or event
+   * @param {SignalId<T>} identifier - the unique identifier for the behavior or event
    * @returns {boolean} - true, if the corresponding event or behavior is currently subscribed
    */
-  isSubscribed<T>(identifier: TypeIdentifier<T>): boolean {
-    return (
-      this.behaviors.get(identifier)?.isObservableSubscribed() === true ||
-      this.eventStreams.get(identifier)?.isObservableSubscribed() === true
-    );
+  isSubscribed<T>(identifier: SignalId<T>): boolean {
+    const isb = isBehaviorId(identifier);
+    return isb
+      ? this.behaviors.get(identifier)?.isObservableSubscribed() === true
+      : this.eventStreams.get(identifier)?.isObservableSubscribed() === true;
   }
 
   /**
@@ -689,33 +708,32 @@ export class Store {
    * counterpart, you could actually use this in some scenarios, but there are likely more idiomatic
    * ways).
    *
-   * @param {TypeIdentifier<T>} identifier - the unique identifier for the behavior or event
+   * @param {SignalId<T>} identifier - the unique identifier for the behavior or event
    * @returns {Observable<boolean>} - upon subscription, lets you keep track whether the corresponding event or behavior is subscribed
    */
-  getIsSubscribedObservable<T>(identifier: TypeIdentifier<T>): Observable<boolean> {
+  getIsSubscribedObservable<T>(identifier: SignalId<T>): Observable<boolean> {
     const sym = identifier;
-    return combineLatest([
-      this.behaviorsSubject
-        .asObservable()
-        .pipe(switchMap(s => s.get(sym)?.getIsSubscribedObservable() ?? of(false))),
-      this.eventStreamsSubject
-        .asObservable()
-        .pipe(switchMap(s => s.get(sym)?.getIsSubscribedObservable() ?? of(false))),
-    ]).pipe(
-      map(([s1, s2]) => s1 || s2),
-      distinctUntilChanged(),
-      share(),
-    );
+    return isBehaviorId(identifier)
+      ? this.behaviorsSubject.asObservable().pipe(
+          switchMap(s => s.get(sym)?.getIsSubscribedObservable() ?? of(false)),
+          distinctUntilChanged(),
+          share(),
+        )
+      : this.eventStreamsSubject.asObservable().pipe(
+          switchMap(s => s.get(sym)?.getIsSubscribedObservable() ?? of(false)),
+          distinctUntilChanged(),
+          share(),
+        );
   }
 
   /**
    * The getNumberOfBehaviorSources method returns the number of sources for the specified behavior.
    * Again, this is mostly for testing and debugging.
    *
-   * @param {TypeIdentifier<T>} identifier - the unique identifier for the behavior
+   * @param {BehaviorId<T>} identifier - the unique identifier for the behavior
    * @returns {number} - the current number of sources for the specified behavior
    */
-  getNumberOfBehaviorSources<T>(identifier: TypeIdentifier<T>): number {
+  getNumberOfBehaviorSources<T>(identifier: BehaviorId<T>): number {
     return this.getBehaviorControlledSubject(identifier).getNumberOfSources();
   }
 
@@ -723,16 +741,16 @@ export class Store {
    * The getNumberOfEventSources method returns the number of sources for the specified event.
    * Again, this is mostly for testing and debugging.
    *
-   * @param {TypeIdentifier<T>} identifier - the unique identifier for the event
+   * @param {EventId<T>} identifier - the unique identifier for the event
    * @returns {number} - the current number of sources for the specified event
    */
-  getNumberOfEventSources<T>(eventIdentifier: TypeIdentifier<T>): number {
+  getNumberOfEventSources<T>(eventIdentifier: EventId<T>): number {
     return this.getEventStreamControlledSubject(eventIdentifier).getNumberOfSources();
   }
 
   private getDependentObservable<T>(
     observable: Observable<T>,
-    subscribeObservableOnlyIfEventIsSubscribed: TypeIdentifier<any> | null,
+    subscribeObservableOnlyIfEventIsSubscribed: EventId<any> | null,
   ): Observable<T> {
     if (subscribeObservableOnlyIfEventIsSubscribed === null) {
       return observable;
@@ -744,7 +762,7 @@ export class Store {
 
   private addTypedEventSource<T>(
     sourceIdentifier: symbol,
-    eventIdentifier: TypeIdentifier<T>,
+    eventIdentifier: EventId<T>,
     sharedSource: Observable<TypedEvent<T>>,
   ): void {
     const source = sharedSource.pipe(
@@ -756,7 +774,7 @@ export class Store {
     );
   }
 
-  private createBehaviorControlledSubject<T>(identifier: TypeIdentifier<T>): ControlledSubject<T> {
+  private createBehaviorControlledSubject<T>(identifier: BehaviorId<T>): ControlledSubject<T> {
     const controlledSubject = new ControlledSubject<T>(
       identifier,
       true,
@@ -777,13 +795,11 @@ export class Store {
     return controlledSubject;
   }
 
-  private getBehaviorControlledSubject<T>(identifier: TypeIdentifier<T>): ControlledSubject<T> {
+  private getBehaviorControlledSubject<T>(identifier: BehaviorId<T>): ControlledSubject<T> {
     return this.behaviors.get(identifier) ?? this.createBehaviorControlledSubject(identifier);
   }
 
-  private createEventStreamControlledSubject<T>(
-    identifier: TypeIdentifier<T>,
-  ): ControlledSubject<T> {
+  private createEventStreamControlledSubject<T>(identifier: EventId<T>): ControlledSubject<T> {
     const controlledSubject = new ControlledSubject<T>(
       identifier,
       false,
@@ -804,7 +820,7 @@ export class Store {
     return controlledSubject;
   }
 
-  private getEventStreamControlledSubject<T>(identifier: TypeIdentifier<T>): ControlledSubject<T> {
+  private getEventStreamControlledSubject<T>(identifier: EventId<T>): ControlledSubject<T> {
     return this.eventStreams.get(identifier) ?? this.createEventStreamControlledSubject(identifier);
   }
 

@@ -1,13 +1,13 @@
 import { of } from 'rxjs';
 import { filter, switchMap } from 'rxjs/operators';
 import { Store } from '../src/store';
-import { getIdentifier } from '../src/store.utils';
+import { getBehaviorId, getEventId } from '../src/store-utils';
 import { expectSequence } from './test.utils';
 
 describe('Event order', () => {
-  const counterState = getIdentifier<number>();
-  const addEvent = getIdentifier<number>();
-  const multiplyEvent = getIdentifier<number>();
+  const counterState = getBehaviorId<number>();
+  const addEvent = getEventId<number>();
+  const multiplyEvent = getEventId<number>();
   const addEffect = Symbol('ADD_EFFECT');
 
   let store: Store;
@@ -44,16 +44,10 @@ describe('Event order', () => {
   });
 
   it('should preserve the order in which events are dispatched 2', async () => {
-    const counterSequence = expectSequence(store.getBehavior(counterState), [
-      0,
-      3,
-      6,
-      24,
-      27,
-      81,
-      82,
-      83,
-    ]);
+    const counterSequence = expectSequence(
+      store.getBehavior(counterState),
+      [0, 3, 6, 24, 27, 81, 82, 83],
+    );
 
     store.dispatchEvent(addEvent, 3); // => 3
     store.dispatchEvent(addEvent, 3); // => 6

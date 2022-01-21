@@ -1,11 +1,11 @@
 import { Store } from '../src/store';
-import { getIdentifier } from '../src/store.utils';
+import { getBehaviorId, getEventId } from '../src/store-utils';
 import { expectSequence } from './test.utils';
 
 describe('Reducers', () => {
-  const counterState = getIdentifier<number>();
-  const increaseEvent = getIdentifier<number>();
-  const decreaseEvent = getIdentifier<number>();
+  const counterState = getBehaviorId<number>();
+  const increaseEvent = getEventId<number>();
+  const decreaseEvent = getEventId<number>();
 
   let store: Store;
 
@@ -74,7 +74,7 @@ describe('Reducers', () => {
     store.addReducer(counterState, increaseEvent, (state, event) => state + event);
     expect(() => {
       store.addReducer(counterState, increaseEvent, (state, event) => state + event);
-    }).toThrowError('A source with the given ID has already been added.: Symbol()');
+    }).toThrowError('A source with the given ID has already been added.: Symbol(e_)');
   });
 
   it('should remove all reducer sources when removing the state', () => {

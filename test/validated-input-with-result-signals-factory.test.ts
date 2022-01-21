@@ -3,13 +3,13 @@ import { delay } from 'rxjs/operators';
 import { EffectType } from '../src/effect-signals-factory';
 import { Signals } from '../src/signals-factory';
 import { Store } from '../src/store';
-import { getIdentifier } from '../src/store.utils';
+import { getBehaviorId } from './../src/store-utils';
 import {
   getValidatedInputWithResultSignalsFactory,
   ValidatedInputWithResult,
-  ValidatedInputWithResultSignalsFactory,
-  ValidatedInputWithResultSignalsType,
-  ValidatedInputWithTriggeredResultSignalsType,
+  ValidatedInputWithResultFactory,
+  ValidatedInputWithResultInput,
+  ValidatedInputWithResultOutput,
 } from './../src/validated-input-with-result-signals-factory';
 import { expectSequence, withSubscription } from './test.utils';
 
@@ -26,7 +26,7 @@ describe('validated input with result signals factory', () => {
     readonly totalResults: number;
   }
 
-  const inputStateId = getIdentifier<InputModel>();
+  const inputStateId = getBehaviorId<InputModel>();
   const inputSubject = new Subject<InputModel>();
 
   const validationEffect: EffectType<InputModel, ValidationResult> = (input: InputModel) => {
@@ -60,24 +60,23 @@ describe('validated input with result signals factory', () => {
   });
 
   describe('default options', () => {
-    let factory: ValidatedInputWithResultSignalsFactory<
-      InputModel,
-      ValidationResult,
-      ResultModel,
-      ValidatedInputWithResultSignalsType<InputModel, ValidationResult, ResultModel>
-    >;
+    let factory: ValidatedInputWithResultFactory<InputModel, ValidationResult, ResultModel>;
     let observable: Observable<ValidatedInputWithResult<InputModel, ValidationResult, ResultModel>>;
 
     beforeEach(() => {
-      factory = getValidatedInputWithResultSignalsFactory(
-        s => s.getBehavior(inputStateId),
-        validationEffect,
-        validationResult => (validationResult === null ? true : false),
+      factory = getValidatedInputWithResultSignalsFactory<
+        InputModel,
+        ValidationResult,
+        ResultModel
+      >().extendSetup((store, inIds) => {
+        store.connect(inputStateId, inIds.input);
+      });
+      const signals = factory.build({
         resultEffect,
-      );
-      const signals = factory.build();
+        validationEffect,
+      });
       signals.setup(store);
-      observable = store.getBehavior(signals.ids.combinedBehavior);
+      observable = store.getBehavior(signals.output.combined);
     });
 
     it('should have correct sequence for valid input', async () => {
@@ -170,27 +169,26 @@ describe('validated input with result signals factory', () => {
   });
 
   describe('with trigger event', () => {
-    let factory: ValidatedInputWithResultSignalsFactory<
-      InputModel,
-      ValidationResult,
-      ResultModel,
-      ValidatedInputWithTriggeredResultSignalsType<InputModel, ValidationResult, ResultModel>
-    >;
+    let factory: ValidatedInputWithResultFactory<InputModel, ValidationResult, ResultModel>;
     let observable: Observable<ValidatedInputWithResult<InputModel, ValidationResult, ResultModel>>;
     let signals: Signals<
-      ValidatedInputWithTriggeredResultSignalsType<InputModel, ValidationResult, ResultModel>
+      ValidatedInputWithResultInput<InputModel>,
+      ValidatedInputWithResultOutput<InputModel, ValidationResult, ResultModel>
     >;
 
     beforeEach(() => {
-      factory = getValidatedInputWithResultSignalsFactory(
-        s => s.getBehavior(inputStateId),
-        validationEffect,
-        validationResult => (validationResult === null ? true : false),
+      factory = getValidatedInputWithResultSignalsFactory<
+        InputModel,
+        ValidationResult,
+        ResultModel
+      >().extendSetup((store, inIds) => store.connect(inputStateId, inIds.input));
+      signals = factory.build({
         resultEffect,
-      ).withTrigger();
-      signals = factory.build();
+        validationEffect,
+        withResultTrigger: true,
+      });
       signals.setup(store);
-      observable = store.getBehavior(signals.ids.combinedBehavior);
+      observable = store.getBehavior(signals.output.combined);
     });
 
     it('should have correct sequence for input with explicit result trigger', async () => {
@@ -327,7 +325,7 @@ describe('validated input with result signals factory', () => {
           },
         },
       ]);
-      store.dispatchEvent(signals.ids.resultTriggerEvent, null);
+      store.dispatchEvent(signals.input.resultTrigger, null);
       await sequence3;
     });
 
@@ -364,7 +362,7 @@ describe('validated input with result signals factory', () => {
         });
         await sequence;
 
-        store.dispatchEvent(signals.ids.resultTriggerEvent, null);
+        store.dispatchEvent(signals.input.resultTrigger, null);
 
         const sequence2 = expectSequence(observable, [
           {
@@ -420,27 +418,25 @@ describe('validated input with result signals factory', () => {
   });
 
   describe('with initial result', () => {
-    let factory: ValidatedInputWithResultSignalsFactory<
-      InputModel,
-      ValidationResult,
-      ResultModel,
-      ValidatedInputWithResultSignalsType<InputModel, ValidationResult, ResultModel>
-    >;
+    let factory: ValidatedInputWithResultFactory<InputModel, ValidationResult, ResultModel>;
     let observable: Observable<ValidatedInputWithResult<InputModel, ValidationResult, ResultModel>>;
 
     beforeEach(() => {
-      factory = getValidatedInputWithResultSignalsFactory(
-        s => s.getBehavior(inputStateId),
-        validationEffect,
-        validationResult => (validationResult === null ? true : false),
+      factory = getValidatedInputWithResultSignalsFactory<
+        InputModel,
+        ValidationResult,
+        ResultModel
+      >().extendSetup((store, inIds) => store.connect(inputStateId, inIds.input));
+      const signals = factory.build({
         resultEffect,
-      ).withInitialResult(() => ({
-        results: [],
-        totalResults: 0,
-      }));
-      const signals = factory.build();
+        validationEffect,
+        initialResultGetter: () => ({
+          results: [],
+          totalResults: 0,
+        }),
+      });
       signals.setup(store);
-      observable = store.getBehavior(signals.ids.combinedBehavior);
+      observable = store.getBehavior(signals.output.combined);
     });
 
     it('should have correct sequence for valid input', async () => {
@@ -508,24 +504,22 @@ describe('validated input with result signals factory', () => {
   });
 
   describe('with custom result input equals', () => {
-    let factory: ValidatedInputWithResultSignalsFactory<
-      InputModel,
-      ValidationResult,
-      ResultModel,
-      ValidatedInputWithResultSignalsType<InputModel, ValidationResult, ResultModel>
-    >;
+    let factory: ValidatedInputWithResultFactory<InputModel, ValidationResult, ResultModel>;
     let observable: Observable<ValidatedInputWithResult<InputModel, ValidationResult, ResultModel>>;
 
     beforeEach(() => {
-      factory = getValidatedInputWithResultSignalsFactory(
-        s => s.getBehavior(inputStateId),
-        validationEffect,
-        validationResult => (validationResult === null ? true : false),
+      factory = getValidatedInputWithResultSignalsFactory<
+        InputModel,
+        ValidationResult,
+        ResultModel
+      >().extendSetup((store, inIds) => store.connect(inputStateId, inIds.input));
+      const signals = factory.build({
         resultEffect,
-      ).withCustomResultEffectInputEquals((a, b) => a.searchString === b.searchString);
-      const signals = factory.build();
+        validationEffect,
+        resultEffectInputEquals: (a, b) => a.searchString === b.searchString,
+      });
       signals.setup(store);
-      observable = store.getBehavior(signals.ids.combinedBehavior);
+      observable = store.getBehavior(signals.output.combined);
     });
 
     it('should ignore changes in the page argument', async () => {

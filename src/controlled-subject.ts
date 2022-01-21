@@ -4,7 +4,7 @@ import { distinctUntilChanged, filter, share } from 'rxjs/operators';
 import { ContextHandle } from './context-handle';
 import { DelayedEventQueue } from './delayed-event-queue';
 import { SourceObservable } from './source-observable';
-import { NO_VALUE } from './store.utils';
+import { NO_VALUE } from './store-utils';
 
 export interface ResetHandle {
   removeSources(): void;

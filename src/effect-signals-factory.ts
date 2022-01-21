@@ -1,8 +1,8 @@
 import { combineLatest, Observable, of, throwError } from 'rxjs';
 import { catchError, debounceTime, filter, map, mapTo, switchMap, take } from 'rxjs/operators';
-import { createSignalsFactory, SignalIds, Signals, SignalsFactory } from './signals-factory';
+import { createSignalsFactory, Signals, SignalsFactory } from './signals-factory';
 import { Store } from './store';
-import { getIdentifier, NO_VALUE, TypeIdentifier } from './store.utils';
+import { BehaviorId, EventId, getBehaviorId, getEventId, NO_VALUE } from './store-utils';
 
 /**
  * This type specifies the effect function that must be supplied to create an EffectSignalsFactory
@@ -72,256 +72,246 @@ export type EffectSuccess<InputType, ResultType> = Readonly<{
 }>;
 
 /**
- * Type specifying the signals of an EffectSignalsFactory.
+ * Type specifying the input signals of an EffectSignalsFactory (the corresponding signal sources are
+ * not added to the store by the factory, but must be added e.g. by extendSetup or fmap).
  *
- * @typedef {object} EffectSignalsType<InputType, ResultType> - object holding the signal identifiers of effect signal factories
+ * @typedef {object} EffectInputSignals<InputType> - object holding the input signal identifiers
  * @template InputType - specifies the input type for the effect
- * @template ResultType - specifies the result type of the effect
- * @property {TypeIdentifier<CombinedEffectResult<InputType, ResultType>>} combinedBehavior - identifier for the produced combined effect result behavior
- * @property {TypeIdentifier<EffectError<InputType>>} errorEvents - identifier for the produced error events
- * @property {TypeIdentifier<EffectSuccess<InputType, ResultType>>} successEvents - identifier for the produced success events
- * @property {TypeIdentifier<void>} invalidateEvent - identifier for the invalidation event that can be dispatched to trigger re-evaluation of the current input under the given effect
+ * @property {BehaviorId<InputType>} input - identifier for the behavior being consumed by the resulting Signals type
+ * @property {EventId<void>} invalidate - identifier for the invalidation event that can be dispatched to trigger re-evaluation of the current input under the given effect
  */
-export type EffectSignalsType<InputType, ResultType> = Readonly<{
-  combinedBehavior: TypeIdentifier<CombinedEffectResult<InputType, ResultType>>;
-  errorEvents: TypeIdentifier<EffectError<InputType>>;
-  successEvents: TypeIdentifier<EffectSuccess<InputType, ResultType>>;
-  invalidateEvent: TypeIdentifier<void>;
+export type EffectInputSignals<InputType> = Readonly<{
+  input: BehaviorId<InputType>;
+  invalidate: EventId<void>;
+  trigger: EventId<void>;
 }>;
 
 /**
- * This type extends the EffectSignalsType type for manually triggered effects.
+ * Type specifying the output signals of an EffectSignalsFactory (signals produced by the resulting Signals type).
  *
- * @typedef {object} TriggeredEffectSignalsType<InputType, ResultType> - object holding the signal identifiers of effect signal factories with effect trigger event
+ * @typedef {object} EffectOutputSignals<InputType, ResultType> - object holding the output signal identifiers
  * @template InputType - specifies the input type for the effect
  * @template ResultType - specifies the result type of the effect
- * @property {TypeIdentifier<void>} triggerEvent - identifier for the trigger event that can be dispatched to trigger the effect
+ * @property {BehaviorId<CombinedEffectResult<InputType, ResultType>>} combined - identifier for the produced combined effect result behavior
+ * @property {EventId<EffectError<InputType>>} errors - identifier for the produced error events
+ * @property {EventId<EffectSuccess<InputType, ResultType>>} successes - identifier for the produced success events
  */
-export type TriggeredEffectSignalsType<InputType, ResultType> = EffectSignalsType<
-  InputType,
-  ResultType
-> & {
-  readonly triggerEvent: TypeIdentifier<void>;
-};
+export type EffectOutputSignals<InputType, ResultType> = Readonly<{
+  combined: BehaviorId<CombinedEffectResult<InputType, ResultType>>;
+  errors: EventId<EffectError<InputType>>;
+  successes: EventId<EffectSuccess<InputType, ResultType>>;
+}>;
 
-const getSignalIds = <InputType, ResultType>(): TriggeredEffectSignalsType<
+const getInputSignalIds = <InputType>(): EffectInputSignals<InputType> => ({
+  input: getBehaviorId<InputType>(),
+  invalidate: getEventId<void>(),
+  trigger: getEventId<void>(),
+});
+
+const getOutputSignalIds = <InputType, ResultType>(): EffectOutputSignals<
   InputType,
   ResultType
 > => ({
-  combinedBehavior: getIdentifier<CombinedEffectResult<InputType, ResultType>>(),
-  errorEvents: getIdentifier<EffectError<InputType>>(),
-  successEvents: getIdentifier<EffectSuccess<InputType, ResultType>>(),
-  invalidateEvent: getIdentifier<void>(),
-  triggerEvent: getIdentifier<void>(),
+  combined: getBehaviorId<CombinedEffectResult<InputType, ResultType>>(),
+  errors: getEventId<EffectError<InputType>>(),
+  successes: getEventId<EffectSuccess<InputType, ResultType>>(),
 });
 
-type EffectFactoryConfiguration<InputType, ResultType> = Readonly<{
-  inputGetter: (store: Store) => Observable<InputType>;
+/**
+ * Type of the configuration object for EffectSignalsFactory
+ *
+ *    TODO
+ */
+export type EffectFactoryConfiguration<InputType, ResultType> = Readonly<{
   effect: EffectType<InputType, ResultType>;
-  effectInputEquals: (a: InputType, b: InputType) => boolean;
+  effectInputEquals?: (a: InputType, b: InputType) => boolean;
   withTrigger?: boolean;
   initialResultGetter?: () => ResultType;
   effectDebounceTime?: number;
 }>;
 
-type FactoryBuilder<T extends SignalIds, ConfigurationType> = (
-  configuration: ConfigurationType,
-) => Signals<T>;
-
-const getEffectBuilder = <IT, RT, T extends SignalIds>(): FactoryBuilder<
-  T,
-  EffectFactoryConfiguration<IT, RT>
-> => {
-  const build: FactoryBuilder<T, EffectFactoryConfiguration<IT, RT>> = (
-    config: EffectFactoryConfiguration<IT, RT>,
+const getEffectBuilder = <IT, RT>(
+  config: EffectFactoryConfiguration<IT, RT>,
+): Signals<EffectInputSignals<IT>, EffectOutputSignals<IT, RT>> => {
+  const internalResultEffect = (
+    input: IT,
+    store: Store,
+    previousInput?: IT,
+    previousResult?: RT,
   ) => {
-    const internalResultEffect = (
-      input: IT,
-      store: Store,
-      previousInput?: IT,
-      previousResult?: RT,
-    ) => {
-      try {
-        return config.effect(input, store, previousInput, previousResult).pipe(take(1));
-      } catch (error) {
-        return throwError(error);
-      }
-    };
+    try {
+      return config.effect(input, store, previousInput, previousResult).pipe(take(1));
+    } catch (error) {
+      return throwError(() => error);
+    }
+  };
 
-    const ids = getSignalIds<IT, RT>();
-    const setup = (store: Store) => {
-      const invalidateTokenBehavior = getIdentifier<object | null>();
-      store.addNonLazyBehavior(
-        invalidateTokenBehavior,
-        store.getEventStream(ids.invalidateEvent).pipe(
-          map(() => ({})), // does not work with mapTo, because mapTo would always assign the same object
+  const effectInputEquals = config.effectInputEquals ?? ((a, b) => a === b);
+
+  const inIds = getInputSignalIds<IT>();
+  const outIds = getOutputSignalIds<IT, RT>();
+  const setup = (store: Store) => {
+    const invalidateTokenBehavior = getBehaviorId<object | null>();
+    store.addNonLazyBehavior(
+      invalidateTokenBehavior,
+      store.getEventStream(inIds.invalidate).pipe(
+        map(() => ({})), // does not work with mapTo, because mapTo would always assign the same object
+      ),
+      null,
+    );
+
+    const resultEvent = getEventId<{
+      readonly result?: RT;
+      readonly resultInput: IT;
+      readonly resultToken: object | null;
+    }>();
+    const resultBehavior = getBehaviorId<{
+      readonly result?: RT;
+      readonly resultInput?: IT;
+      readonly resultToken: object | null;
+    }>();
+    const initialResult = config.initialResultGetter ? config.initialResultGetter() : undefined;
+    store.addLazyBehavior(resultBehavior, store.getEventStream(resultEvent), {
+      result: initialResult,
+      resultToken: null,
+    });
+
+    const triggeredInputEvent = getEventId<IT>();
+    const triggeredInputBehavior = getBehaviorId<IT | null>();
+    store.addLazyBehavior(triggeredInputBehavior, store.getEventStream(triggeredInputEvent), null);
+
+    // It is important to setup the combined observable as behavior,
+    // because a simple shareReplay (even with refCount) would create a memory leak!!!
+    const combinedId = getBehaviorId<
+      [
+        IT,
+        {
+          readonly result?: RT;
+          readonly resultInput?: IT;
+          readonly resultToken: object | null;
+        },
+        object | null,
+        IT,
+      ]
+    >();
+    store.addLazyBehavior(
+      combinedId,
+      combineLatest([
+        store.getBehavior(inIds.input),
+        store.getBehavior(resultBehavior),
+        store.getBehavior(invalidateTokenBehavior),
+        store.getBehavior(triggeredInputBehavior),
+      ]),
+    );
+    const combined = store.getBehavior(combinedId);
+
+    const eventSourceInput =
+      config.effectDebounceTime === undefined || config.effectDebounceTime < 1
+        ? combined
+        : combined.pipe(debounceTime(config.effectDebounceTime));
+
+    store.add4TypedEventSource(
+      Symbol(''),
+      resultEvent,
+      triggeredInputEvent,
+      outIds.errors,
+      outIds.successes,
+      eventSourceInput.pipe(
+        filter(
+          ([input, resultState, token]) =>
+            token !== resultState.resultToken ||
+            resultState.resultInput === undefined ||
+            !effectInputEquals(input, resultState.resultInput),
         ),
-        null,
-      );
-
-      const resultEvent = getIdentifier<{
-        readonly result?: RT;
-        readonly resultInput: IT;
-        readonly resultToken: object | null;
-      }>();
-      const resultBehavior = getIdentifier<{
-        readonly result?: RT;
-        readonly resultInput?: IT;
-        readonly resultToken: object | null;
-      }>();
-      const initialResult = config.initialResultGetter ? config.initialResultGetter() : undefined;
-      store.addLazyBehavior(resultBehavior, store.getEventStream(resultEvent), {
-        result: initialResult,
-        resultToken: null,
-      });
-
-      const triggeredInputEvent = getIdentifier<IT>();
-      const triggeredInputBehavior = getIdentifier<IT | null>();
-      store.addLazyBehavior(
-        triggeredInputBehavior,
-        store.getEventStream(triggeredInputEvent),
-        null,
-      );
-
-      // It is important to setup the combined observable as behavior,
-      // because a simple shareReplay (event with refCount) would create a memory leak!!!
-      const combinedId = getIdentifier<
-        [
-          IT,
-          {
-            readonly result?: RT;
-            readonly resultInput?: IT;
-            readonly resultToken: object | null;
-          },
-          object | null,
-          IT,
-        ]
-      >();
-      store.addLazyBehavior(
-        combinedId,
-        combineLatest([
-          config.inputGetter(store),
-          store.getBehavior(resultBehavior),
-          store.getBehavior(invalidateTokenBehavior),
-          store.getBehavior(triggeredInputBehavior),
-        ]),
-      );
-      const combined = store.getBehavior(combinedId);
-
-      const eventSourceInput =
-        config.effectDebounceTime === undefined || config.effectDebounceTime < 1
-          ? combined
-          : combined.pipe(debounceTime(config.effectDebounceTime));
-
-      store.add4TypedEventSource(
-        Symbol(''),
-        resultEvent,
-        triggeredInputEvent,
-        ids.errorEvents,
-        ids.successEvents,
-        eventSourceInput.pipe(
-          filter(
-            ([input, resultState, token]) =>
-              token !== resultState.resultToken ||
-              resultState.resultInput === undefined ||
-              !config.effectInputEquals(input, resultState.resultInput),
-          ),
-          switchMap(([input, resultState, token, triggeredInput]) =>
-            config.withTrigger && input !== triggeredInput
-              ? store.getEventStream(ids.triggerEvent).pipe(
-                  mapTo({
-                    type: triggeredInputEvent,
-                    event: input,
-                  }),
-                )
-              : internalResultEffect(
-                  input,
-                  store,
-                  resultState.resultInput,
-                  resultState.result,
-                ).pipe(
-                  switchMap(result =>
-                    of(
-                      {
-                        type: resultEvent,
-                        event: {
-                          result,
-                          resultInput: input,
-                          resultToken: token,
-                        },
+        switchMap(([input, resultState, token, triggeredInput]) =>
+          config.withTrigger && input !== triggeredInput
+            ? store.getEventStream(inIds.trigger).pipe(
+                mapTo({
+                  type: triggeredInputEvent,
+                  event: input,
+                }),
+              )
+            : internalResultEffect(input, store, resultState.resultInput, resultState.result).pipe(
+                switchMap(result =>
+                  of(
+                    {
+                      type: resultEvent,
+                      event: {
+                        result,
+                        resultInput: input,
+                        resultToken: token,
                       },
-                      {
-                        type: ids.successEvents,
-                        event: {
-                          result,
-                          resultInput: input,
-                          previousInput: resultState.resultInput,
-                          previousResult: resultState.result,
-                        },
+                    },
+                    {
+                      type: outIds.successes,
+                      event: {
+                        result,
+                        resultInput: input,
+                        previousInput: resultState.resultInput,
+                        previousResult: resultState.result,
                       },
-                    ),
-                  ),
-                  catchError(error =>
-                    of(
-                      {
-                        type: ids.errorEvents,
-                        event: {
-                          error,
-                          errorInput: input,
-                        },
-                      },
-                      {
-                        type: resultEvent,
-                        event: {
-                          resultInput: input,
-                          resultToken: token,
-                        },
-                      },
-                    ),
+                    },
                   ),
                 ),
-          ),
+                catchError(error =>
+                  of(
+                    {
+                      type: outIds.errors,
+                      event: {
+                        error,
+                        errorInput: input,
+                      },
+                    },
+                    {
+                      type: resultEvent,
+                      event: {
+                        resultInput: input,
+                        resultToken: token,
+                      },
+                    },
+                  ),
+                ),
+              ),
         ),
-        resultEvent,
-      );
+      ),
+      resultEvent,
+    );
 
-      store.addLazyBehavior(
-        ids.combinedBehavior,
-        combined.pipe(
-          map(([input, resultState, token, triggeredInput]) => ({
-            currentInput: input,
-            result: resultState.result,
-            resultInput: resultState.resultInput,
-            resultPending: config.withTrigger
-              ? input === triggeredInput &&
-                (token !== resultState.resultToken ||
-                  resultState.resultInput === undefined ||
-                  !config.effectInputEquals(input, resultState.resultInput))
-              : token !== resultState.resultToken ||
+    store.addLazyBehavior(
+      outIds.combined,
+      combined.pipe(
+        map(([input, resultState, token, triggeredInput]) => ({
+          currentInput: input,
+          result: resultState.result,
+          resultInput: resultState.resultInput,
+          resultPending: config.withTrigger
+            ? input === triggeredInput &&
+              (token !== resultState.resultToken ||
                 resultState.resultInput === undefined ||
-                !config.effectInputEquals(input, resultState.resultInput),
-          })),
-        ),
-        config.initialResultGetter
-          ? {
-              result: config.initialResultGetter(),
-              resultPending: false,
-            }
-          : NO_VALUE,
-      );
-    };
-    const { triggerEvent, ...withoutTriggerID } = ids;
-    return {
-      setup,
-      ids: (config.withTrigger ? ids : withoutTriggerID) as unknown as T,
-    };
+                !effectInputEquals(input, resultState.resultInput))
+            : token !== resultState.resultToken ||
+              resultState.resultInput === undefined ||
+              !effectInputEquals(input, resultState.resultInput),
+        })),
+      ),
+      config.initialResultGetter
+        ? {
+            result: config.initialResultGetter(),
+            resultPending: false,
+          }
+        : NO_VALUE,
+    );
   };
-  return build;
+  return {
+    setup,
+    input: inIds,
+    output: outIds,
+  };
 };
 
 /**
  * This type specifies effect signal factories (extending signal factories). An effect signals factory is a signals factory
- * to generically handle sideeffects (hence, an abstraction over sideeffects). Furthermore, they are implemeted as builders to
+ * to generically handle sideeffects (hence, an abstraction over side-effects). Furthermore, they are implemeted as builders to
  * allow for easy custom configuration.
  * An effect signals factory fulfills the following requirements:
  * 1.) The produced CombinedEffectResult<InputType, ResultType> behavior must be lazy, hence, as long as it is not subscribed,
@@ -344,86 +334,21 @@ const getEffectBuilder = <IT, RT, T extends SignalIds>(): FactoryBuilder<
  * @property {function} withEffectDebounce - returns a factory that uses the specified time to debounce the result effect. This is different from debouncing the input yourself! If you debounce the input yourself, then also the currentInput in the result behavior will be debounced (hence the whole result behavior will be debounced). In contrast, if you use this function, then only the result effect itself will be debounced.
  * @property {function} withCustomEffectInputEquals - by default, reference equals is used to make the effect input distinct. However, this function will return a factory that uses the provided custom equals function instead.
  */
-export type EffectSignalsFactory<InputType, ResultType, T extends SignalIds> = SignalsFactory<T> & {
-  withTrigger: () => EffectSignalsFactory<
-    InputType,
-    ResultType,
-    TriggeredEffectSignalsType<InputType, ResultType>
-  >;
-  withInitialResult: (
-    resultGetter?: () => ResultType,
-  ) => EffectSignalsFactory<InputType, ResultType, T>;
-  withEffectDebounce: (debounceMS: number) => EffectSignalsFactory<InputType, ResultType, T>;
-  withCustomEffectInputEquals: (
-    effectInputEquals: (a: InputType, b: InputType) => boolean,
-  ) => EffectSignalsFactory<InputType, ResultType, T>;
-};
-
-const getEffectSignalsFactoryIntern = <
-  InputType,
-  ResultType,
-  T extends EffectSignalsType<InputType, ResultType>,
->(
-  config: EffectFactoryConfiguration<InputType, ResultType>,
-): EffectSignalsFactory<InputType, ResultType, T> => {
-  const builder = getEffectBuilder<InputType, ResultType, T>();
-  const build = (): Signals<T> => builder(config);
-  const withTrigger = () =>
-    getEffectSignalsFactoryIntern<
-      InputType,
-      ResultType,
-      TriggeredEffectSignalsType<InputType, ResultType>
-    >({
-      ...config,
-      withTrigger: true,
-    });
-  const withInitialResult = (resultGetter?: () => ResultType) =>
-    getEffectSignalsFactoryIntern<InputType, ResultType, T>({
-      ...config,
-      initialResultGetter: resultGetter,
-    });
-  const withEffectDebounce = (effectDebounceTime: number) =>
-    getEffectSignalsFactoryIntern<InputType, ResultType, T>({
-      ...config,
-      effectDebounceTime,
-    });
-  const withCustomEffectInputEquals = (
-    effectInputEquals: (a: InputType, b: InputType) => boolean,
-  ) =>
-    getEffectSignalsFactoryIntern<InputType, ResultType, T>({
-      ...config,
-      effectInputEquals,
-    });
-  return {
-    ...createSignalsFactory(build),
-    withTrigger,
-    withInitialResult,
-    withEffectDebounce,
-    withCustomEffectInputEquals,
-  };
-};
-
+export type EffectSignalsFactory<InputType, ResultType> = SignalsFactory<
+  EffectInputSignals<InputType>,
+  EffectOutputSignals<InputType, ResultType>,
+  EffectFactoryConfiguration<InputType, ResultType>
+>;
 /**
  * This function creates a configurable EffectSignalsFactory<InputType, ResultType, SignalsType>.
+ * You must add a source for the consumed input event signal, using e.g. extendSetup or fmap
  *
  * @template InputType - specifies the input type for the effect
  * @template ResultType - specifies the result type of the effect
- * @param {function} inputGetter - a function providing an Observable<InputType>
  * @param {function} effect - a function implementing EffectType<InputType, ResultType>
- * @returns {EffectSignalsFactory<InputType, ResultType, EffectSignalsType<InputType, ResultType>>}
+ * @returns {EffectSignalsFactory<InputType, ResultType, EffectInputSignals<InputType>>}
  */
-export const getEffectSignalsFactory = <InputType, ResultType>(
-  inputGetter: (store: Store) => Observable<InputType>,
-  effect: EffectType<InputType, ResultType>,
-): EffectSignalsFactory<InputType, ResultType, EffectSignalsType<InputType, ResultType>> => {
-  const config: EffectFactoryConfiguration<InputType, ResultType> = {
-    inputGetter,
-    effect,
-    effectInputEquals: (a, b) => a === b,
-  };
-  return getEffectSignalsFactoryIntern<
-    InputType,
-    ResultType,
-    EffectSignalsType<InputType, ResultType>
-  >(config);
-};
+export const getEffectSignalsFactory = <InputType, ResultType>(): EffectSignalsFactory<
+  InputType,
+  ResultType
+> => createSignalsFactory(getEffectBuilder);
