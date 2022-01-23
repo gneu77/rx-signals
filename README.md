@@ -2,9 +2,11 @@
 
 **Reactive state and effects management**
 
+:warning: YOU'RE READING A DOCUMENT FOR AN OUTDATED 2.x VERSION. IT IS STRONGLY RECOMMENDED TO USE A 3.x VERSION INSTEAD!
+
 ## Installation
 
-`npm install --save @rx-signals/store`
+`npm install --save @rx-signals/store@2.7.0`
 
 ## Dependencies
 
