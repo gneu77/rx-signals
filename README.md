@@ -2,9 +2,11 @@
 
 **Reactive state and effects management**
 
-:warning: This documentation is work in progress for the upcoming 3.0.0 version. There is however no good reason to use 2.7 over 3.0.0-rc1, so please start with the rc-version. 3.0.0-rc1 is better than 2.7 in any aspect, the only drawback is that minor breaking changes are still possible until 3.0.0.
+:warning: This documentation is work in progress for the upcoming 3.0.0 version.
+There is however no good reason to use 2.7 over 3.0.0-rc1, so please start with the rc-version.
 
-The documentation is still work in progress and missing a lot of details. Nevertheless, all code is already production-ready!
+3.0.0-rc1 is better than 2.7 in any aspect and the code is production-ready.
+The only drawback is that minor breaking changes are still possible until 3.0.0 is released.
 
 ## Installation
 
