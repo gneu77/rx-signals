@@ -1,6 +1,8 @@
-import { combineLatest } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { combineLatest, merge, of } from 'rxjs';
+import { map, mapTo } from 'rxjs/operators';
+import { EffectType } from '../src/effect-signals-factory';
 import { Store } from '../src/store';
+import { getEffectSignalsFactory } from './../src/effect-signals-factory';
 import { Signals, SignalsFactory } from './../src/signals-factory';
 import { BehaviorId, EventId, getBehaviorId, getEventId } from './../src/store-utils';
 import { expectSequence } from './test.utils';
@@ -17,22 +19,10 @@ describe('signals factories documentation', () => {
       decreaseBy: EventId<number>;
     }>;
     type CounterOutput = Readonly<{
-      counterState: BehaviorId<number>;
+      counter: BehaviorId<number>;
     }>;
-    type SumInput = Readonly<{
-      inputA: BehaviorId<number>;
-      inputB: BehaviorId<number>;
-    }>;
-    type SumOutput = Readonly<{
-      counterSum: BehaviorId<number>;
-    }>;
-    type ComposedInput = Readonly<{
-      inputA: CounterInput;
-      inputB: CounterInput;
-    }>;
-
     const getCounterSignals: () => Signals<CounterInput, CounterOutput> = () => {
-      const counterState = getBehaviorId<number>();
+      const counter = getBehaviorId<number>();
       const increaseBy = getEventId<number>();
       const decreaseBy = getEventId<number>();
       return {
@@ -41,17 +31,24 @@ describe('signals factories documentation', () => {
           decreaseBy,
         },
         output: {
-          counterState,
+          counter,
         },
         setup: store => {
-          store.addReducer(counterState, increaseBy, (state, event) => state + event);
-          store.addReducer(counterState, decreaseBy, (state, event) => state - event);
-          store.addState(counterState, 0);
+          store.addReducer(counter, increaseBy, (state, event) => state + event);
+          store.addReducer(counter, decreaseBy, (state, event) => state - event);
+          store.addState(counter, 0);
         },
       };
     };
 
-    const getSumSignals: (
+    type SumInput = Readonly<{
+      inputA: BehaviorId<number>;
+      inputB: BehaviorId<number>;
+    }>;
+    type SumOutput = Readonly<{
+      counterSum: BehaviorId<number>;
+    }>;
+    const getSumSignalsBad: (
       inputA: BehaviorId<number>,
       inputB: BehaviorId<number>,
     ) => Signals<{}, SumOutput> = (inputA, inputB) => {
@@ -70,7 +67,7 @@ describe('signals factories documentation', () => {
       };
     };
 
-    const getSumSignals2: () => Signals<SumInput, SumOutput> = () => {
+    const getSumSignals: () => Signals<SumInput, SumOutput> = () => {
       const inputA = getBehaviorId<number>();
       const inputB = getBehaviorId<number>();
       const counterSum = getBehaviorId<number>();
@@ -88,12 +85,17 @@ describe('signals factories documentation', () => {
       };
     };
 
+    type ComposedInput = Readonly<{
+      inputA: CounterInput;
+      inputB: CounterInput;
+    }>;
+
     it('should createSignalsFactory for counters', async () => {
       const counterFactory = new SignalsFactory(getCounterSignals);
       const { input, output, setup } = counterFactory.build({});
       setup(store);
 
-      const sequence = expectSequence(store.getBehavior(output.counterState), [0, 1, 6, 4]);
+      const sequence = expectSequence(store.getBehavior(output.counter), [0, 1, 6, 4]);
       store.dispatch(input.increaseBy, 1);
       store.dispatch(input.increaseBy, 5);
       store.dispatch(input.decreaseBy, 2);
@@ -101,13 +103,13 @@ describe('signals factories documentation', () => {
       await sequence;
     });
 
-    it('should manually compose Signals without SignalsFactory', async () => {
+    it('should manually compose Signals without SignalsFactory Bad', async () => {
       const getCounterWithSumSignals: () => Signals<ComposedInput, SumOutput> = () => {
         const counter1Signals = getCounterSignals();
         const counter2Signals = getCounterSignals();
-        const counterSumSignals = getSumSignals(
-          counter1Signals.output.counterState,
-          counter2Signals.output.counterState,
+        const counterSumSignals = getSumSignalsBad(
+          counter1Signals.output.counter,
+          counter2Signals.output.counter,
         );
         return {
           input: {
@@ -137,11 +139,46 @@ describe('signals factories documentation', () => {
       await sequence;
     });
 
-    it('should manually compose Signals without SignalsFactory 2', async () => {
+    it('should manually compose Signals without SignalsFactory Better', async () => {
+      const getCounterWithSumSignals: () => Signals<ComposedInput, SumOutput> = () => {
+        const counterASignals = getCounterSignals();
+        const counterBSignals = getCounterSignals();
+        const counterSumSignals = getSumSignals();
+        return {
+          input: {
+            inputA: counterASignals.input,
+            inputB: counterBSignals.input,
+          },
+          output: {
+            counterSum: counterSumSignals.output.counterSum,
+          },
+          setup: store => {
+            counterASignals.setup(store);
+            counterBSignals.setup(store);
+            counterSumSignals.setup(store);
+            store.connect(counterASignals.output.counter, counterSumSignals.input.inputA);
+            store.connect(counterBSignals.output.counter, counterSumSignals.input.inputB);
+          },
+        };
+      };
+
+      const { input, output, setup } = getCounterWithSumSignals();
+      setup(store);
+
+      const sequence = expectSequence(store.getBehavior(output.counterSum), [0, 1, 6, 8, 5]);
+      store.dispatch(input.inputA.increaseBy, 1);
+      store.dispatch(input.inputA.increaseBy, 5);
+      store.dispatch(input.inputB.increaseBy, 2);
+      store.dispatch(input.inputA.decreaseBy, 3);
+
+      await sequence;
+    });
+
+    it('should manually compose Signals without SignalsFactory', async () => {
       const getCounterWithSumSignals: () => Signals<ComposedInput, SumOutput> = () => {
         const counter1Signals = getCounterSignals();
         const counter2Signals = getCounterSignals();
-        const counterSumSignals = getSumSignals2();
+        const counterSumSignals = getSumSignals();
         return {
           input: {
             inputA: counter1Signals.input,
@@ -156,11 +193,11 @@ describe('signals factories documentation', () => {
             counterSumSignals.setup(store);
             store.addLazyBehavior(
               counterSumSignals.input.inputA,
-              store.getBehavior(counter1Signals.output.counterState),
+              store.getBehavior(counter1Signals.output.counter),
             );
             store.addLazyBehavior(
               counterSumSignals.input.inputB,
-              store.getBehavior(counter2Signals.output.counterState),
+              store.getBehavior(counter2Signals.output.counter),
             );
           },
         };
@@ -180,14 +217,14 @@ describe('signals factories documentation', () => {
 
     it('should compose', async () => {
       const counterFactory = new SignalsFactory(getCounterSignals);
-      const sumFactory = new SignalsFactory(getSumSignals2);
+      const sumFactory = new SignalsFactory(getSumSignals);
       const getCounterWithSumSignalsFactory: SignalsFactory<ComposedInput, SumOutput> =
         counterFactory
           .bind(() => counterFactory)
           .bind(() => sumFactory)
           .extendSetup((store, input, output) => {
-            store.connect(output.conflicts1.counterState, input.inputA);
-            store.connect(output.conflicts2.counterState, input.inputB);
+            store.connect(output.conflicts1.counter, input.inputA);
+            store.connect(output.conflicts2.counter, input.inputB);
           })
           .mapInput(ids => ({
             inputA: ids.conflicts1,
@@ -210,157 +247,176 @@ describe('signals factories documentation', () => {
     });
   });
 
-  // describe('generic query documentation', () => {
-  //   type ModelIds<T> = Readonly<{
-  //     model: TypeIdentifier<T>;
-  //     setModelEvent: TypeIdentifier<T>;
-  //     updateModelEvent: TypeIdentifier<Partial<T>>;
-  //     resetModelEvent: TypeIdentifier<void>;
-  //   }>;
-  //   const getModelSignals = <T>(defaultModel: T): Signals<ModelIds<T>> => {
-  //     const model = getIdentifier<T>('FilterModel');
-  //     const setModelEvent = getIdentifier<T>();
-  //     const updateModelEvent = getIdentifier<Partial<T>>();
-  //     const resetModelEvent = getIdentifier<void>();
-  //     return {
-  //       ids: {
-  //         model,
-  //         setModelEvent,
-  //         updateModelEvent,
-  //         resetModelEvent,
-  //       },
-  //       setup: store => {
-  //         store.addState(model, defaultModel);
-  //         store.addReducer(model, setModelEvent, (_, event) => event);
-  //         store.addReducer(model, updateModelEvent, (state, event) => ({
-  //           ...state,
-  //           ...event,
-  //         }));
-  //         store.addReducer(model, resetModelEvent, () => defaultModel);
-  //       },
-  //     };
-  //   };
-  //   const getModelSignalsFactory = <T>(defaultModel: T) =>
-  //     createSignalsFactory(() => getModelSignals(defaultModel));
+  describe('generic query documentation', () => {
+    type ModelInput<T> = Readonly<{
+      setModel: EventId<T>;
+      updateModel: EventId<Partial<T>>;
+      resetModel: EventId<void>;
+    }>;
+    type ModelOutput<T> = Readonly<{
+      model: BehaviorId<T>;
+    }>;
+    const getModelSignals = <T>(defaultModel: T): Signals<ModelInput<T>, ModelOutput<T>> => {
+      const model = getBehaviorId<T>();
+      const setModel = getEventId<T>();
+      const updateModel = getEventId<Partial<T>>();
+      const resetModel = getEventId<void>();
+      return {
+        input: {
+          setModel,
+          updateModel,
+          resetModel,
+        },
+        output: {
+          model,
+        },
+        setup: store => {
+          store.addState(model, defaultModel);
+          store.addReducer(model, setModel, (_, event) => event);
+          store.addReducer(model, updateModel, (state, event) => ({
+            ...state,
+            ...event,
+          }));
+          store.addReducer(model, resetModel, () => defaultModel);
+        },
+      };
+    };
 
-  //   type SortParameter = Readonly<{ propertyName?: string; descending: boolean }>;
-  //   type SortingIds = Readonly<{
-  //     sorting: TypeIdentifier<SortParameter>;
-  //     ascendingEvent: TypeIdentifier<string>;
-  //     descendingEvent: TypeIdentifier<string>;
-  //     noneEvent: TypeIdentifier<void>;
-  //   }>;
-  //   const getSortingSignals = (): Signals<SortingIds> => {
-  //     const sorting = getIdentifier<SortParameter>();
-  //     const ascendingEvent = getIdentifier<string>();
-  //     const descendingEvent = getIdentifier<string>();
-  //     const noneEvent = getIdentifier<void>();
-  //     return {
-  //       ids: {
-  //         sorting,
-  //         ascendingEvent,
-  //         descendingEvent,
-  //         noneEvent,
-  //       },
-  //       setup: store => {
-  //         store.addState(sorting, { descending: false });
-  //         store.addReducer(sorting, ascendingEvent, (_, propertyName) => ({
-  //           propertyName,
-  //           descending: false,
-  //         }));
-  //         store.addReducer(sorting, descendingEvent, (_, propertyName) => ({
-  //           propertyName,
-  //           descending: true,
-  //         }));
-  //         store.addReducer(sorting, noneEvent, () => ({ descending: false }));
-  //       },
-  //     };
-  //   };
-  //   const sortingSignalsFactory = createSignalsFactory(getSortingSignals);
+    type SortParameter = Readonly<{ propertyName?: string; descending: boolean }>;
+    type SortingInput = Readonly<{
+      ascending: EventId<string>;
+      descending: EventId<string>;
+      none: EventId<void>;
+    }>;
+    type SortingOutput = Readonly<{
+      sorting: BehaviorId<SortParameter>;
+    }>;
+    const getSortingSignals = (): Signals<SortingInput, SortingOutput> => {
+      const sorting = getBehaviorId<SortParameter>();
+      const ascending = getEventId<string>();
+      const descending = getEventId<string>();
+      const none = getEventId<void>();
+      return {
+        input: {
+          ascending,
+          descending,
+          none,
+        },
+        output: {
+          sorting,
+        },
+        setup: store => {
+          store.addState(sorting, { descending: false });
+          store.addReducer(sorting, ascending, (_, propertyName) => ({
+            propertyName,
+            descending: false,
+          }));
+          store.addReducer(sorting, descending, (_, propertyName) => ({
+            propertyName,
+            descending: true,
+          }));
+          store.addReducer(sorting, none, () => ({ descending: false }));
+        },
+      };
+    };
+    const sortingSignalsFactory = new SignalsFactory(getSortingSignals);
 
-  //   type PagingParameter = Readonly<{ page: number; pageSize: number }>;
-  //   type PagingIds = Readonly<{
-  //     paging: TypeIdentifier<PagingParameter>;
-  //     setPageEvent: TypeIdentifier<number>;
-  //     setPageSizeEvent: TypeIdentifier<number>;
-  //   }>;
-  //   const getPagingSignals = (): Signals<PagingIds> => {
-  //     const paging = getIdentifier<PagingParameter>();
-  //     const setPageEvent = getIdentifier<number>();
-  //     const setPageSizeEvent = getIdentifier<number>();
-  //     return {
-  //       ids: {
-  //         paging,
-  //         setPageEvent,
-  //         setPageSizeEvent,
-  //       },
-  //       setup: store => {
-  //         store.addState(paging, { page: 0, pageSize: 10 });
-  //         store.addReducer(paging, setPageEvent, (state, page) => ({
-  //           ...state,
-  //           page,
-  //         }));
-  //         store.addReducer(paging, setPageSizeEvent, (state, pageSize) => ({
-  //           ...state,
-  //           pageSize,
-  //         }));
-  //       },
-  //     };
-  //   };
-  //   const pagingSignalsFactory = createSignalsFactory(getPagingSignals);
+    type PagingParameter = Readonly<{ page: number; pageSize: number }>;
+    type PagingInput = Readonly<{
+      setPage: EventId<number>;
+      setPageSize: EventId<number>;
+    }>;
+    type PagingOutput = Readonly<{
+      paging: BehaviorId<PagingParameter>;
+    }>;
+    const getPagingSignals = (): Signals<PagingInput, PagingOutput> => {
+      const paging = getBehaviorId<PagingParameter>();
+      const setPage = getEventId<number>();
+      const setPageSize = getEventId<number>();
+      return {
+        input: {
+          setPage,
+          setPageSize,
+        },
+        output: {
+          paging,
+        },
+        setup: store => {
+          store.addState(paging, { page: 0, pageSize: 10 });
+          store.addReducer(paging, setPage, (state, page) => ({
+            ...state,
+            page,
+          }));
+          store.addReducer(paging, setPageSize, (state, pageSize) => ({
+            ...state,
+            pageSize,
+          }));
+        },
+      };
+    };
+    const pagingSignalsFactory = new SignalsFactory(getPagingSignals);
 
-  //   type FilteredSortedPagedQueryIds<FilterType> = ModelIds<FilterType> & SortingIds & PagingIds;
-  //   const getFilteredSortedPagedQuerySignalsFactory = <FilterType>(
-  //     defaultFilter: FilterType,
-  //   ): SignalsFactory<FilteredSortedPagedQueryIds<FilterType>> =>
-  //     getModelSignalsFactory(defaultFilter)
-  //       .bind(() => sortingSignalsFactory)
-  //       .flattenIds()
-  //       .bind(() => pagingSignalsFactory)
-  //       .flattenIds()
-  //       .fmap(s => ({
-  //         ...s,
-  //         setup: store => {
-  //           s.setup(store);
-  //           store.addEventSource(
-  //             Symbol('resetPagingEffect'),
-  //             s.ids.setPageEvent,
-  //             merge(
-  //               store.getEventStream(s.ids.resetModelEvent),
-  //               store.getEventStream(s.ids.setModelEvent),
-  //               store.getEventStream(s.ids.updateModelEvent),
-  //               store.getEventStream(s.ids.ascendingEvent),
-  //               store.getEventStream(s.ids.descendingEvent),
-  //               store.getEventStream(s.ids.noneEvent),
-  //             ).pipe(mapTo(0)),
-  //           );
-  //         },
-  //       }));
+    type FilteredSortedPagedQueryInput<FilterType> = ModelInput<FilterType> &
+      SortingInput &
+      PagingInput;
+    type FilteredSortedPagedQueryOutput<FilterType> = ModelOutput<FilterType> &
+      SortingOutput &
+      PagingOutput;
+    const getFilteredSortedPagedQuerySignalsFactory = <FilterType>(): SignalsFactory<
+      FilteredSortedPagedQueryInput<FilterType>,
+      FilteredSortedPagedQueryOutput<FilterType>,
+      FilterType
+    > =>
+      new SignalsFactory<ModelInput<FilterType>, ModelOutput<FilterType>, FilterType>(
+        getModelSignals,
+      )
+        .bind(() => sortingSignalsFactory)
+        .bind(() => pagingSignalsFactory)
+        .extendSetup((store, input) => {
+          store.addEventSource(
+            Symbol('resetPagingEffect'),
+            input.setPage,
+            merge(
+              store.getEventStream(input.resetModel),
+              store.getEventStream(input.setModel),
+              store.getEventStream(input.updateModel),
+              store.getEventStream(input.ascending),
+              store.getEventStream(input.descending),
+              store.getEventStream(input.none),
+            ).pipe(mapTo(0)),
+          );
+        });
 
-  //   const getQueryWithResultFactory = <FilterType, ResultType>(
-  //     defaultFilter: FilterType,
-  //     queryEffect: EffectType<[FilterType, SortParameter, PagingParameter], ResultType>,
-  //   ) =>
-  //     getFilteredSortedPagedQuerySignalsFactory(defaultFilter)
-  //       .bind(s =>
-  //         getEffectSignalsFactory(
-  //           store =>
-  //             combineLatest([
-  //               store.getBehavior(s.ids.model),
-  //               store.getBehavior(s.ids.sorting),
-  //               store.getBehavior(s.ids.paging),
-  //             ]),
-  //           queryEffect,
-  //         ),
-  //       )
-  //       .flattenIds();
+    const getQueryWithResultFactory = <FilterType, ResultType>() =>
+      getFilteredSortedPagedQuerySignalsFactory<FilterType>()
+        .bind(() =>
+          getEffectSignalsFactory<[FilterType, SortParameter, PagingParameter], ResultType>(),
+        )
+        .extendSetup((store, input, output) => {
+          store.connectObservable(
+            combineLatest([
+              store.getBehavior(output.model),
+              store.getBehavior(output.sorting),
+              store.getBehavior(output.paging),
+            ]),
+            input.input,
+            false,
+          );
+        });
 
-  //   it('should create the factory', async () => {
-  //     type FT = { name: string };
-  //     const effectMock: EffectType<[FT, SortParameter, PagingParameter], string[]> = input =>
-  //       of([input[0].name]);
-  //     const f = getQueryWithResultFactory({ name: '' }, effectMock).build();
-  //     expect(f.ids.model.toString()).toEqual('Symbol(FilterModel)');
-  //   });
-  // });
+    it('should create the factory', async () => {
+      type FT = { name: string };
+      const effectMock: EffectType<[FT, SortParameter, PagingParameter], string[]> = input =>
+        of([input[0].name]);
+      const f = getQueryWithResultFactory<FT, string[]>().build({
+        c1: {
+          name: '',
+        },
+        c2: {
+          effect: effectMock,
+        },
+      });
+      expect(f.output.model.toString()).toEqual('Symbol(B)');
+    });
+  });
 });

@@ -26,29 +26,54 @@ export type EventId<T> = symbol & {
   _eventTypeTemplate: T;
 };
 
+/**
+ * SignalId<T> is the union type of BehaviorId<T> and EventId<T>, hence it
+ * represents an identifier that corresponds either to a behavior or to an event.
+ * You can use the functions isBehaviorId or isEventId to check the concrete
+ * type of a SignalId.
+ *
+ * @typedef {object} EventId<T> - type to uniquely identify a certain event
+ * @template T - specifies the type for the corresponding event observable
+ * @property {symbol} symbol - a symbol, making the EventId unique
+ */
 export type SignalId<T> = BehaviorId<T> | EventId<T>;
 
 /**
- * Function to get a new BehaviorId for the rx-signals store.
+ * Function to get a new, unique BehaviorId.
  *
  * @template T - specifies the type for the corresponding behavior
- * @param {string} name - an optional name for the resulting BehaviorId symbol
  * @returns {BehaviorId<T>}
  */
-export const getBehaviorId = <T>(name?: string): BehaviorId<T> =>
-  Symbol(`b_${name ?? ''}`) as BehaviorId<T>;
+export const getBehaviorId = <T>(): BehaviorId<T> => Symbol('B') as BehaviorId<T>;
 
 /**
- * Function to get a new EventId for the rx-signals store.
+ * Function to get a new, unique EventId.
  *
  * @template T - specifies the type for the corresponding event
- * @param {string} name - an optional name for the resulting EventId symbol
  * @returns {EventId<T>}
  */
-export const getEventId = <T>(name?: string): EventId<T> => Symbol(`e_${name ?? ''}`) as EventId<T>;
+export const getEventId = <T>(): EventId<T> => Symbol('E') as EventId<T>;
 
-export const isBehaviorId = <T>(id: SignalId<T>): boolean => id.toString().startsWith('Symbol(b_');
+/**
+ * Function to check whether a given SignalId is a BehaviorId.
+ *
+ * @template T - specifies the type for the corresponding signal
+ * @param {Signal<T>} id - a signal identifier.
+ * @returns {boolean}
+ */
+export const isBehaviorId = <T>(id: SignalId<T>): boolean => id.toString() === 'Symbol(B)';
 
-export const isEventId = <T>(id: SignalId<T>): boolean => id.toString().startsWith('Symbol(e_');
+/**
+ * Function to check whether a given SignalId is an EventId.
+ *
+ * @template T - specifies the type for the corresponding signal
+ * @param {Signal<T>} id - a signal identifier.
+ * @returns {boolean}
+ */
+export const isEventId = <T>(id: SignalId<T>): boolean => id.toString() === 'Symbol(E)';
 
+/**
+ * A constant symbol representing the intentional absence of a value.
+ * (even undefined and null are valid values, so these cannot be used to represent no-value).
+ */
 export const NO_VALUE: symbol = Symbol('NO_VALUE');

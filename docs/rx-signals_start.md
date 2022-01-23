@@ -1,11 +1,11 @@
 # Using rx-signals
 
 1. [Using the store](#store)
-    1. [Type Identifiers](#type-identifiers)
+    1. [Signal Identifiers](#type-identifiers)
     1. [Events](#events)
     1. [Behaviors](#behaviors)
-1. [Encapsulation via Signals-type](signals-type)
-1. [Reusability and Composition via SignalsFactory-type](signals-factory-type)
+1. [Encapsulation via Signals-type](#signals-type)
+1. [Reusability and Composition via SignalsFactory](#signals-factory-type)
     1. [The EffectSignalsFactory](#effect-signals-factory)
 1. [Testing](#testing)
 
@@ -29,15 +29,17 @@ For the full API, please see the [corresponding documentation](https://rawcdn.gi
 
 <a name="architecture"></a> ![Store architecture](./images/store_arch_full.svg)
 
-### Type Identifiers <a name="type-identifiers"></a>
+### Signal Identifiers <a name="type-identifiers"></a>
 
-Type identifiers
+Signal identifiers
 * are used to uniquely identify a behavior or event-stream of the store
 * provide type-safe access to behaviors and event-streams
 
-For a given event- or behavior-type `T`, you can (and should) obtain a new `TypeIdentifier<T>` using `getIdentifier<T>(name?: string)` (this is not a store method, but an independent utility function).
-The name-parameter is optional and usually not of any interest (except maybe for rare debugging-cases).
-Under the hood, the returned identifier is a `symbol`. Thus, e.g. two calls of `getIdentifier<number>('MyNumber')` will return two different identifiers!
+A signal identifier can be either an event- or behavior id: `type SignalId<T> = BehaviorId<T> | EventId<T>`
+
+For a given event- or behavior-type `T`, you can obtain a new id using `getEventId<T>():` or `getBehaviorId<T>():` (these are not store methods, but independent utility functions).
+
+Under the hood, the returned identifier is a `symbol`. Thus, e.g. two calls of `getBehaviorId<number>()` will return two different identifiers!
 
 ### Events <a name="events"></a>
 
@@ -49,42 +51,42 @@ So in _rx-signals_, an event-stream is an _RxJs_-observable that has no current 
 
 > _Events_ are similar to actions in _Redux_-like libs.
 > However, in contrast to _actions_, they are no objects with type and value, but instead they are the dispatched values itself.
-> The type is an extra-argument to dispatch. Subscribers, specifically subscribe to one type of event.
+> The type (event-type, NOT event-values-type) is an extra-argument to dispatch. Subscribers, specifically subscribe to one type of event.
 
 #### Event-streams and basic event-sources
 
-For a given `identifier`, you can get the corresponding event-stream from the store as follows:
+For a given `EventId<T>`, you can get the corresponding event-stream from the store as follows:
 ```typescript
-store.getEventStream(identifier: TypeIdentifier<T>);
+store.getEventStream(id: EventId<T>);
 ```
-The return value of this method is an `Observable<T>`, and if you're using TypeScript, it will infer the correct generic type for the returned observable, because it is encoded in the `identifier`.
+The return value of this method is an `Observable<T>` and TypeScript will infer the correct generic type for the returned observable, because it is encoded in the `EventId`.
 
 From now on:
 * the term _event-values-type_, always means the generic type of values
-* the term _event-type_, means a certain `TypeIdentifier<T>`
-Thus, for `const luckyNumbers = getIdentifier<number>();`, the _event-type_ would be `luckyNumbers`, while the _event-values-type_ would be `number`,
+* the term _event-type_, means a certain `EventId<T>`
+Thus, for `const luckyNumbers = getEventId<number>();`, the _event-type_ would be `luckyNumbers`, while the _event-values-type_ would be `number`,
 
 There can be multiple sources for a given _event-type_. One source that all event-streams have is a call to the dispatch function:
 ```typescript
-store.dispatchEvent(identifier: TypeIdentifier<T>, value: T);
+store.dispatch(id: EventId<T>, value: T);
 ```
 
-Calling `dispatchEvent` for an _event-type_ that has no subscribed event-stream is a NOOP.
+Calling `dispatch` for an _event-type_ that has no subscribed event-stream is a NO-OP.
 
 You can add further event-sources as follows:
 ```typescript
 store.addEventSource(
   sourceIdentifier: symbol,
-  eventIdentifier: TypeIdentifier<T>,
-  observable: Observable<T>
+  eventId: EventId<T>,
+  observable: Observable<T>,
 );
 ```
 * a `sourceIdentifier` is required, because it must be possible to remove event-sources from the store.
-* `eventIdentifier` is your _event-type_
+* `eventId` is your _event-type_
 * `observable` can be any observable of the correct _event-values-type_ (even a behavior)
   * The store will **not** eagerly subscribe the source-observable, but only, if the corresponding event-stream is subscribed
 
-Of course, even if all added event-sources for a given _event-type_ complete, the corresponding event-stream will **not** complete (other sources may be added in the future / `dispatchEvent` is always possible).
+Of course, even if all added event-sources for a given _event-type_ complete, the corresponding event-stream will **not** complete (other sources may be added in the future / manual `dispatch` is always possible).
 
 #### Dispatch process
 
@@ -98,7 +100,7 @@ There are some important **guarantees** concerning event-dispatch (whether manua
 
 Let's see this in action:
 ```typescript
-const myEvent = getIdentifier<number>();
+const myEvent = getEventId<number>();
 store.getEventStream(myEvent)
   .pipe(take(7))
   .subscribe(console.log);
@@ -117,7 +119,7 @@ store.addEventSource(
   of(3, 4, 5)
 );
 console.log(1);
-store.dispatchEvent(myEvent, 6);
+store.dispatch(myEvent, 6);
 console.log(2);
 ```
 
@@ -133,7 +135,7 @@ The output will be in order of the numbers:
 ...(etc)
 
 Please have in mind that dispatching an event is always a side-effect. That means
-* you should use `dispatchEvent` only to translate non-store events (like browser events) to store events
+* you should use `dispatch` only to translate non-store events (like browser events) to store events
 * event-sources are either effects or event-transformers (mapping from one _event-type_ to another)
 
 The previous example was already a bit complicated and you should strive for a low number of event-sources that would lead to automatic dispatch->state->dispatch cycles.
@@ -143,7 +145,7 @@ Dispatching the _N_ events might lead to _M_ new events being added to the dispa
 Those _M_ new events however, will not be dispatched immediately, but again asynchronously in one of the next cycles of the JS-event-loop.
 The following example illustrates this:
 ```typescript
-const myEvent = getIdentifier<number>();
+const myEvent = getEventId<number>();
 store.getEventStream(myEvent)
   .pipe(take(14))
   .subscribe(console.log); // 1, 2 -> 6, 21, 7, 22 -> 11, 26, 26, 41, 12, 27, 27, 42
@@ -162,8 +164,8 @@ store.addEventSource(
     map(e => e + 20), // 21, 22 -> 26, 41, 27, 42
   ),
 );
-store.dispatchEvent(myEvent, 1);
-store.dispatchEvent(myEvent, 2);
+store.dispatch(myEvent, 1);
+store.dispatch(myEvent, 2);
 ```
 
 ![dispatch queue example](./images/event-order2.svg)
@@ -177,17 +179,17 @@ E.g. a source that can dispatch 2 different _event-types_ with corresponding _ev
 ```typescript
 store.add2TypedEventSource(
   sourceIdentifier: symbol,
-  eventIdentifierA: TypeIdentifier<A>,
-  eventIdentifierB: TypeIdentifier<B>,
+  eventIdA: EventId<A>,
+  eventIdB: EventId<B>,
   observable: Observable<TypedEvent<A> | TypedEvent<B>>,
-  subscribeObservableOnlyIfEventIsSubscribed?: null | TypeIdentifier<any>
+  subscribeObservableOnlyIfEventIsSubscribed?: null | EventId<any>
 )
 ```
 
 As you can see, in this case, the source-observable must provide values of
 ```typescript
 type TypedEvent<T> = Readonly<{
-  type: TypeIdentifier<T>;
+  type: EventId<T>;
   event: T;
 }>;
 ```
@@ -233,15 +235,15 @@ As a rule of thumb, those parts of the state that have no dependencies should be
 
 #### Basic behaviors
 
-No big surprise that getting a behavior from the store just requires an identifier:
+No big surprise that getting a behavior from the store just requires a `BehaviorId<T>`:
 ```typescript
-store.getBehavior(identifier);
+store.getBehavior(behaviorId);
 ```
 
 Adding a lazy behavior source is done as follows:
 ```typescript
 store.addLazyBehavior(
-  identifier: TypeIdentifier<T>,
+  identifier: BehaviorId<T>,
   observable: Observable<T>,
   initialValueOrValueGetter: T | (() => T) | symbol = NO_VALUE,
 );
@@ -270,11 +272,11 @@ type QueryResult = Readonly<{
   resultQuery: string | null;
 }>;
 
-const query = getIdentifier<string>();
-const result = getIdentifier<QueryResult>();
-const pending = getIdentifier<boolean>();
-const setQuery = getIdentifier<string>();
-const setResult = getIdentifier<QueryResult>();
+const query = getBehaviorId<string>();
+const result = getBehaviorId<QueryResult>();
+const pending = getBehaviorId<boolean>();
+const setQuery = getEventId<string>();
+const setResult = getEventId<QueryResult>();
 
 store.addLazyBehavior(query, store.getEventStream(setQuery), '');
 store.addLazyBehavior(result, store.getEventStream(setResult), {
@@ -299,7 +301,8 @@ store.addEventSource(
 ```
 
 Phew, a lot of code for a trivial (simplified) example!
-But don't fear, there's no need to repeat such common patterns thanks to `SignalsFactories` and there'salso a better and more general way to cope with effects, both of which will be demonstrated in the [SignalsFactory-section](#signals-factory-type).
+But don't fear, there's no need to repeat such common patterns thanks to `Signals` and `SignalsFactories`.
+Also, there's a better and more general way to cope with effects, all of this being demonstrated in the [SignalsFactory-section](#signals-factory-type).
 
 Here's a visual representation of the above setup:
 
@@ -308,41 +311,42 @@ Here's a visual representation of the above setup:
 As all behaviors are lazy, dispatching a `setQuery` event will be a no-op, as long as none of the behaviors is subscribed.
 Subscribing to the `query` behavior only, would still not trigger the effect.
 But as soon as the `pending` and/or the `result` behavior is subscribed, the effect (event-source) will start operating.
-In other words, it would be no problem to defined the `query` behavior as non-lazy behavior (though there's no good reason to do so in this example).
+In other words, it would be no problem to define the `query` behavior as non-lazy behavior (though there's no good reason to do so in this example).
 In general, you should aim for as many lazy behaviors as possible.
 
 However, there are definitely behaviors that must be non-lazy.
 The rule is simple: If it would be a logical error that a behavior misses one of the events it depends on, then it must be non-lazy.
+(See the docstring for store.addBehavior to get some more guidance on when to use lazy vs. non-lazy.)
 
 So far, defining a behavior that depends on multiple different events would be a bit clumsy (you'd have to use `getTypedEventStream` instead of `getEventStream` to differentiate between the merged events).
 For such cases, the state-reducer API from the next section is much more straight forward.
 
 #### State-Reducer API
 
-There are additional convenience methods to add and reduce certain state.
+There are additional convenience methods to add and reduce certain root-state.
 ```typescript
 store.addState(identifier, initialValueOrValueGetter);
 ```
 adds a non-lazy behavior-source (which so far would be equivalent to `store.addNonLazyBehavior(identifier, NEVER, initialValueOrValueGetter)` or `store.addNonLazyBehavior(identifier, of(initialValue))`).
 
-However, you can add as many reducers for this state as you like, one for each event that should be handled (so trying to add a second reducer with the same stateIdentifier and eventIdentifier would result in an error):
+However, you can add as many reducers for this state as you like, one for each event that should be handled (so trying to add a second reducer with the same stateId and eventId would result in an error):
 ```typescript
 store.addReducer(
-  stateIdentifier: TypeIdentifier<T>,
-  eventIdentifier: TypeIdentifier<E>,
+  stateId: BehaviorId<T>,
+  eventId: EventId<E>,
   stateReducer: (state: T, event: E) => T
 );
 ```
 
-It's time for the counter-example that is found in the documentation of almost all state-management libs:
+It's time for the counter-example that is found in the documentation of almost all state-management libs (though for better demonstration, we use increaseBy and decreaseBy instead of simple increase/decrease):
 ```typescript
-const counterState = getIdentifier<number>();
-const increaseEvent = getIdentifier<number>();
-const decreaseEvent = getIdentifier<number>();
+const counter = getBehaviorId<number>();
+const increaseBy = getEventId<number>();
+const decreaseBy = getEventId<number>();
 
-store.addReducer(counterState, increaseEvent, (state, event) => state + event);
-store.addReducer(counterState, decreaseEvent, (state, event) => state - event);
-store.addState(counterState, 0);
+store.addReducer(counter, increaseBy, (state, event) => state + event);
+store.addReducer(counter, decreaseBy, (state, event) => state - event);
+store.addState(counter, 0);
 ```
 
 As you can see, it's no problem to add reducers **before** the state itself is added.
@@ -359,7 +363,7 @@ Some DI-implementations even have problems with cyclic dependencies (which is no
 Again, remember that one feature of RP is to [abstract away the need to think about time](https://github.com/gneu77/rx-signals/blob/master/docs/rp_state_effects_start.md#abstract_away_time).
 
 Well, using _rx-signals_ your dependencies are just behaviors, it's as simple as that.
-If you separate the setup of all other behaviors and event-streams, from the setup of behaviors for non-rx-signals-dependencies (like e.g. Angular HTTP-services), you can run a single integration test over all those other signals without the need to mock anything at all!
+If you separate the setup of all other behaviors and event-streams, from the setup of behaviors for non-rx-signals-dependencies (like e.g. HTTP-services in an Angular application), you can run a single integration test over all those other signals without the need to mock anything at all!
 This will be detailed in the [Testing section](#testing)
 
 > You might say 'Wait, isn't this more like a reactive service locator?'.
@@ -371,177 +375,226 @@ This will be detailed in the [Testing section](#testing)
 ## Encapsulation via Signals-type <a name="signals-type"></a>
 
 In the previous section, we tallied that in _rx-signals_, decoupling is done by wireing dependencies based on identifiers.
-But of course, we still want to be able to somehow encapsulate certain behaviors and events together.
+But of course, we still want to be able to somehow encapsulate certain behaviors and events that belong together, to achieve a high cohesion.
 This leads to the following requirements:
-* The creation of `TypeIdentifiers` and the setup of the store (using the `TypeIdentifiers`) must be separated somehow.
-  * Because all `TypeIdentifiers` used in wireing must be available, when the setup starts.
-* It must be possible to bundle the setup of certain behaviors and event-sources with the creation of corresponding `TypeIdentifiers`
+* The creation of `SignalId`s and the setup of the store (using the `SignalId`s) must be separated somehow.
+  * Because all `SignalId`s used in wireing must be available, when the setup starts.
+* It must be possible to 'bundle' the setup of certain behaviors and event-sources with the creation of corresponding `SignalId`s
 
 Therefore, _rx-signals_ defines the `Signals` type as follows:
 ```typescript
-type Signals<T extends SignalIds> = SetupWithStore & SignalTypes<T>;
+type Signals<IN extends NameToSignalId, OUT extends NameToSignalId> = SetupWithStore & SignalIds<IN, OUT>;
 
 // with:
-type SignalIds = Readonly<{ [key: string]: TypeIdentifier<any> | SignalIds }>;
+type NameToSignalId = Readonly<{ [key: string]: SignalId<any> | NameToSignalId }>;
+type SignalIds<IN extends NameToSignalId, OUT extends NameToSignalId> = Readonly<{
+  input: IN;
+  output: OUT;
+}>;
 type SetupWithStore = { readonly setup: (store: Store) => void; };
-type SignalTypes<T extends SignalIds> = { readonly ids: T; };
 ```
 
 Let's see an example, where we encapsulate the creation of signals for counters:
 ```typescript
-type CounterSignalIds = Readonly<{
-  counterState: TypeIdentifier<number>;
-  increaseEvent: TypeIdentifier<number>;
-  decreaseEvent: TypeIdentifier<number>;
+type CounterInput = Readonly<{
+  increaseBy: EventId<number>;
+  decreaseBy: EventId<number>;
 }>;
-export const getCounterSignals: () => Signals<CounterSignalIds> = () => {
-  const counterState = getIdentifier<number>();
-  const increaseEvent = getIdentifier<number>();
-  const decreaseEvent = getIdentifier<number>();
+type CounterOutput = Readonly<{
+  counterState: BehaviorId<number>;
+}>;
+const getCounterSignals: () => Signals<CounterInput, CounterOutput> = () => {
+  const counter = getBehaviorId<number>();
+  const increaseBy = getEventId<number>();
+  const decreaseBy = getEventId<number>();
   return {
-    ids: {
-      counterState,
-      increaseEvent,
-      decreaseEvent,
+    input: {
+      increaseBy,
+      decreaseBy,
+    },
+    output: {
+      counter,
     },
     setup: store => {
-      store.addReducer(counterState, increaseEvent, (state, event) => state + event);
-      store.addReducer(counterState, decreaseEvent, (state, event) => state - event);
-      store.addState(counterState, 0);
+      store.addReducer(counter, increaseBy, (state, event) => state + event);
+      store.addReducer(counter, decreaseBy, (state, event) => state - event);
+      store.addState(counter, 0);
     },
   };
 };
 ```
+
+We can use `getCounterSignals` to create as many counters as we like.
 
 Next, we encapsulate the creation of a signal that depends on two number-streams (calculating the sum of those numbers):
 ```typescript
-type SumSignalIds = Readonly<{
-  counterSum: TypeIdentifier<number>;
+type SumInput = Readonly<{
+  inputA: BehaviorId<number>;
+  inputB: BehaviorId<number>;
 }>;
-export const getSumSignals: (aId: TypeIdentifier<number>, bId: TypeIdentifier<number>) => 
-  Signals<SumSignalIds> = (aId, bId) => {
-    const counterSum = getIdentifier<number>();
-    return {
-      ids: { counterSum },
-      setup: store => {
-        store.addLazyBehavior(counterSum, combineLatest([
-          store.getBehavior(aId),
-          store.getBehavior(bId),
-        ]).pipe(
-          map(([a, b]) => a + b),
-        ));
-      },
-    };
-  };
-```
-
-And finally, we can create concrete signals:
-```typescript
-export const counter1Signals = getCounterSignals();
-export const counter2Signals = getCounterSignals();
-export const counterSumSignals = getSumSignals(
-  counter1Signals.ids.counterState, 
-  counter2Signals.ids.counterState
-);
-```
-
-So we can use the `counterState`-IDs to create the signals for the dependent behavior, although no store setup has happened yet.
-It is also irrelevant in which order the store setup is performed (you can call `counterSumSignals.setup(store)` before or after `counterNSignals.setup(store)`).
-
-The two factories are free of any dependencies between each other (so not even on identifier-level).
-
-A next improvement could be to combine the two factories into a new factory (to make the combination of two counters and their sum reusable):
-```typescript
-type CounterWithSumSignalIds = Readonly<{
-  c1Ids: CounterSignalIds;
-  c2Ids: CounterSignalIds;
-  counterSum: TypeIdentifier<number>;
-}>
-export const getCounterWithSumSignals: () => Signals<CounterWithSumSignalIds> = () => {
-  const counter1Signals = getCounterSignals();
-  const counter2Signals = getCounterSignals();
-  const counterSumSignals = getSumSignals(
-    counter1Signals.ids.counterState,
-    counter2Signals.ids.counterState,
-  );
+type SumOutput = Readonly<{
+  counterSum: BehaviorId<number>;
+}>;
+const getSumSignals: () => Signals<SumInput, SumOutput> = () => {
+  const inputA = getBehaviorId<number>();
+  const inputB = getBehaviorId<number>();
+  const counterSum = getBehaviorId<number>();
   return {
-    ids: {
-      c1Ids: counter1Signals.ids,
-      c2Ids: counter2Signals.ids,
-      counterSum: counterSumSignals.ids.counterSum,
-    },
+    input: { inputA, inputB },
+    output: { counterSum },
     setup: store => {
-      counter1Signals.setup(store);
-      counter2Signals.setup(store);
-      counterSumSignals.setup(store);
+      store.addLazyBehavior(
+        counterSum,
+        combineLatest([store.getBehavior(inputA), store.getBehavior(inputB)]).pipe(
+          map(([a, b]) => a + b),
+        ),
+      );
     },
-  }
+  };
 };
 ```
 
+The two factory functions `getCounterSignals` and `getSumSignals` are two functions that are free of any dependencies between each other (so not even on identifier-level).
+
+Of course, we can create a function that composes the previous two functions to create counters with sum signals:
+```typescript
+type ComposedInput = Readonly<{
+  inputA: CounterInput;
+  inputB: CounterInput;
+}>;
+const getCounterWithSumSignals: () => Signals<ComposedInput, SumOutput> = () => {
+  const counterASignals = getCounterSignals();
+  const counterBSignals = getCounterSignals();
+  const counterSumSignals = getSumSignals();
+  return {
+    input: {
+      inputA: counterASignals.input,
+      inputB: counterBSignals.input,
+    },
+    output: {
+      counterSum: counterSumSignals.output.counterSum,
+    },
+    setup: store => {
+      counterASignals.setup(store);
+      counterBSignals.setup(store);
+      counterSumSignals.setup(store);
+      store.connect(counterASignals.output.counter, counterSumSignals.input.inputA);
+      store.connect(counterBSignals.output.counter, counterSumSignals.input.inputB);
+    },
+  };
+};
+```
+
+(Again, please note that the order in which the setup functions are called is irrelevant.)
+
 The above way to compose a signals factory from two other factories might be OK in this trivial example.
 But as soon as things get more complex, this kind of 'manual' composition becomes inflexible, verbose and error-prone.
-The next section presents a signals factory type that allows for generalized composition.
+E.g. it's easy to forget calling the setup of one of the signals.
+And even if you don't forget it, it's still boilerplate.
+The next section presents a signals factory type that allows for a better, generalized composition.
 
 ## Reusability and Composition via SignalsFactory-type <a name="signals-factory-type"></a>
 
 The previous section introduced the `Signals` type as means of encapsulation/isolation for the creation of IDs and setup of corresponding signals in the `Store`.
 The given example even used factory functions to produce `Signals` and a new factory function was composed from the two initial factory functions.
-
-To generalize factory composition, _rx-signals_ defines the following type:
+For more complex Signals, it might be neccessary to configure this kind of factory.
+Therefore, _rx-signals_ formalizes such configurable factory as `SignalsBuild` type:
 ```typescript
-type SignalsFactory<T extends SignalIds> = Readonly<{
-  build: () => Signals<T>;
-  bind: <T2 extends SignalIds>(mapper: SignalsMapToFactory<T1, T2>) => SignalsFactory<MappedSignalTypes<T1, T2>>;
-  fmap: <T2 extends SignalIds>(mapper: SignalsMapper<T1, T2>) => SignalsFactory<T2>;
-  idsMap: <T2 extends SignalIds>(mapper: IdsMapper<T1, T2>) => SignalsFactory<T2>;
-  flattenIds: () => SignalsFactory<FlattenComposedIds<T>>;
-}>;
+type SignalsBuild<
+  IN extends NameToSignalId,
+  OUT extends NameToSignalId,
+  CONFIG extends Configuration,
+> = (config: CONFIG) => Signals<IN, OUT>;
 
 // with:
-type MappedSignalTypes<T1 extends SignalIds, T2 extends SignalIds> = Readonly<{
-  ids1: T1;
-  ids2: T2;
-}>;
-type SignalsMapToFactory<T1 extends SignalIds, T2 extends SignalIds> = (signals: Signals<T1>) => SignalsFactory<T2>;
-type SignalsMapper<T1 extends SignalIds, T2 extends SignalIds> = (signals: Signals<T1>) => Signals<T2>;
-type IdsMapper<T1 extends SignalIds, T2 extends SignalIds> = (ids: T1) => T2;
+type Configuration = Readonly<Record<string, any>>;
 ```
 
-This type actually defines a factory that builds the kind of `() => Signals<T>`-factories that were used in the previous section.
-Hence, it's an additional abstraction layer over the `() => Signals<T>` type (actually _SignalsFactoryBuilder_ would have been a better name for this type, but it's `SignalsFactory` now.).
+As mentioned at the end of the previous section, the manual composition of such `SignalsBuild` functions is error-prone and needs a lot of boilerplate code.
+To generalize factory composition, _rx-signals_ features the `SignalsFactory` class as a wrapper for `SignalsBuild`:
+```typescript
+class SignalsFactory<IN extends NameToSignalId, OUT extends NameToSignalId, CONFIG extends Configuration> {
+  constructor(readonly build: SignalsBuild<IN, OUT, CONFIG>) {}
+  
+  bind<IN2 extends NameToSignalId, OUT2 extends NameToSignalId, CONFIG2 extends Configuration>(
+    mapper: SignalsMapToFactory<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>,
+  ): ComposedFactory<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>;
 
-Of course, you do not have to implement the `bind`, `fmap`, `idsMap` and `flattenIds` methods yourself, but you only have to provide the `build` as an argument to `createSignalsFactory` (so an appropriate name for the type of the `createSignalsFactory`-function would be `SignalsFactoryBuilderFactory` :sweat_smile: ).
+  fmap<IN2 extends NameToSignalId, OUT2 extends NameToSignalId>(
+    mapper: SignalsMapper<IN, OUT, IN2, OUT2, CONFIG>,
+  ): SignalsFactory<IN2, OUT2, CONFIG>;
 
-Before coming to a more real-world example, let's generalize the counter-sum-example from the previous section by turning the 'custom' signals factories into `SignalsFactory` types.
+  extendSetup(extend: ExtendSetup<IN, OUT, CONFIG>): SignalsFactory<IN, OUT, CONFIG>;
+
+  mapInput<IN2 extends NameToSignalId>(mapper: MapSignalIds<IN, IN2>): SignalsFactory<IN2, OUT, CONFIG>;
+
+  mapOutput<OUT2 extends NameToSignalId>(mapper: MapSignalIds<OUT, OUT2>): SignalsFactory<IN, OUT2, CONFIG>;
+
+  mapConfig<CONFIG2 extends Configuration>(mapper: MapConfig<CONFIG, CONFIG2>): SignalsFactory<IN, OUT, CONFIG2>;
+}
+```
+
+`SignalsFactory` instances are immutable, hence all methods return a new `SignalsFactory` instance.
+
+Before coming to a more real-world example, let's generalize the counter-sum-example from the previous section by turning the 'custom' signals factories into a `SignalsFactory`.
 Based on our definitions for `getCounterSignals` and `getSumSignals`, we can turn these into `SignalsFactories` as follows:
 ```typescript
-const counterFactory = createSignalsFactory(getCounterSignals);
-const getSumSignalsFactory = (aId: TypeIdentifier<number>, bId: TypeIdentifier<number>) =>
-  createSignalsFactory(() => getSumSignals(aId, bId));
+const counterFactory = new SignalsFactory(getCounterSignals);
+const sumFactory = new SignalsFactory(getSumSignals);
 ```
 
-Due to `getSumSignals` taking parameters, we actually have to create another factory that produces the desired `SignalsFactory`.
-At first, this might seem to get a bit out of control (`getSumSignalsFactory` abstracts over a `SignalsFactory` that abstracts over `Signals`), but if you stick to wrapping everything into a `SignalsFactory`, the benefit is simple and flexible composition of these factories:
+Now, composition of these factories is simple:
 ```typescript
-const getCounterWithSumSignalsFactory: SignalsFactory<CounterWithSumSignalIds> =
+const getCounterWithSumSignalsFactory: SignalsFactory<ComposedInput, SumOutput> = 
   counterFactory
     .bind(() => counterFactory)
-    .bind(s => getSumSignalsFactory(s.ids.ids1.counterState, s.ids.ids2.counterState))
-    .idsMap(ids => ({
-      c1Ids: { ...ids.ids1.ids1 },
-      c2Ids: { ...ids.ids1.ids2 },
-      counterSum: ids.ids2.counterSum,
+    .bind(() => sumFactory)
+    .extendSetup((store, input, output) => {
+      store.connect(output.conflicts1.counter, input.inputA);
+      store.connect(output.conflicts2.counter, input.inputB);
+    })
+    .mapInput(ids => ({
+      inputA: ids.conflicts1,
+      inputB: ids.conflicts2,
+    }))
+    .mapOutput(ids => ({
+      counterSum: ids.counterSum,
     }));
-
-const getCounterWithSumSignals = getCounterWithSumSignalsFactory.build();
 ```
 
-So the `bind` composes two factories by taking a function parameter that maps from the first factories `Signals` to the second factory, resulting in a third factory (the composed factory).
-`idsMap` can be used to change the resulting `SignalIds` type.
-The `fmap` (not used in the example) maps from the first factories `Signals` to new `Signals`.
-So in contrast to `idsMap`, the `fmap` can perform additional setup tasks with the store (will be seen in subsequent examples).
-Finally, there's `flattenIds` which flattens `MappedSignalTypes<T1, T2>` to `FlattenComposedIds<MappedSignalTypes<T1, T2>>` (also used in the next example).
+To understand what the `bind` method does, let's have a look at the signature again:
+```typescript
+bind<IN2 extends NameToSignalId, OUT2 extends NameToSignalId, CONFIG2 extends Configuration>(
+  mapper: SignalsMapToFactory<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>,
+): ComposedFactory<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>
+
+// with:
+type SignalsMapToFactory<
+  IN1 extends NameToSignalId,
+  OUT1 extends NameToSignalId,
+  CONFIG1 extends Configuration,
+  IN2 extends NameToSignalId,
+  OUT2 extends NameToSignalId,
+  CONFIG2 extends Configuration,
+> = (signals: Signals<IN1, OUT1>, config: CONFIG1) => SignalsFactory<IN2, OUT2, CONFIG2>;
+type ComposedFactory<
+  IN1 extends NameToSignalId,
+  OUT1 extends NameToSignalId,
+  CONFIG1 extends Configuration,
+  IN2 extends NameToSignalId,
+  OUT2 extends NameToSignalId,
+  CONFIG2 extends Configuration,
+> = SignalsFactory<Merged<IN1, IN2>, Merged<OUT1, OUT2>, MergedConfiguration<CONFIG1, CONFIG2>>;
+```
+
+So the `bind` method composes two factories by taking a function parameter that maps from the `Signals<IN, OUT>` produced by the first factory to a second `SignalsFactory<IN2, OUT2, CONFIG2>` (in the given example, the `Signals` argument is not used). 
+The result of `bind` is a third factory `SignalsFactory<Merged<IN1, IN2>, Merged<OUT1, OUT2>, MergedConfiguration<CONFIG1, CONFIG2>>`.
+Simply put, the merge of input and output `NameToSignalId` works in a way that conflicting names are put under properties _conflicts1_ and _conflicts2_, as you can see in the connect, or mapInput/mapOutput method calls.
+For details of the merge-logic, please have a look at [the corresponding API-documentation](https://rawcdn.githack.com/gneu77/rx-signals/master/docs/tsdoc/index.html)
+
+The `extendSetup` method returns a new factory where the `SignalsBuild` performs additional code in its setup method.
+The `mapInput` and `mapOutput` methods can be used to change the results from `Merged<IN1, IN2>` and `Merged<OUT1, OUT2>` to our needs.
+In a similar, if our factory had any configuration, we could use the `mapConfig` method, to change the result of `MergedConfiguration<CONFIG1, CONFIG2>`.
 
 Now let's build something that is at least a bit closer to real-world requirements.
 
@@ -549,7 +602,7 @@ Now let's build something that is at least a bit closer to real-world requiremen
 
 In the behaviors-section, we had an example of query-signals. 
 This example presented neither reusable, nor generalized code.
-So we start with some more general requirements for a _search with filtered, sorted and paged results_-SignalsFactory (we still keep the requirements simple, because later on, we will see that with `EffectsSignalsFactory`, _rx-signals_ already features a factory implementation that can be used in composition to cover many more requirements without the need to implement things yourself):
+So we start with some more general requirements for a _search with filtered, sorted and paged results_-SignalsFactory (we still keep the requirements simple, because later on, we will see that with `EffectSignalsFactory`, _rx-signals_ already features a factory implementation that can be used in composition to cover many more requirements without the need to implement things yourself):
 * The query-model for the filters should be generic
 * The result-model should be generic
 * The search should be invoked whenever the query-model, or the sorting, or the paging paramter changes
@@ -561,169 +614,182 @@ We will compose a corresponding `SignalsFactory` from smaller, generic and reusa
 So in the above diagram, the arrows show the direction of composition, hence dependencies are in the opposite direction.
 There are 4 low-level components and 2 composed ones.
 
-Here is a possible implementation for the _ModelFactory_ that is generic and could be used for any form-controlled model (and will be used to model the filter of our query):
+Here is a possible implementation for a generic `SignalsBuild` of a _ModelFactory_ that could be used for any form-controlled model (and will be used to model the filter of our query):
 ```typescript
-type ModelIds<T> = Readonly<{
-  model: TypeIdentifier<T>;
-  setModelEvent: TypeIdentifier<T>;
-  updateModelEvent: TypeIdentifier<Partial<T>>;
-  resetModelEvent: TypeIdentifier<void>;
+type ModelInput<T> = Readonly<{
+  setModel: EventId<T>;
+  updateModel: EventId<Partial<T>>;
+  resetModel: EventId<void>;
 }>;
-const getModelSignals = <T>(defaultModel: T): Signals<ModelIds<T>> => {
-  const model = getIdentifier<T>();
-  const setModelEvent = getIdentifier<T>();
-  const updateModelEvent = getIdentifier<Partial<T>>();
-  const resetModelEvent = getIdentifier<void>();
+type ModelOutput<T> = Readonly<{
+  model: BehaviorId<T>;
+}>;
+// SignalsBuild<ModelInput<T>, ModelOutput<T>, T>
+const getModelSignals: SignalsBuild = <T>(defaultModel: T): Signals<ModelInput<T>, ModelOutput<T>> => {
+  const model = getBehaviorId<T>();
+  const setModel = getEventId<T>();
+  const updateModel = getEventId<Partial<T>>();
+  const resetModel = getEventId<void>();
   return {
-    ids: {
+    input: {
+      setModel,
+      updateModel,
+      resetModel,
+    },
+    output: {
       model,
-      setModelEvent,
-      updateModelEvent,
-      resetModelEvent,
     },
     setup: store => {
       store.addState(model, defaultModel);
-      store.addReducer(model, setModelEvent, (_, event) => event);
-      store.addReducer(model, updateModelEvent, (state, event) => ({
+      store.addReducer(model, setModel, (_, event) => event);
+      store.addReducer(model, updateModel, (state, event) => ({
         ...state,
         ...event,
       }));
-      store.addReducer(model, resetModelEvent, () => defaultModel);
+      store.addReducer(model, resetModel, () => defaultModel);
     },
   };
 };
-const getModelSignalsFactory = <T>(defaultModel: T) =>
-  createSignalsFactory(() => getModelSignals(defaultModel));
 ```
 
-It takes a `defaultModel` as parameter and as well, it exposes a `setModelEvent`. The latter e.g. could be used, if the factory serves for editing an existing model.
+This time, we also have a configuration object, to setup a default model.
 
 Next comes a possible implementation for our _SortParameterFactory_:
 ```typescript
 type SortParameter = Readonly<{ propertyName?: string; descending: boolean }>;
-type SortingIds = Readonly<{
-  sorting: TypeIdentifier<SortParameter>;
-  ascendingEvent: TypeIdentifier<string>;
-  descendingEvent: TypeIdentifier<string>;
-  noneEvent: TypeIdentifier<void>;
+type SortingInput = Readonly<{
+  ascending: EventId<string>;
+  descending: EventId<string>;
+  none: EventId<void>;
 }>;
-const getSortingSignals = (): Signals<SortingIds> => {
-  const sorting = getIdentifier<SortParameter>();
-  const ascendingEvent = getIdentifier<string>();
-  const descendingEvent = getIdentifier<string>();
-  const noneEvent = getIdentifier<void>();
+type SortingOutput = Readonly<{
+  sorting: BehaviorId<SortParameter>;
+}>;
+const getSortingSignals = (): Signals<SortingInput, SortingOutput> => {
+  const sorting = getBehaviorId<SortParameter>();
+  const ascending = getEventId<string>();
+  const descending = getEventId<string>();
+  const none = getEventId<void>();
   return {
-    ids: {
+    input: {
+      ascending,
+      descending,
+      none,
+    },
+    output: {
       sorting,
-      ascendingEvent,
-      descendingEvent,
-      noneEvent,
     },
     setup: store => {
       store.addState(sorting, { descending: false });
-      store.addReducer(sorting, ascendingEvent, (_, propertyName) => ({
+      store.addReducer(sorting, ascending, (_, propertyName) => ({
         propertyName,
         descending: false,
       }));
-      store.addReducer(sorting, descendingEvent, (_, propertyName) => ({
+      store.addReducer(sorting, descending, (_, propertyName) => ({
         propertyName,
         descending: true,
       }));
-      store.addReducer(sorting, noneEvent, () => ({ descending: false }));
+      store.addReducer(sorting, none, () => ({ descending: false }));
     },
   };
 };
-const sortingSignalsFactory = createSignalsFactory(getSortingSignals);
+const sortingSignalsFactory = new SignalsFactory(getSortingSignals);
 ```
 
 Next the _PagingParameterFactory_:
 ```typescript
 type PagingParameter = Readonly<{ page: number; pageSize: number }>;
-type PagingIds = Readonly<{
-  paging: TypeIdentifier<PagingParameter>;
-  setPageEvent: TypeIdentifier<number>;
-  setPageSizeEvent: TypeIdentifier<number>;
+type PagingInput = Readonly<{
+  setPage: EventId<number>;
+  setPageSize: EventId<number>;
 }>;
-const getPagingSignals = (): Signals<PagingIds> => {
-  const paging = getIdentifier<PagingParameter>();
-  const setPageEvent = getIdentifier<number>();
-  const setPageSizeEvent = getIdentifier<number>();
+type PagingOutput = Readonly<{
+  paging: BehaviorId<PagingParameter>;
+}>;
+const getPagingSignals = (): Signals<PagingInput, PagingOutput> => {
+  const paging = getBehaviorId<PagingParameter>();
+  const setPage = getEventId<number>();
+  const setPageSize = getEventId<number>();
   return {
-    ids: {
+    input: {
+      setPage,
+      setPageSize,
+    },
+    output: {
       paging,
-      setPageEvent,
-      setPageSizeEvent,
     },
     setup: store => {
       store.addState(paging, { page: 0, pageSize: 10 });
-      store.addReducer(paging, setPageEvent, (state, page) => ({
+      store.addReducer(paging, setPage, (state, page) => ({
         ...state,
         page,
       }));
-      store.addReducer(paging, setPageSizeEvent, (state, pageSize) => ({
+      store.addReducer(paging, setPageSize, (state, pageSize) => ({
         ...state,
         pageSize,
       }));
     },
   };
 };
-const pagingSignalsFactory = createSignalsFactory(getPagingSignals);
+const pagingSignalsFactory = new SignalsFactory(getPagingSignals);
 ```
 
-Now we can compose these 3 factories to a _QueryInputFactory_:
+Now we can compose a generic function producing a _QueryInputFactory_:
 ```typescript
-type FilteredSortedPagedQueryIds<FilterType> = ModelIds<FilterType> & SortingIds & PagingIds;
-const getFilteredSortedPagedQuerySignalsFactory = <FilterType>(
-  defaultFilter: FilterType,
-): SignalsFactory<FilteredSortedPagedQueryIds<FilterType>> =>
-  getModelSignalsFactory(defaultFilter)
+type FilteredSortedPagedQueryInput<FilterType> = ModelInput<FilterType> &
+  SortingInput &
+  PagingInput;
+type FilteredSortedPagedQueryOutput<FilterType> = ModelOutput<FilterType> &
+  SortingOutput &
+  PagingOutput;
+const getFilteredSortedPagedQuerySignalsFactory = <FilterType>(): SignalsFactory<
+  FilteredSortedPagedQueryInput<FilterType>,
+  FilteredSortedPagedQueryOutput<FilterType>,
+  FilterType
+> =>
+  new SignalsFactory<ModelInput<FilterType>, ModelOutput<FilterType>, FilterType>(
+    getModelSignals,
+  )
     .bind(() => sortingSignalsFactory)
-    .flattenIds()
     .bind(() => pagingSignalsFactory)
-    .flattenIds()
-    .fmap(s => ({
-      ...s,
-      setup: store => {
-        s.setup(store);
-        store.addEventSource(
-          Symbol('resetPagingEffect'),
-          s.ids.setPageEvent,
-          merge(
-            store.getEventStream(s.ids.resetModelEvent),
-            store.getEventStream(s.ids.setModelEvent),
-            store.getEventStream(s.ids.updateModelEvent),
-            store.getEventStream(s.ids.ascendingEvent),
-            store.getEventStream(s.ids.descendingEvent),
-            store.getEventStream(s.ids.noneEvent),
-          ).pipe(mapTo(0)),
-        );
-      },
-    }));
+    .extendSetup((store, input) => {
+      store.addEventSource(
+        Symbol('resetPagingEffect'),
+        input.setPage,
+        merge(
+          store.getEventStream(input.resetModel),
+          store.getEventStream(input.setModel),
+          store.getEventStream(input.updateModel),
+          store.getEventStream(input.ascending),
+          store.getEventStream(input.descending),
+          store.getEventStream(input.none),
+        ).pipe(mapTo(0)),
+      );
+    });
 ```
 
-In addition to just combining all signals, there is additional logic in the `fmap` block, adding an effect to reset the page (of the PagingParameter) to `0` whenever the filter or the sorting changes.
+In addition to just combining all signals, there is additional logic in the `extendSetup` block, adding an effect to reset the page (of the PagingParameter) to `0` whenever the filter or the sorting changes.
 
 For the _EffectFactory_, we're using the `EffectSignalsFactory` that comes with _rx-signals_ and that will be explained in more details in the next sub-section of this document.
 
-So we can compose our _QueryWithResultFactory_ as:
+Here is a generic function producing a _QueryWithResultFactory_:
 ```typescript
-const getQueryWithResultFactory = <FilterType, ResultType>(
-  defaultFilter: FilterType,
-  queryEffect: EffectType<[FilterType, SortParameter, PagingParameter], ResultType>,
-) =>
-  getFilteredSortedPagedQuerySignalsFactory(defaultFilter)
-    .bind(s =>
-      getEffectSignalsFactory(
-        store =>
-          combineLatest([
-            store.getBehavior(s.ids.model),
-            store.getBehavior(s.ids.sorting),
-            store.getBehavior(s.ids.paging),
-          ]),
-        queryEffect,
-      ),
+const getQueryWithResultFactory = <FilterType, ResultType>() =>
+  getFilteredSortedPagedQuerySignalsFactory<FilterType>()
+    .bind(() =>
+      getEffectSignalsFactory<[FilterType, SortParameter, PagingParameter], ResultType>(),
     )
-    .flattenIds();
+    .extendSetup((store, input, output) => {
+      store.connectObservable(
+        combineLatest([
+          store.getBehavior(output.model),
+          store.getBehavior(output.sorting),
+          store.getBehavior(output.paging),
+        ]),
+        input.input,
+        false,
+      );
+    });
 ```
 
 All those factories are generic and can be reused or composed as necessary.
@@ -734,7 +800,8 @@ const resultEffect: EffectType<[MyFilter, SortParameter, PagingParameter], strin
   store.getBehavior(serviceIds.myService).pipe(
     switchMap(s => s.getResults(input[0], input[1], input[2])),
   );
-const f = getQueryWithResultFactory({ firstName: '', lastName: '' }, resultEffect).build();
+const myFactory = getQueryWithResultFactory<MyFilter, string[]>()
+  .build({ firstName: '', lastName: '' });
 ```
 
 ### The EffectSignalsFactory <a name="effect-signals-factory"></a>

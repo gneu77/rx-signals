@@ -106,7 +106,7 @@
       <path fill="url(#linearGradient3)" d="M328.75 218 Q328.75 215.75 331 215.75 L397.8 215.75 Q400.05 215.75 400.05 218 Q400.05 220.25 366.65 229.25 Q333.25 238.25 331 238.25 Q328.75 238.25 328.75 236 Z" clip-path="url(#clipPath2)" transform="matrix(1,0,0,1.0667,-315,-216.5333)" stroke="none" image-rendering="auto"/>
     </g>
     <g stroke-linecap="butt" transform="matrix(1,0,0,1,-66,-200)" text-rendering="geometricPrecision" font-family="sans-serif" shape-rendering="geometricPrecision" font-weight="bold" stroke-miterlimit="1.45">
-      <text x="342.9902" xml:space="preserve" y="234.7139" clip-path="url(#clipPath2)" stroke="none">dispatchEvent</text>
+      <text x="359.3291" xml:space="preserve" y="234.7139" clip-path="url(#clipPath2)" stroke="none">dispatch</text>
     </g>
     <g text-rendering="geometricPrecision" shape-rendering="geometricPrecision" transform="matrix(1,0,0,0.9375,231.5,103)" image-rendering="optimizeQuality">
       <image x="0" y="0" clip-path="url(#clipPath12)" width="32" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAABACAYAAAB7jnWuAAABKUlEQVR4Xu2YuUoE&#13;&#10;QBAFez3WCxRvNHHxilwDL0yUFXZR9P//x1eMg6ndayD4Ciqdft0zSU+EMcYY83sM&#13;&#10;is4FByzIxS+XCpahOEWX5Ypck+tyI2mJ3vkwWtEtuSv35YE8TFiCAIyP4jvyWI7k&#13;&#10;ubxMWoLuGTudU/xCXstb+ZC0BHfPndP9KFrxR/ksX5KWIADj584ZO51TfCbfkpbo&#13;&#10;AXhw3COjpBsO/EhawgEcwAEcwAEcwAEcwAEcwAH+VADWsns5ka/yPWmJHmBPnskb&#13;&#10;+SSn0UJkLEGA1Wi74YkcR7sGQkySlujb8aY8irYfXkWbxF3SEoP4/h/YjhaCSZxG&#13;&#10;C8O7+KllmALfM6zpTIIgvAk25oxlmAIhmMQw2pvo/0QZ56YHQR5nVmOMMf+cTxda&#13;&#10;kTxtXhGuAAAAAElFTkSuQmCC" height="64" preserveAspectRatio="none"/>

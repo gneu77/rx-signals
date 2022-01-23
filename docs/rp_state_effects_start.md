@@ -327,7 +327,7 @@ The combination of explicit, declarative definitions and automatic change propag
 
 It's time to hint at some first differences between _rx-signals_ and other popular state-management libraries.
 In _rx-signals_ the individual properties (that is all state) are represented by individual behaviors, the latter being nothing else but _Observables_ (with current value).
-[_Redux_](https://redux.js.org/) models the **Root State* (properties that depend only on events and previous value) as a single object and represents this state as the single only observable.
+[_Redux_](https://redux.js.org/) models the **Root State** (properties that depend only on events and previous value) as a single object and represents this state as the single only observable.
 **Derived State** is modelled by _Selectors_ (functions mapping the root-state) that are used inside a subscribe-block (if you're used to _React_, you usually don't subscribe explicitly, but use the _Provider_ component that does this for you and calls _mapStateToProps_ or triggers a _useSelector_ hook, where then you use _Selectors_).
 [_NgRx_](https://ngrx.io/) mixes the two approaches, by also using a single object for the root-state, but modelling selectors as individual observables.
 An advantage of modelling also **Derived State** as _Observables_ is that it moves the subscription closer to the actual consumer of the properties, because calling _subscribe_ on an _Observable_ marks the border between declarative and imperative code and thus, in principle breaks reactivity.

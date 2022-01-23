@@ -4,7 +4,7 @@
 
 ### Breaking Changes
 
-- TODO
+- TODO (WIP)
 
 ## 2.7.0 (2022-01-13)
 

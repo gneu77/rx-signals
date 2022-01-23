@@ -2,9 +2,11 @@
 
 **Reactive state and effects management**
 
+:warning: This documentation is work in progress for the upcoming 3.0.0 version. There is however no good reason to use 2.7 over 3.0.0-rc1, so please start with the rc-version. 3.0.0-rc1 is better than 2.7 in any aspect, the only drawback is that minor breaking changes are still possible until 3.0.0.
+
 ## Installation
 
-`npm install --save @rx-signals/store`
+`npm install --save @rx-signals/store@3.0.0-rc1`
 
 ## Dependencies
 
@@ -28,7 +30,7 @@ It is however not limited to MVU, but can be used in all architectures that woul
   * Mock-less testing of your application logic
 * An alternative to _Redux_, _NgRx_ or other MVU-libs
   * Less boilerplate / More DRY
-  * More abstractions / reusability
+  * More abstractions / Better reusability
 
 Though it heavily relies on _RxJs_, this lib is **not** Angular-specific. You can (and should) also use it in any other context where you have _RxJs_ at your disposal!
 
@@ -36,15 +38,15 @@ _rx-signals_ itself is implemented with TypeScript and therefore naturally comes
 
 ### High-level overview
 This lib comes with a
-* Store-API for
-  * State/Effects-management based on the RP (reactive programming) concepts of events and behaviors (generalized as signals)
+* Store for
+  * State-management based on the RP (reactive programming) concepts of events and behaviors (generalized as signals)
   * Reactive dependency injection
-* Signals-Type as
-  * Encapsulation/Abstraction-layer for signal-composition
-* SignalsFactory-Type and utility functions as
-  * Abstraction-layer over the Signals-Type for high-level composition and DRY architecture
+* Signals- and SignalsBuilder Types as
+  * Encapsulation/Abstraction-layer over low-level signal-composition
+* SignalsFactory as
+  * Abstraction-layer over the SignalsBuilder-Type for high-level composition and reusability (enabling DRY architecture)
 * EffectSignalsFactory as
-  * SignalsFactory-implementation that covers side-effect-scenarios, encapsulating and abstracting away all the pitfalls and possibilities to shoot yourself in the foot.
+  * SignalsFactory that covers all side-effect-scenarios generically, encapsulating and abstracting away all the pitfalls and possibilities to shoot yourself in the foot.
 
 ## Getting started
 
@@ -95,7 +97,7 @@ You should start with my introduction to [MVU, State Management, Reactive Progra
 * you don't know what any of these terms mean
 * you like to understand the basis for the _rx-signals_ architecture
 * you think State Management is only about having a global state and how to modify it
-* you think you're doing RP, just because you're using something like _RxJs_ (no, you're not)
+* you think you're doing RP, just because you're using something like _RxJs_
 * you think Effects Management is only about managing async processes (like http calls)
 * you don't know that all these things are tied together
 

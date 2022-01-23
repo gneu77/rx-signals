@@ -19,7 +19,7 @@
     <g text-rendering="geometricPrecision" stroke-miterlimit="1.45" shape-rendering="geometricPrecision" transform="matrix(1,0,0,1,445,290)" stroke-linecap="butt">
       <rect x="-429.9893" y="-84.3965" clip-path="url(#clipPath2)" fill="none" width="157" rx="4" ry="4" height="59"/>
       <text x="-414.6875" font-size="14px" y="-64.3213" clip-path="url(#clipPath2)" font-family="sans-serif" stroke="none" font-weight="bold" xml:space="preserve">Root State = Model</text>
-      <text x="-423.9893" y="-48.7344" clip-path="url(#clipPath2)" font-family="sans-serif" font-style="italic" stroke="none" xml:space="preserve">depends on</text>
+      <text x="-423.9893" y="-48.7344" clip-path="url(#clipPath2)" font-family="sans-serif" font-style="italic" stroke="none" xml:space="preserve">only depends on</text>
       <text x="-423.9893" y="-34.0332" clip-path="url(#clipPath2)" font-family="sans-serif" font-style="italic" stroke="none" xml:space="preserve">events (actions, messages)</text>
     </g>
     <g fill="rgb(255,204,0)" text-rendering="geometricPrecision" shape-rendering="geometricPrecision" transform="matrix(1,0,0,1,445,290)" stroke="rgb(255,204,0)">
@@ -37,7 +37,7 @@
     <g text-rendering="geometricPrecision" stroke-miterlimit="1.45" shape-rendering="geometricPrecision" transform="matrix(1,0,0,1,445,290)" stroke-linecap="butt">
       <rect x="-203.3086" y="-84.3965" clip-path="url(#clipPath2)" fill="none" width="157" rx="4" ry="4" height="59"/>
       <text x="-169.5498" font-size="14px" y="-64.3213" clip-path="url(#clipPath2)" font-family="sans-serif" stroke="none" font-weight="bold" xml:space="preserve">Derived State</text>
-      <text x="-197.3086" y="-48.7344" clip-path="url(#clipPath2)" font-family="sans-serif" font-style="italic" stroke="none" xml:space="preserve">depends on other</text>
+      <text x="-197.3086" y="-48.7344" clip-path="url(#clipPath2)" font-family="sans-serif" font-style="italic" stroke="none" xml:space="preserve">only depends on other</text>
       <text x="-197.3086" y="-34.0332" clip-path="url(#clipPath2)" font-family="sans-serif" font-style="italic" stroke="none" xml:space="preserve">state (behaviors)</text>
     </g>
     <g fill="rgb(255,204,0)" text-rendering="geometricPrecision" shape-rendering="geometricPrecision" transform="matrix(1,0,0,1,445,290)" stroke="rgb(255,204,0)">

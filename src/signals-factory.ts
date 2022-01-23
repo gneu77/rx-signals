@@ -46,11 +46,11 @@ export type Signals<IN extends NameToSignalId, OUT extends NameToSignalId> = Set
 /**
  * This type defines a function returning a Signals object, hence a function implementing SignalsFactory.build().
  *
- * @typedef {function} FactoryBuild<IN, OUT> - type for the build method of SignalsFactories
+ * @typedef {function} SignalsBuild<IN, OUT> - constructor argument of SignalsFactories
  * @template IN - concrete NameToSignalIds defining input signals of the resulting SignalsFactory
  * @template OUT - concrete NameToSignalIds defining output signals of the resulting SignalsFactory
  */
-export type FactoryBuild<
+export type SignalsBuild<
   IN extends NameToSignalId,
   OUT extends NameToSignalId,
   CONFIG extends Configuration,
@@ -58,11 +58,11 @@ export type FactoryBuild<
 
 /**
  * This type specifies a function mapping from Signals<T1> to SignalsFactory<T2>, hence
- * the argument to the monadic bind of SignalFactories (hence the argument to FactoryBind<T1,T2>).
+ * the argument to the bind method of SignalFactories.
  *
- * @typedef {function} SignalsMapToFactory<IN1, OUT1, IN2, OUT2> - function mapping from Signals<IN1, OUT1> to SignalsFactory<IN2, OUT2>
- * @template IN1 - concrete NameToSignalIds defining input signals of the initial SignalsFactory
- * @template OUT1 - concrete NameToSignalIds defining output signals of the initial SignalsFactory
+ * @typedef {function} SignalsMapToFactory<IN1, OUT1, IN2, OUT2> - function mapping from Signals<IN1, OUT1> and CONFIG1 to SignalsFactory<IN2, OUT2, CONFIG2>
+ * @template IN1 - concrete NameToSignalIds defining input signals of the initial SignalsFactory Signals
+ * @template OUT1 - concrete NameToSignalIds defining output signals of the initial SignalsFactory Signals
  * @template IN2 - concrete NameToSignalIds defining input signals of the resulting SignalsFactory
  * @template OUT2 - concrete NameToSignalIds defining output signals of the resulting SignalsFactory
  */
@@ -75,6 +75,15 @@ export type SignalsMapToFactory<
   CONFIG2 extends Configuration,
 > = (signals: Signals<IN1, OUT1>, config: CONFIG1) => SignalsFactory<IN2, OUT2, CONFIG2>;
 
+/**
+ * This type specifies the result of the SignalsFactory bind method.
+ *
+ * @typedef {object} ComposedFactory<IN1, OUT1, CONFIG1, IN2, OUT2, CONFIG2> - result of SignalsFactory<IN1, OUT1, CONFIG1>::bind(SignalsMapToFactory<IN1, OUT1, CONFIG1, IN2, OUT2, CONFIG2>
+ * @template IN1 - concrete NameToSignalIds defining input signals of the initial SignalsFactory
+ * @template OUT1 - concrete NameToSignalIds defining output signals of the initial SignalsFactory
+ * @template IN2 - concrete NameToSignalIds defining input signals of the bound SignalsFactory
+ * @template OUT2 - concrete NameToSignalIds defining output signals of the bound SignalsFactory
+ */
 export type ComposedFactory<
   IN1 extends NameToSignalId,
   OUT1 extends NameToSignalId,
@@ -86,13 +95,13 @@ export type ComposedFactory<
 
 /**
  * This type specifies a function mapping from Signals<IN1, OUT1> to Signals<IN2, OUT2>, hence
- * the argument to the functor fmap of SignalFactories (hence the argument to FactoryMap<IN1, OUT1, IN2, OUT2>).
+ * the argument to the fmap-method of SignalFactories.
  *
- * @typedef {function} SignalsMapper<IN1, OUT1, IN2, OUT2> - function mapping from Signals<IN1, OUT1> to Signals<IN2, OUT2>
- * @template IN1 - concrete NameToSignalIds defining input signals of the initial SignalsFactory
- * @template OUT1 - concrete NameToSignalIds defining output signals of the initial SignalsFactory
- * @template IN2 - concrete NameToSignalIds defining input signals of the resulting SignalsFactory
- * @template OUT2 - concrete NameToSignalIds defining output signals of the resulting SignalsFactory
+ * @typedef {function} SignalsMapper<IN1, OUT1, IN2, OUT2> - function mapping from Signals<IN1, OUT1> and CONFIG to Signals<IN2, OUT2>
+ * @template IN1 - concrete NameToSignalIds defining input signals of the initial SignalsFactory Signals
+ * @template OUT1 - concrete NameToSignalIds defining output signals of the initial SignalsFactory Signals
+ * @template IN2 - concrete NameToSignalIds defining input signals of the resulting SignalsFactory Signals
+ * @template OUT2 - concrete NameToSignalIds defining output signals of the resulting SignalsFactory Signals
  */
 export type SignalsMapper<
   IN1 extends NameToSignalId,
@@ -102,25 +111,60 @@ export type SignalsMapper<
   CONFIG extends Configuration,
 > = (signals: Signals<IN1, OUT1>, config: CONFIG) => Signals<IN2, OUT2>;
 
+/**
+ * This type specifies the argument to the extendSetup-method of SignalFactories.
+ *
+ * @typedef {function} ExtendSetup<IN, OUT, CONFIG> - function consuming store, input, output and configuration of a SignalsFactory
+ * @template IN - concrete NameToSignalIds defining input signals
+ * @template OUT - concrete NameToSignalIds defining output signals
+ * @template CONFIG - concrete Configuration
+ */
 export type ExtendSetup<
   IN extends NameToSignalId,
   OUT extends NameToSignalId,
   CONFIG extends Configuration,
 > = (store: Store, input: IN, output: OUT, config: CONFIG) => void;
 
+/**
+ * Argument to the mapConfig-method of SignalFactories
+ */
 export type MapConfig<CONFIG1 extends Configuration, CONFIG2 extends Configuration> = (
   config: CONFIG2,
 ) => CONFIG1;
 
+/**
+ * Argument to the mapInput- and mapOutput method of SignalFactories
+ */
 export type MapSignalIds<T1 extends NameToSignalId, T2 extends NameToSignalId> = (ids: T1) => T2;
 
+/**
+ * The SignalsFactory wraps a SignalsBuild<IN, OUT, CONFIG> function, allowing for simple Signals composition
+ * by classic monadic bind method and functor fmap, as well as additional convenience methods.
+ * SignalFactory instances are immutable, hence all its methods return a new SignalsFactory instance.
+ * (The whole purpose of this class is to provide SignalsBuild composition)
+ *
+ * @class SignalsFactory<IN extends NameToSignalId, OUT extends NameToSignalId, CONFIG extends Configuration = {}>
+ */
 export class SignalsFactory<
   IN extends NameToSignalId,
   OUT extends NameToSignalId,
   CONFIG extends Configuration = {},
 > {
-  constructor(readonly build: FactoryBuild<IN, OUT, CONFIG>) {}
+  /**
+   * The constructor takes a pure function implementing SignalsBuild<IN, OUT, CONFIG>.
+   *
+   * @param {SignalsBuild<IN, OUT, CONFIG>} build - a pure function mapping from CONFIG to Signals<IN, OUT>
+   * @constructor
+   */
+  constructor(readonly build: SignalsBuild<IN, OUT, CONFIG>) {}
 
+  /**
+   * The bind method takes as argument a pure function that implements SignalsMapToFactory<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>.
+   * It returns a new SignalsFactory that represents the composition of this SignalsFactory and the SignalsFactory returned by the mapper argument.
+   *
+   * @param {SignalsMapToFactory<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>} mapper - a pure function mapping from Signals<IN, OUT> and CONFIG to SignalsFactory<IN2, OUT2, CONFIG2>
+   * @returns {ComposedFactory<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>} - the SignalsFactory resulting from the composition of SignalsFactory<IN, OUT, CONFIG> and SignalsFactory<IN2, OUT2, CONFIG2>
+   */
   bind<IN2 extends NameToSignalId, OUT2 extends NameToSignalId, CONFIG2 extends Configuration>(
     mapper: SignalsMapToFactory<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>,
   ): ComposedFactory<IN, OUT, CONFIG, IN2, OUT2, CONFIG2> {
@@ -144,6 +188,13 @@ export class SignalsFactory<
     >(build);
   }
 
+  /**
+   * The fmap method takes as argument a pure function that implements SignalsMapper<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>.
+   * It returns a new SignalsFactory that represents the composition of this SignalsFactory and a SignalsFactory wrapping the Signals returned by the mapper argument.
+   *
+   * @param {SignalsMapper<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>} mapper - a pure function mapping from Signals<IN, OUT> and CONFIG to Signals<IN2, OUT2>
+   * @returns {SignalsFactory<IN2, OUT2, CONFIG>} - the SignalsFactory resulting from the composition of SignalsFactory<IN, OUT, CONFIG> and SignalsFactory<IN2, OUT2, CONFIG>
+   */
   fmap<IN2 extends NameToSignalId, OUT2 extends NameToSignalId>(
     mapper: SignalsMapper<IN, OUT, IN2, OUT2, CONFIG>,
   ): SignalsFactory<IN2, OUT2, CONFIG> {
@@ -151,6 +202,13 @@ export class SignalsFactory<
     return new SignalsFactory<IN2, OUT2, CONFIG>(build);
   }
 
+  /**
+   * The extendSetup method takes as argument a function that implements ExtendSetup<IN, OUT, CONFIG>.
+   * It returns a new SignalsFactory of the same type as this SignalsFactory, but with a wrapped SignalsBuild that extends the code executed in the Signals setup method by the provided code.
+   *
+   * @param {ExtendSetup<IN, OUT, CONFIG>} extend - a function extending the setup method of the Signals produced by the SignalsBuild of the resulting SignalsFactory
+   * @returns {SignalsFactory<IN, OUT, CONFIG>} - a new SignalsFactory with extended store setup
+   */
   extendSetup(extend: ExtendSetup<IN, OUT, CONFIG>): SignalsFactory<IN, OUT, CONFIG> {
     return this.fmap((s, config) => ({
       ...s,
@@ -161,6 +219,13 @@ export class SignalsFactory<
     }));
   }
 
+  /**
+   * The mapInput method takes as argument a pure function that implements MapSignalIds<IN, IN2>.
+   * It returns a new SignalsFactory<IN2, OUT, CONFIG>.
+   *
+   * @param {MapSignalIds<IN, IN2>} mapper - a pure function mapping from IN to IN2
+   * @returns {SignalsFactory<IN2, OUT, CONFIG>} - a new SignalsFactory with different input signals
+   */
   mapInput<IN2 extends NameToSignalId>(
     mapper: MapSignalIds<IN, IN2>,
   ): SignalsFactory<IN2, OUT, CONFIG> {
@@ -170,6 +235,13 @@ export class SignalsFactory<
     }));
   }
 
+  /**
+   * The mapOutput method takes as argument a pure function that implements MapSignalIds<OUT, OUT2>.
+   * It returns a new SignalsFactory<IN, OUT2, CONFIG>.
+   *
+   * @param {MapSignalIds<OUT, OUT2>} mapper - a pure function mapping from OUT to OUT2
+   * @returns {SignalsFactory<IN, OUT2, CONFIG>} - a new SignalsFactory with different output signals
+   */
   mapOutput<OUT2 extends NameToSignalId>(
     mapper: MapSignalIds<OUT, OUT2>,
   ): SignalsFactory<IN, OUT2, CONFIG> {
@@ -179,6 +251,13 @@ export class SignalsFactory<
     }));
   }
 
+  /**
+   * The mapConfig method takes as argument a pure function that implements MapConfig<CONFIG, CONFIG2>.
+   * It returns a new SignalsFactory<IN, OUT, CONFIG2>.
+   *
+   * @param {MapConfig<CONFIG, CONFIG2>} mapper - a pure function mapping CONFIG2 to CONFIG
+   * @returns {SignalsFactory<IN, OUT, CONFIG2>} - a new SignalsFactory with different Configuration type
+   */
   mapConfig<CONFIG2 extends Configuration>(
     mapper: MapConfig<CONFIG, CONFIG2>,
   ): SignalsFactory<IN, OUT, CONFIG2> {

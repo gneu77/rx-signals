@@ -33,8 +33,9 @@ export type TypedEvent<T> = Readonly<{
 
 /**
  * The state reducer type specifies the signature for reducers used by the store.
+ * StateReducers must be pure functions.
  *
- * @typedef {function} StateReducer<T, E> - type for a function that takes a state and an event and returns a new state
+ * @typedef {function} StateReducer<T, E> - type for a pure function that takes a state and an event and returns a new state
  * @template T - representing the type of the state
  * @template E - representing the type of the event
  * @property {T} state - the current state
@@ -45,7 +46,7 @@ export type StateReducer<T, E> = (state: T, event: E) => T;
 
 /**
  * The rx-signals Store provides RxJs-Observables for RP (reactive programming) BehaviorStreams
- * and EventStreams (in original FRP, behaviors and events are the two different types of signals).
+ * and EventStreams (behaviors and events are the two different types of signals, where behaviors represent state).
  * The Store separates the sources of these streams from the streams itself.
  *
  * @class Store
@@ -65,6 +66,8 @@ export class Store {
     new Map<symbol, ControlledSubject<any>>(),
   );
 
+  private readonly names = new Map<symbol, string>();
+
   private parentStore: Store | null = null;
 
   /**
@@ -78,7 +81,7 @@ export class Store {
 
   /**
    * Get the root store of this store, in case this store is a child store in a hierarchy of parent-child stores.
-   * Return itself, if this store has no parent.
+   * Returns itself, if this store has no parent.
    *
    * @returns {Store}
    */
@@ -110,7 +113,16 @@ export class Store {
 
   /**
    * This method adds the given observable as source for the behavior identified by the
-   * given identifier.
+   * given identifier. If the observable represents root-state (state that depends on events only, but not on any
+   * other behaviors), subscribeLazy should be false, except for cases where you're really sure that it is OK to
+   * miss events while you do not actively subscribe the behavior.
+   * If the observable only depends on other behaviors, but not on any events, subscribeLazy should be true of course (there
+   * is no need to run the observable until it becomes actively subscribed).
+   * Also, if it depends on any lazy behavior, subscribeLazy should be true (because otherwise the lazy behavior it depends
+   * on would become non-lazy).
+   * Analogously, if it depends on an event-source that should be lazy, subscribeLazy should be true. If your behavior needs
+   * to be non-lazy, but at the same time an event-source you depend on should be lazy, this situation can be solved using
+   * one of the addXTypedEventSource methods (see corresponding documentation).
    *
    * @param {BehaviorId<T>} identifier - the unique identifier for the behavior
    * @param {Observable<T>} observable - the source for the behavior
@@ -132,6 +144,7 @@ export class Store {
 
   /**
    * The same as calling addBehavior with parameter subscribeLazy = true
+   * (See addBehavior documentation on how to decide between lazy and non-lazy)
    *
    * @param {BehaviorId<T>} identifier - the unique identifier for the behavior
    * @param {Observable<T>} observable - the source for the behavior
@@ -148,6 +161,7 @@ export class Store {
 
   /**
    * The same as calling addBehavior with parameter subscribeLazy = false
+   * (See addBehavior documentation on how to decide between lazy and non-lazy)
    *
    * @param {BehaviorId<T>} identifier - the unique identifier for the behavior
    * @param {Observable<T>} observable - the source for the behavior
@@ -165,6 +179,8 @@ export class Store {
   /**
    * This method adds a source for the non-lazy behavior specified by the given identifier, that provides the
    * given value as initial value for the behavior. It will be the only value, as long as no reducer is added.
+   * (Calling addState(id, value) has the same result as calling addNonLazyBehavior(id, NEVER, value) , however,
+   * the latter would not be idiomatic.)
    *
    * @param {BehaviorId<T>} identifier - the unique identifier for the behavior
    * @param {T | (() => T)} initialValueOrValueGetter - the initial value or value getter (for lazy initialization)
@@ -180,7 +196,7 @@ export class Store {
   /**
    * This adds a reducer to a behavior. This is meant to be used together with the addState method.
    * Technically, you can also add reducers to behaviors that were added with one of the addBevavior methods.
-   * However, this is strongly discouraged and might result in unexpected behavior (literally).
+   * However, this is strongly discouraged and might result in unexpected behavior (literally)!
    *
    * @param {BehaviorId<T>} stateIdentifier - the unique identifier for the behavior
    * @param {EventId<T>} eventIdentifier - the unique identifier for the event reducing the state
@@ -202,12 +218,24 @@ export class Store {
   }
 
   /**
+   * This method can be used to remove a reducer from a behavior.
+   *
+   * @param {TypeIdentifier<T>} stateIdentifier - the unique identifier for the behavior
+   * @param {TypeIdentifier<T>} eventIdentifier - the unique identifier for the event the reducer is handling
+   * @returns {void}
+   */
+  removeReducer<T, E>(stateIdentifier: BehaviorId<T>, eventIdentifier: EventId<E>): void {
+    this.getBehaviorControlledSubject(stateIdentifier).removeSource(eventIdentifier);
+  }
+
+  /**
    * This connects the source event or behavior with the target event or behavior.
    * If the targetId is a BehaviorId, a corresponding behavior will be added to the store,
    * considering the optional lazy-parameter.
    * In case the sourceId is an EventId, the optional lazy-parameter defaults to false, else to true.
    * If the targetId is an EventId, a corresponding EventSource will be added to the store and the optional
    * lazy-parameter has no meaning.
+   * Hence, if targetId is a BehaviorId, it must not yet exist in the store, else this method will throw a corresponding error!
    *
    * @param {SignalId<T>} sourceId - the unique identifier for the source event or behavior
    * @param {SignalId<T>} targetId - the unique identifier for the target event or behavior
@@ -222,23 +250,26 @@ export class Store {
     this.connectObservable(source, targetId, lazyParam);
   }
 
+  /**
+   * This connects the source observable with the target event or behavior.
+   * If the targetId is a BehaviorId, a corresponding behavior will be added to the store,
+   * considering the optional lazy-parameter.
+   * In case the sourceId is an EventId, the optional lazy-parameter defaults to false, else to true.
+   * If the targetId is an EventId, a corresponding EventSource will be added to the store and the optional
+   * lazy-parameter has no meaning.
+   * Hence, if targetId is a BehaviorId, it must not yet exist in the store, else this method will throw a corresponding error!
+   *
+   * @param {Observable<T>} source - the source observable
+   * @param {SignalId<T>} targetId - the unique identifier for the target event or behavior
+   * @param {boolean} lazy - optional parameter that defaults to false, if the source is an event, else to true. If the target is a behavior, lazy defines whether its lazy or not, else the parameter is meaningless.
+   * @returns {void}
+   */
   connectObservable<T>(source: Observable<T>, targetId: SignalId<T>, lazy: boolean): void {
     if (isBehaviorId(targetId)) {
       this.addBehavior(targetId as BehaviorId<T>, source, lazy, NO_VALUE);
     } else {
       this.addEventSource(Symbol(''), targetId as EventId<T>, source);
     }
-  }
-
-  /**
-   * This method can be used to remove a reducer from a behavior.
-   *
-   * @param {TypeIdentifier<T>} stateIdentifier - the unique identifier for the behavior
-   * @param {TypeIdentifier<T>} eventIdentifier - the unique identifier for the event the reducer is handling
-   * @returns {void}
-   */
-  removeReducer<T, E>(stateIdentifier: BehaviorId<T>, eventIdentifier: EventId<E>): void {
-    this.getBehaviorControlledSubject(stateIdentifier).removeSource(eventIdentifier);
   }
 
   /**
@@ -256,7 +287,7 @@ export class Store {
 
   /**
    * This method removes all sources for a behavior and then completes the behavior for all
-   * current subscribers.
+   * current subscribers and removes it from the store.
    *
    * @param {BehaviorId<T>} identifier - the unique identifier for the behavior
    * @returns {void}
@@ -266,14 +297,16 @@ export class Store {
     behavior.removeAllSources();
     behavior.complete();
     this.behaviors.delete(identifier);
+    this.names.delete(identifier);
     this.behaviorsSubject.next(this.behaviors);
   }
 
   /**
    * This method removes all sources for all behaviors and all event
-   * streams and then completes them for all current subscribers.
-   * This should be used to end a stores lifetime (e.g. for a child store), to make
-   * sure no non-lazy subscriptions keep the store a life (hence avoiding memory leaks).
+   * streams and then completes them for all current subscribers and removes them
+   * from the store.
+   * This method should be used to end a stores lifetime (e.g. for a child store), to make
+   * sure no non-lazy subscriptions keep the store alife (hence avoiding memory leaks)!
    *
    * @returns {void}
    */
@@ -283,12 +316,14 @@ export class Store {
       behavior?.removeAllSources();
       behavior?.complete();
       this.behaviors.delete(key);
+      this.names.delete(key);
     });
     [...this.eventStreams.keys()].forEach(key => {
       const eventStream = this.eventStreams.get(key);
       eventStream?.removeAllSources();
       eventStream?.complete();
       this.eventStreams.delete(key);
+      this.names.delete(key);
     });
     this.behaviorsSubject.next(this.behaviors);
     this.eventStreamsSubject.next(this.eventStreams);
@@ -301,7 +336,7 @@ export class Store {
    * initial value, as soon as a source is added.
    * Please note, that all behaviors are shared and distinct value streams (hence you do not
    * have to pipe with distinctUntilChanged and shareReplay yourself). The sharing behaves like
-   * shareReplay(1), but without the risk of a memory leak that would be possible with shareReplay(1).
+   * shareReplay(1), but WITHOUT the risk of a memory leak that would be possible with shareReplay(1).
    * If this store has a parent store, then as long as no behavior source is added for the child, the
    * behavior will be received from the parent. As soon, as a corresponding source is added to the child,
    * you will receive the behavior values from the child.
@@ -327,8 +362,8 @@ export class Store {
 
   /**
    * This method resets all behaviors, effectively resetting the complete store to the state it
-   * had before any event was dispatched (technically, this is done by first removing all sources
-   * and then adding them again).
+   * had before any event was dispatched.
+   * Technically, this is done by first removing all sources and then adding them again.
    *
    * @returns {void} - the behavior observable (shared and distinct)
    */
@@ -344,7 +379,7 @@ export class Store {
    * testing (e.g. make sure a dispatch is finished before checking the new state). In real code,
    * awaiting the returned promise would be a severe code smell (dispatching an event is an effect
    * and the only way to know an effect has been finished is to receive a corresponding message,
-   * either in form of another event, or in form of a corresponding new state).
+   * either in form of another event, or in form of a corresponding new state)!
    *
    * @param {EventId<T>} identifier - the unique identifier for the event
    * @param {T} event - the event of the type specified by the identifier
@@ -371,9 +406,9 @@ export class Store {
    * This method adds an event source to the Store. There can be multiple sources
    * for the same event type. However, each source must be identified by its own
    * symbol and adding two sources with the same symbol would result in an error.
-   * Event sources are effects.
+   * Event sources are effects!
    *
-   * @param {symbol} sourceIdentifier - each source must be uniquely identified by a symbol
+   * @param {symbol} sourceIdentifier - each source must be uniquely identified by a symbol (that can be used to remove the source)
    * @param {EventId<T>} eventIdentifier - the unique identifier for the event
    * @param {Observable<T>} observable - the event source
    * @returns {void}
@@ -655,11 +690,11 @@ export class Store {
    * This method returns an observable for events of the specified type.
    * Please note, that all observables for the same identifier are already piped with delay(1, asyncScheduler)
    * and share(). So events will always be received asynchronously (expecting synchronous event dispatch would
-   * be a strong indicator of flawed design, because it would mean your code is not reactive).
+   * be a strong indicator of flawed design, because it could break MVU/reactivity).
    * If this store has a parent store, events from both, parent and child will be observed (merged).
    *
    * @param {EventId<T>} identifier - the unique identifier for the event
-   * @returns {Observable<T>} - the behavior observable for the events (with delay(1, asyncScheduler) and share())
+   * @returns {Observable<T>} - the behavior observable for the events (piped with delay(1, asyncScheduler) and share())
    */
   getEventStream<T>(identifier: EventId<T>): Observable<T> {
     return merge(
@@ -748,6 +783,35 @@ export class Store {
     return this.getEventStreamControlledSubject(eventIdentifier).getNumberOfSources();
   }
 
+  /**
+   * This method can be used to link a SignalId with a name.
+   * The corresponding name will then be used in future debug methods to represent
+   * tracked signals.
+   *
+   * @param {SignalId<T>} id - the id that should be linked to a name
+   * @param {string} name - the name linked to the given id
+   * @returns {void}
+   */
+  setIdName<T>(id: SignalId<T>, name: string): void {
+    this.names.set(id, name);
+  }
+
+  /**
+   * Get the name linked to the given SignalId.
+   * If no specific name was linked (via setIdName), the default toString()
+   * representation will be returned.
+   *
+   * @param {SignalId<T>} id - the id you are interested in
+   * @returns {string} - the name linked to the id, or the corresponding toString() result
+   */
+  getIdName<T>(id: SignalId<T>): string {
+    return this.getNameForSymbol(id);
+  }
+
+  private getNameForSymbol(id: symbol): string {
+    return this.names.get(id) ?? id.toString();
+  }
+
   private getDependentObservable<T>(
     observable: Observable<T>,
     subscribeObservableOnlyIfEventIsSubscribed: EventId<any> | null,
@@ -830,7 +894,9 @@ export class Store {
       (this.eventStreams.has(symbol) && this.eventStreams.get(symbol)?.hasSource(sourceIdentifier))
     ) {
       throw new Error(
-        `A behavior or event source with the given identifier was already added with a source: ${symbol.toString()}`,
+        `A behavior or event source with the given identifier has already been added: ${this.getNameForSymbol(
+          symbol,
+        )}`,
       );
     }
   }

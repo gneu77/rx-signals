@@ -74,7 +74,7 @@ describe('Reducers', () => {
     store.addReducer(counterState, increaseEvent, (state, event) => state + event);
     expect(() => {
       store.addReducer(counterState, increaseEvent, (state, event) => state + event);
-    }).toThrowError('A source with the given ID has already been added.: Symbol(e_)');
+    }).toThrowError('A source with the given ID has already been added.: Symbol(E)');
   });
 
   it('should remove all reducer sources when removing the state', () => {

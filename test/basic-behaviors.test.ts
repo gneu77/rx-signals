@@ -19,7 +19,7 @@ describe('Behavior basics', () => {
       expect(() => {
         store.addLazyBehavior(testId, NEVER);
       }).toThrowError(
-        'A behavior or event source with the given identifier was already added with a source: Symbol(b_)',
+        'A behavior or event source with the given identifier has already been added: Symbol(B)',
       );
     });
     it('should be possible to add behavior sources again, after initial source has completed', async () => {
@@ -58,7 +58,7 @@ describe('Behavior basics', () => {
       expect(() => {
         store.addNonLazyBehavior(testId, NEVER);
       }).toThrowError(
-        'A behavior or event source with the given identifier was already added with a source: Symbol(b_)',
+        'A behavior or event source with the given identifier has already been added: Symbol(B)',
       );
     });
 
