@@ -37,12 +37,12 @@ export type EffectType<InputType, ResultType> = (
  * @property {ResultType | undefined} result - the current result (or undefined, if no result was received yet)
  * @property {boolean} resultPending - indicates whether the effect is currently running. (In case of a factory without trigger, this will be true whenever currentInput !== resultInput, or whenever an invalidation event has been sent)
  */
-export type CombinedEffectResult<InputType, ResultType> = Readonly<{
+export type CombinedEffectResult<InputType, ResultType> = {
   currentInput?: InputType;
   result?: ResultType;
   resultInput?: InputType;
   resultPending: boolean;
-}>;
+};
 
 /**
  * Type for error events produced by an EffectSignals (unhandled effect errors).
@@ -52,10 +52,10 @@ export type CombinedEffectResult<InputType, ResultType> = Readonly<{
  * @property {any} error - the unhandled error thrown by an effect
  * @property {InputType} errorInput - the effect input that lead to the error
  */
-export type EffectError<InputType> = Readonly<{
+export type EffectError<InputType> = {
   error: any;
   errorInput: InputType;
-}>;
+};
 
 /**
  * Type for success events produced by EffectSignals.
@@ -68,12 +68,12 @@ export type EffectError<InputType> = Readonly<{
  * @property {InputType | undefined} previousInput - the input of the previous result, or undefined
  * @property {ResultType | undefined} previousResult - the previous result, or undefined
  */
-export type EffectSuccess<InputType, ResultType> = Readonly<{
+export type EffectSuccess<InputType, ResultType> = {
   result: ResultType;
   resultInput: InputType;
   previousInput?: InputType;
   previousResult?: ResultType;
-}>;
+};
 
 /**
  * Type specifying the input EffectSignals (the corresponding signal sources are
@@ -84,11 +84,11 @@ export type EffectSuccess<InputType, ResultType> = Readonly<{
  * @property {BehaviorId<InputType>} input - identifier for the behavior being consumed by EffectSignals as input
  * @property {EventId<void>} invalidate - identifier for the invalidation event that can be dispatched to trigger re-evaluation of the current input under the given effect
  */
-export type EffectInputSignals<InputType> = Readonly<{
+export type EffectInputSignals<InputType> = {
   input: BehaviorId<InputType>;
   invalidate: EventId<void>;
   trigger: EventId<void>;
-}>;
+};
 
 /**
  * Type specifying the output EffectSignals (signals produced EffectSignals).
@@ -100,11 +100,11 @@ export type EffectInputSignals<InputType> = Readonly<{
  * @property {EventId<EffectError<InputType>>} errors - identifier for the produced error events
  * @property {EventId<EffectSuccess<InputType, ResultType>>} successes - identifier for the produced success events
  */
-export type EffectOutputSignals<InputType, ResultType> = Readonly<{
+export type EffectOutputSignals<InputType, ResultType> = {
   combined: BehaviorId<CombinedEffectResult<InputType, ResultType>>;
   errors: EventId<EffectError<InputType>>;
   successes: EventId<EffectSuccess<InputType, ResultType>>;
-}>;
+};
 
 /**
  * This type specifies generic effect signals. EffectSignals generically handle side-effects (hence, are an abstraction over side-effects).
@@ -141,13 +141,13 @@ export type EffectSignals<InputType, ResultType> = Signals<
  * @property {function | undefined} initialResultGetter - optional function that defaults to undefined. If not undefined, it will be used to determine an initial result for the result behavior.
  * @property {number | undefined} effectDebounceTime - optional number that defaults to undefined. If a number > 0 is specified, then it will be used as milliseconds to debounce new input to the effect (please DON't debounce the input signal yourself, because that would debounce before trigger and/or input equals).
  */
-export type EffectConfiguration<InputType, ResultType> = Readonly<{
+export type EffectConfiguration<InputType, ResultType> = {
   effect: EffectType<InputType, ResultType>;
   effectInputEquals?: (a: InputType, b: InputType) => boolean;
   withTrigger?: boolean;
   initialResultGetter?: () => ResultType;
   effectDebounceTime?: number;
-}>;
+};
 
 /**
  * Type specifying the SignalsBuild function for EffectSignals.
@@ -207,14 +207,14 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
     );
 
     const resultEvent = getEventId<{
-      readonly result?: RT;
-      readonly resultInput: IT;
-      readonly resultToken: object | null;
+      result?: RT;
+      resultInput: IT;
+      resultToken: object | null;
     }>();
     const resultBehavior = getBehaviorId<{
-      readonly result?: RT;
-      readonly resultInput?: IT;
-      readonly resultToken: object | null;
+      result?: RT;
+      resultInput?: IT;
+      resultToken: object | null;
     }>();
     const initialResult = config.initialResultGetter ? config.initialResultGetter() : undefined;
     store.addLazyBehavior(resultBehavior, store.getEventStream(resultEvent), {
@@ -232,9 +232,9 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
       [
         IT,
         {
-          readonly result?: RT;
-          readonly resultInput?: IT;
-          readonly resultToken: object | null;
+          result?: RT;
+          resultInput?: IT;
+          resultToken: object | null;
         },
         object | null,
         IT,

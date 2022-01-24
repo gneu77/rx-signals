@@ -13,7 +13,7 @@ import { Store } from './store';
 import { BehaviorId, EventId, getBehaviorId } from './store-utils';
 import { Merged } from './type-utils';
 
-export type ValidatedInputWithResult<InputType, ValidationType, ResultType> = Readonly<{
+export type ValidatedInputWithResult<InputType, ValidationType, ResultType> = {
   currentInput?: InputType;
   validationPending: boolean;
   validatedInput?: InputType;
@@ -22,31 +22,31 @@ export type ValidatedInputWithResult<InputType, ValidationType, ResultType> = Re
   resultPending: boolean;
   resultInput?: InputType;
   result?: ResultType;
-}>;
+};
 
-export type ValidatedInputWithResultInput<InputType> = Readonly<{
+export type ValidatedInputWithResultInput<InputType> = {
   input: BehaviorId<InputType>;
   validationInvalidate: EventId<void>;
   resultInvalidate: EventId<void>;
   resultTrigger: EventId<void>;
-}>;
+};
 
-export type ValidatedInputWithResultOutput<InputType, ValidationType, ResultType> = Readonly<{
+export type ValidatedInputWithResultOutput<InputType, ValidationType, ResultType> = {
   combined: BehaviorId<ValidatedInputWithResult<InputType, ValidationType, ResultType>>;
   validationErrors: EventId<EffectError<InputType>>;
   validationSuccesses: EventId<EffectSuccess<InputType, ValidationType>>;
   resultErrors: EventId<EffectError<InputType>>;
   resultSuccesses: EventId<EffectSuccess<InputType, ResultType>>;
-}>;
+};
 
-export type ValidatedInputWithResultConfig<InputType, ValidationType, ResultType> = Readonly<{
+export type ValidatedInputWithResultConfig<InputType, ValidationType, ResultType> = {
   validationEffect: EffectType<InputType, ValidationType>;
   isValidationResultValid?: (validationResult: ValidationType) => boolean;
   resultEffect: EffectType<InputType, ResultType>;
   initialResultGetter?: () => ResultType;
   withResultTrigger?: boolean;
   resultEffectInputEquals?: (a: InputType, b: InputType) => boolean;
-}>;
+};
 
 export type ValidatedInputWithResultFactory<InputType, ValidationType, ResultType> = SignalsFactory<
   ValidatedInputWithResultInput<InputType>,

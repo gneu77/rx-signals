@@ -8,7 +8,7 @@ import { Configuration, merge, Merged, MergedConfiguration } from './type-utils'
  *
  * @typedef {object} NameToSignalId - maps strings on SignalId<any> | NameToSignalId
  */
-export type NameToSignalId = Readonly<{ [key: string]: SignalId<any> | NameToSignalId }>;
+export type NameToSignalId = { [key: string]: SignalId<any> | NameToSignalId };
 
 /**
  * This type defines an object that holds input and output signal ids of a Signals type.

@@ -267,10 +267,10 @@ This is what makes cyclic dependencies and reactive dependency injection possibl
 
 Here's an all-lazy example:
 ```typescript
-type QueryResult = Readonly<{
+type QueryResult = {
   result: string[];
   resultQuery: string | null;
-}>;
+};
 
 const query = getBehaviorId<string>();
 const result = getBehaviorId<QueryResult>();
@@ -386,23 +386,23 @@ Therefore, _rx-signals_ defines the `Signals` type as follows:
 type Signals<IN extends NameToSignalId, OUT extends NameToSignalId> = SetupWithStore & SignalIds<IN, OUT>;
 
 // with:
-type NameToSignalId = Readonly<{ [key: string]: SignalId<any> | NameToSignalId }>;
-type SignalIds<IN extends NameToSignalId, OUT extends NameToSignalId> = Readonly<{
-  input: IN;
-  output: OUT;
-}>;
+type NameToSignalId = { [key: string]: SignalId<any> | NameToSignalId };
+type SignalIds<IN extends NameToSignalId, OUT extends NameToSignalId> = {
+  readonly input: IN;
+  readonly output: OUT;
+};
 type SetupWithStore = { readonly setup: (store: Store) => void; };
 ```
 
 Let's see an example, where we encapsulate the creation of signals for counters:
 ```typescript
-type CounterInput = Readonly<{
+type CounterInput = {
   increaseBy: EventId<number>;
   decreaseBy: EventId<number>;
-}>;
-type CounterOutput = Readonly<{
+};
+type CounterOutput = {
   counterState: BehaviorId<number>;
-}>;
+};
 const getCounterSignals: () => Signals<CounterInput, CounterOutput> = () => {
   const counter = getBehaviorId<number>();
   const increaseBy = getEventId<number>();
@@ -428,13 +428,13 @@ We can use `getCounterSignals` to create as many counters as we like.
 
 Next, we encapsulate the creation of a signal that depends on two number-streams (calculating the sum of those numbers):
 ```typescript
-type SumInput = Readonly<{
+type SumInput = {
   inputA: BehaviorId<number>;
   inputB: BehaviorId<number>;
-}>;
-type SumOutput = Readonly<{
+};
+type SumOutput = {
   counterSum: BehaviorId<number>;
-}>;
+};
 const getSumSignals: () => Signals<SumInput, SumOutput> = () => {
   const inputA = getBehaviorId<number>();
   const inputB = getBehaviorId<number>();
@@ -458,10 +458,10 @@ The two factory functions `getCounterSignals` and `getSumSignals` are two functi
 
 Of course, we can create a function that composes the previous two functions to create counters with sum signals:
 ```typescript
-type ComposedInput = Readonly<{
+type ComposedInput = {
   inputA: CounterInput;
   inputB: CounterInput;
-}>;
+};
 const getCounterWithSumSignals: () => Signals<ComposedInput, SumOutput> = () => {
   const counterASignals = getCounterSignals();
   const counterBSignals = getCounterSignals();
@@ -507,7 +507,7 @@ type SignalsBuild<
 > = (config: CONFIG) => Signals<IN, OUT>;
 
 // with:
-type Configuration = Readonly<Record<string, any>>;
+type Configuration = Record<string, any>;
 ```
 
 As mentioned at the end of the previous section, the manual composition of such `SignalsBuild` functions is error-prone and needs a lot of boilerplate code.
@@ -614,18 +614,16 @@ We will compose a corresponding `SignalsFactory` from smaller, generic and reusa
 So in the above diagram, the arrows show the direction of composition, hence dependencies are in the opposite direction.
 There are 4 low-level components and 2 composed ones.
 
-Here is a possible implementation for a generic `SignalsBuild` of a _ModelFactory_ that could be used for any form-controlled model (and will be used to model the filter of our query):
+Here is a possible implementation for a generic `SignalsBuild<ModelInput<T>, ModelOutput<T>, T>` of a _ModelFactory_ that could be used for any form-controlled model (and will be used to model the filter of our query):
 ```typescript
-type ModelInput<T> = Readonly<{
+type ModelInput<T> = {
   setModel: EventId<T>;
   updateModel: EventId<Partial<T>>;
   resetModel: EventId<void>;
-}>;
-type ModelOutput<T> = Readonly<{
-  model: BehaviorId<T>;
-}>;
-// SignalsBuild<ModelInput<T>, ModelOutput<T>, T>
-const getModelSignals: SignalsBuild = <T>(defaultModel: T): Signals<ModelInput<T>, ModelOutput<T>> => {
+};
+type ModelOutput<T> = { model: BehaviorId<T> };
+type ModelConfig<T> = { defaultModel: T };
+const getModelSignals = <T>(config: ModelConfig<T>): Signals<ModelInput<T>, ModelOutput<T>> => {
   const model = getBehaviorId<T>();
   const setModel = getEventId<T>();
   const updateModel = getEventId<Partial<T>>();
@@ -640,13 +638,13 @@ const getModelSignals: SignalsBuild = <T>(defaultModel: T): Signals<ModelInput<T
       model,
     },
     setup: store => {
-      store.addState(model, defaultModel);
+      store.addState(model, config.defaultModel);
       store.addReducer(model, setModel, (_, event) => event);
       store.addReducer(model, updateModel, (state, event) => ({
         ...state,
         ...event,
       }));
-      store.addReducer(model, resetModel, () => defaultModel);
+      store.addReducer(model, resetModel, () => config.defaultModel);
     },
   };
 };
@@ -656,15 +654,13 @@ This time, we also have a configuration object, to setup a default model.
 
 Next comes a possible implementation for our _SortParameterFactory_:
 ```typescript
-type SortParameter = Readonly<{ propertyName?: string; descending: boolean }>;
-type SortingInput = Readonly<{
+type SortParameter = { propertyName?: string; descending: boolean };
+type SortingInput = {
   ascending: EventId<string>;
   descending: EventId<string>;
   none: EventId<void>;
-}>;
-type SortingOutput = Readonly<{
-  sorting: BehaviorId<SortParameter>;
-}>;
+};
+type SortingOutput = { sorting: BehaviorId<SortParameter> };
 const getSortingSignals = (): Signals<SortingInput, SortingOutput> => {
   const sorting = getBehaviorId<SortParameter>();
   const ascending = getEventId<string>();
@@ -698,14 +694,12 @@ const sortingSignalsFactory = new SignalsFactory(getSortingSignals);
 
 Next the _PagingParameterFactory_:
 ```typescript
-type PagingParameter = Readonly<{ page: number; pageSize: number }>;
-type PagingInput = Readonly<{
+type PagingParameter = { page: number; pageSize: number };
+type PagingInput = {
   setPage: EventId<number>;
   setPageSize: EventId<number>;
-}>;
-type PagingOutput = Readonly<{
-  paging: BehaviorId<PagingParameter>;
-}>;
+};
+type PagingOutput = { paging: BehaviorId<PagingParameter> };
 const getPagingSignals = (): Signals<PagingInput, PagingOutput> => {
   const paging = getBehaviorId<PagingParameter>();
   const setPage = getEventId<number>();
@@ -745,9 +739,9 @@ type FilteredSortedPagedQueryOutput<FilterType> = ModelOutput<FilterType> &
 const getFilteredSortedPagedQuerySignalsFactory = <FilterType>(): SignalsFactory<
   FilteredSortedPagedQueryInput<FilterType>,
   FilteredSortedPagedQueryOutput<FilterType>,
-  FilterType
+  ModelConfig<FilterType>
 > =>
-  new SignalsFactory<ModelInput<FilterType>, ModelOutput<FilterType>, FilterType>(
+  new SignalsFactory<ModelInput<FilterType>, ModelOutput<FilterType>, ModelConfig<FilterType>>(
     getModelSignals,
   )
     .bind(() => sortingSignalsFactory)
@@ -774,6 +768,10 @@ For the _EffectFactory_, we're using the `EffectSignalsFactory` that comes with 
 
 Here is a generic function producing a _QueryWithResultFactory_:
 ```typescript
+type QueryWithResultConfig<FilterType, ResultType> = {
+  defaultFilter: FilterType;
+  resultEffect: EffectType<[FilterType, SortParameter, PagingParameter], ResultType>;
+};
 const getQueryWithResultFactory = <FilterType, ResultType>() =>
   getFilteredSortedPagedQuerySignalsFactory<FilterType>()
     .bind(() =>
@@ -789,8 +787,18 @@ const getQueryWithResultFactory = <FilterType, ResultType>() =>
         input.input,
         false,
       );
-    });
+    })
+    .mapConfig((config: QueryWithResultConfig<FilterType, ResultType>) => ({
+      c1: {
+        defaultModel: config.defaultFilter,
+      },
+      c2: {
+        effect: config.resultEffect,
+      },
+    }));
 ```
+
+Here we used `mapConfig` for the first time. It's argument is a function mapping from target-configuration back to the `MergedConfiguration` of the source-factory (`mapInput and mapOutput` work the other way around, mapping from source-input/output to target-input/output).
 
 All those factories are generic and can be reused or composed as necessary.
 A concrete usage could be like this:
@@ -801,7 +809,12 @@ const resultEffect: EffectType<[MyFilter, SortParameter, PagingParameter], strin
     switchMap(s => s.getResults(input[0], input[1], input[2])),
   );
 const myFactory = getQueryWithResultFactory<MyFilter, string[]>()
-  .build({ firstName: '', lastName: '' });
+  .build({
+    defaultFilter: {
+      firstName: '', lastName: ''
+    },
+    resultEffect,
+  });
 ```
 
 ### The EffectSignalsFactory <a name="effect-signals-factory"></a>

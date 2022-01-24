@@ -91,8 +91,9 @@ type MergeResult<T1 extends Record<string, any>, T2 extends Record<string, any>>
  *
  * @typedef {object} Merged<T1 extends Record<string, any>, T2 extends Record<string, any>> - result of merge for T1 and T2
  */
-export type Merged<T1 extends Record<string, any>, T2 extends Record<string, any>> = Readonly<
-  MergeResult<T1, T2>
+export type Merged<T1 extends Record<string, any>, T2 extends Record<string, any>> = MergeResult<
+  T1,
+  T2
 >;
 
 /**
@@ -169,9 +170,9 @@ export const merge = <T1 extends Record<string, any>, T2 extends Record<string, 
 };
 
 /**
- * Just a type alias for Readonly<Record<string, any>>
+ * Just a type alias for Record<string, any>
  */
-export type Configuration = Readonly<Record<string, any>>;
+export type Configuration = Record<string, any>;
 
 type NM<T1 extends Configuration, T2 extends Configuration> = T1 & T2;
 
@@ -189,7 +190,7 @@ export type MergedConfiguration<
   ? NM<T1, T2>
   : keyof T2 extends never
   ? NM<T1, T2>
-  : Readonly<{
+  : {
       c1: T1;
       c2: T2;
-    }>;
+    };

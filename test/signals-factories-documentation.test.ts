@@ -14,13 +14,13 @@ describe('signals factories documentation', () => {
   });
 
   describe('counter sum documentation', () => {
-    type CounterInput = Readonly<{
+    type CounterInput = {
       increaseBy: EventId<number>;
       decreaseBy: EventId<number>;
-    }>;
-    type CounterOutput = Readonly<{
+    };
+    type CounterOutput = {
       counter: BehaviorId<number>;
-    }>;
+    };
     const getCounterSignals: () => Signals<CounterInput, CounterOutput> = () => {
       const counter = getBehaviorId<number>();
       const increaseBy = getEventId<number>();
@@ -41,13 +41,13 @@ describe('signals factories documentation', () => {
       };
     };
 
-    type SumInput = Readonly<{
+    type SumInput = {
       inputA: BehaviorId<number>;
       inputB: BehaviorId<number>;
-    }>;
-    type SumOutput = Readonly<{
+    };
+    type SumOutput = {
       counterSum: BehaviorId<number>;
-    }>;
+    };
     const getSumSignalsBad: (
       inputA: BehaviorId<number>,
       inputB: BehaviorId<number>,
@@ -85,10 +85,10 @@ describe('signals factories documentation', () => {
       };
     };
 
-    type ComposedInput = Readonly<{
+    type ComposedInput = {
       inputA: CounterInput;
       inputB: CounterInput;
-    }>;
+    };
 
     it('should createSignalsFactory for counters', async () => {
       const counterFactory = new SignalsFactory(getCounterSignals);
@@ -248,15 +248,18 @@ describe('signals factories documentation', () => {
   });
 
   describe('generic query documentation', () => {
-    type ModelInput<T> = Readonly<{
+    type ModelInput<T> = {
       setModel: EventId<T>;
       updateModel: EventId<Partial<T>>;
       resetModel: EventId<void>;
-    }>;
-    type ModelOutput<T> = Readonly<{
+    };
+    type ModelOutput<T> = {
       model: BehaviorId<T>;
-    }>;
-    const getModelSignals = <T>(defaultModel: T): Signals<ModelInput<T>, ModelOutput<T>> => {
+    };
+    type ModelConfig<T> = {
+      defaultModel: T;
+    };
+    const getModelSignals = <T>(config: ModelConfig<T>): Signals<ModelInput<T>, ModelOutput<T>> => {
       const model = getBehaviorId<T>();
       const setModel = getEventId<T>();
       const updateModel = getEventId<Partial<T>>();
@@ -271,26 +274,26 @@ describe('signals factories documentation', () => {
           model,
         },
         setup: store => {
-          store.addState(model, defaultModel);
+          store.addState(model, config.defaultModel);
           store.addReducer(model, setModel, (_, event) => event);
           store.addReducer(model, updateModel, (state, event) => ({
             ...state,
             ...event,
           }));
-          store.addReducer(model, resetModel, () => defaultModel);
+          store.addReducer(model, resetModel, () => config.defaultModel);
         },
       };
     };
 
-    type SortParameter = Readonly<{ propertyName?: string; descending: boolean }>;
-    type SortingInput = Readonly<{
+    type SortParameter = { propertyName?: string; descending: boolean };
+    type SortingInput = {
       ascending: EventId<string>;
       descending: EventId<string>;
       none: EventId<void>;
-    }>;
-    type SortingOutput = Readonly<{
+    };
+    type SortingOutput = {
       sorting: BehaviorId<SortParameter>;
-    }>;
+    };
     const getSortingSignals = (): Signals<SortingInput, SortingOutput> => {
       const sorting = getBehaviorId<SortParameter>();
       const ascending = getEventId<string>();
@@ -321,14 +324,14 @@ describe('signals factories documentation', () => {
     };
     const sortingSignalsFactory = new SignalsFactory(getSortingSignals);
 
-    type PagingParameter = Readonly<{ page: number; pageSize: number }>;
-    type PagingInput = Readonly<{
+    type PagingParameter = { page: number; pageSize: number };
+    type PagingInput = {
       setPage: EventId<number>;
       setPageSize: EventId<number>;
-    }>;
-    type PagingOutput = Readonly<{
+    };
+    type PagingOutput = {
       paging: BehaviorId<PagingParameter>;
-    }>;
+    };
     const getPagingSignals = (): Signals<PagingInput, PagingOutput> => {
       const paging = getBehaviorId<PagingParameter>();
       const setPage = getEventId<number>();
@@ -365,9 +368,9 @@ describe('signals factories documentation', () => {
     const getFilteredSortedPagedQuerySignalsFactory = <FilterType>(): SignalsFactory<
       FilteredSortedPagedQueryInput<FilterType>,
       FilteredSortedPagedQueryOutput<FilterType>,
-      FilterType
+      ModelConfig<FilterType>
     > =>
-      new SignalsFactory<ModelInput<FilterType>, ModelOutput<FilterType>, FilterType>(
+      new SignalsFactory<ModelInput<FilterType>, ModelOutput<FilterType>, ModelConfig<FilterType>>(
         getModelSignals,
       )
         .bind(() => sortingSignalsFactory)
@@ -387,6 +390,10 @@ describe('signals factories documentation', () => {
           );
         });
 
+    type QueryWithResultConfig<FilterType, ResultType> = {
+      defaultFilter: FilterType;
+      resultEffect: EffectType<[FilterType, SortParameter, PagingParameter], ResultType>;
+    };
     const getQueryWithResultFactory = <FilterType, ResultType>() =>
       getFilteredSortedPagedQuerySignalsFactory<FilterType>()
         .bind(() =>
@@ -402,19 +409,23 @@ describe('signals factories documentation', () => {
             input.input,
             false,
           );
-        });
+        })
+        .mapConfig((config: QueryWithResultConfig<FilterType, ResultType>) => ({
+          c1: {
+            defaultModel: config.defaultFilter,
+          },
+          c2: {
+            effect: config.resultEffect,
+          },
+        }));
 
     it('should create the factory', async () => {
       type FT = { name: string };
       const effectMock: EffectType<[FT, SortParameter, PagingParameter], string[]> = input =>
         of([input[0].name]);
       const f = getQueryWithResultFactory<FT, string[]>().build({
-        c1: {
-          name: '',
-        },
-        c2: {
-          effect: effectMock,
-        },
+        defaultFilter: { name: '' },
+        resultEffect: effectMock,
       });
       expect(f.output.model.toString()).toEqual('Symbol(B)');
     });
