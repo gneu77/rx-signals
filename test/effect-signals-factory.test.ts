@@ -2,10 +2,10 @@ import { Observable, of, Subject } from 'rxjs';
 import { delay, filter, take } from 'rxjs/operators';
 import {
   CombinedEffectResult,
+  Effect,
   EffectInputSignals,
   EffectOutputSignals,
   EffectSignalsFactory,
-  EffectType,
   getEffectSignalsFactory,
 } from '../src/effect-signals-factory';
 import { Store } from '../src/store';
@@ -27,7 +27,7 @@ describe('effect signals factory', () => {
   const inputSubject = new Subject<InputModel>();
   let effectCalled = 0;
 
-  const resultEffect: EffectType<InputModel, ResultModel> = (
+  const resultEffect: Effect<InputModel, ResultModel> = (
     input: InputModel,
     _,
     prevInput,

@@ -77,3 +77,25 @@ export const isEventId = <T>(id: SignalId<T>): boolean => id.toString() === 'Sym
  * (even undefined and null are valid values, so these cannot be used to represent no-value).
  */
 export const NO_VALUE: symbol = Symbol('NO_VALUE');
+
+/**
+ * This type specifies the effect function used by EffectSignals<InputType, ResultType>.
+ * It is a mandatory field of EffectFactoryConfiguration<InputType, ResultType> (the argument
+ * to the build method of an EffectSignalsFactory<InputType, ResultType>).
+ * The previousInput can be used e.g. to decide whether the effect must be performed,
+ * or if maybe the previousResult can be returned directly.
+ *
+ * @typedef {function} Effect<InputModel, ResultType> - function performing an effect and returning an observable with the result
+ * @template InputType - specifies the input type for the effect
+ * @template ResultType - specifies the result type for the effect
+ * @property {InputType} input - the effect input
+ * @property {Store} store - the Store instance that will be passed to the function (e.g. to inject some service dependency).
+ * @property {InputType | undefined} previousInput - the input of the previous function invocation, or undefined
+ * @property {ResultType | undefined} previousResult - the result of the previous function invocation, or undefined
+ */
+// export type Effect<InputType, ResultType> = (
+//   input: InputType,
+//   store: Store,
+//   previousInput?: InputType,
+//   previousResult?: ResultType,
+// ) => Observable<ResultType>;

@@ -11,7 +11,7 @@ import { BehaviorId, EventId, getBehaviorId, getEventId, NO_VALUE } from './stor
  * The previousInput can be used e.g. to decide whether the effect must be performed,
  * or if maybe the previousResult can be returned directly.
  *
- * @typedef {function} EffectType<InputModel, ResultType> - function performing an effect and returning an observable with the result
+ * @typedef {function} Effect<InputModel, ResultType> - function performing an effect and returning an observable with the result
  * @template InputType - specifies the input type for the effect
  * @template ResultType - specifies the result type for the effect
  * @property {InputType} input - the effect input
@@ -19,7 +19,7 @@ import { BehaviorId, EventId, getBehaviorId, getEventId, NO_VALUE } from './stor
  * @property {InputType | undefined} previousInput - the input of the previous function invocation, or undefined
  * @property {ResultType | undefined} previousResult - the result of the previous function invocation, or undefined
  */
-export type EffectType<InputType, ResultType> = (
+export type Effect<InputType, ResultType> = (
   input: InputType,
   store: Store,
   previousInput?: InputType,
@@ -142,7 +142,7 @@ export type EffectSignals<InputType, ResultType> = Signals<
  * @property {number | undefined} effectDebounceTime - optional number that defaults to undefined. If a number > 0 is specified, then it will be used as milliseconds to debounce new input to the effect (please DON't debounce the input signal yourself, because that would debounce before trigger and/or input equals).
  */
 export type EffectConfiguration<InputType, ResultType> = {
-  effect: EffectType<InputType, ResultType>;
+  effect: Effect<InputType, ResultType>;
   effectInputEquals?: (a: InputType, b: InputType) => boolean;
   withTrigger?: boolean;
   initialResultGetter?: () => ResultType;

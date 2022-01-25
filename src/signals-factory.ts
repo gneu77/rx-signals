@@ -138,6 +138,22 @@ export type MapConfig<CONFIG1 extends Configuration, CONFIG2 extends Configurati
 export type MapSignalIds<T1 extends NameToSignalId, T2 extends NameToSignalId> = (ids: T1) => T2;
 
 /**
+ * AddOrReplaceId is the result type of adding or replacing a key in a NameToSignalId.
+ *
+ * @typedef {object} AddOrReplaceId<T, N, ID> - the result of adding or replacing { [N]: ID; } on T
+ * @template T - concrete NameToSignalIds
+ * @template N - string key
+ * @template ID - concrete SignalId
+ */
+export type AddOrReplaceId<
+  T extends NameToSignalId,
+  N extends string,
+  ID extends SignalId<any>,
+> = Omit<T, N> & {
+  [K in N]: ID;
+};
+
+/**
  * The SignalsFactory wraps a SignalsBuild<IN, OUT, CONFIG> function, allowing for simple Signals composition
  * by classic monadic bind method and functor fmap, as well as additional convenience methods.
  * SignalFactory instances are immutable, hence all its methods return a new SignalsFactory instance.
@@ -220,6 +236,20 @@ export class SignalsFactory<
   }
 
   /**
+   * The mapConfig method takes as argument a pure function that implements MapConfig<CONFIG, CONFIG2>.
+   * It returns a new SignalsFactory<IN, OUT, CONFIG2>.
+   *
+   * @param {MapConfig<CONFIG, CONFIG2>} mapper - a pure function mapping CONFIG2 to CONFIG
+   * @returns {SignalsFactory<IN, OUT, CONFIG2>} - a new SignalsFactory with different Configuration type
+   */
+  mapConfig<CONFIG2 extends Configuration>(
+    mapper: MapConfig<CONFIG, CONFIG2>,
+  ): SignalsFactory<IN, OUT, CONFIG2> {
+    const build = (config: CONFIG2) => this.build(mapper(config));
+    return new SignalsFactory<IN, OUT, CONFIG2>(build);
+  }
+
+  /**
    * The mapInput method takes as argument a pure function that implements MapSignalIds<IN, IN2>.
    * It returns a new SignalsFactory<IN2, OUT, CONFIG>.
    *
@@ -233,6 +263,42 @@ export class SignalsFactory<
       ...s,
       input: mapper(s.input),
     }));
+  }
+
+  /**
+   * addOrReplaceInputId can be used as a short alternative to mapInput, if you want
+   * to add or replace just a single SignalId to/in the input signal ids.
+   *
+   * @template K - a concrete string to be used as key for the new SignalId
+   * @template ID - a concrete SignalId type
+   * @param {K} name - the name of the new SignalId
+   * @param {ID} id - the new SignalId
+   * @returns {SignalsFactory<AddOrReplaceId<IN, K, ID>, OUT, CONFIG>} - a new SignalsFactory with modified input signals
+   */
+  addOrReplaceInputId<K extends string, ID extends SignalId<any>>(
+    name: K,
+    id: ID,
+  ): SignalsFactory<AddOrReplaceId<IN, K, ID>, OUT, CONFIG> {
+    return this.mapInput<AddOrReplaceId<IN, K, ID>>(input => ({
+      ...input,
+      [name]: id,
+    }));
+  }
+
+  /**
+   * removeInputId can be used as a short alternative to mapInput, if you want
+   * to remove just a single SignalId from the input signal ids.
+   *
+   * @template K - a concrete K of the input signals of this factory
+   * @param {K} name - the name of the SignalId to be removed
+   * @returns {SignalsFactory<Omit<IN, K>, OUT, CONFIG>} - a new SignalsFactory with modified input signals
+   */
+  removeInputId<K extends keyof IN>(name: K): SignalsFactory<Omit<IN, K>, OUT, CONFIG> {
+    return this.mapInput<Omit<IN, K>>(input => {
+      const result = { ...input };
+      delete result[name];
+      return result;
+    });
   }
 
   /**
@@ -252,16 +318,38 @@ export class SignalsFactory<
   }
 
   /**
-   * The mapConfig method takes as argument a pure function that implements MapConfig<CONFIG, CONFIG2>.
-   * It returns a new SignalsFactory<IN, OUT, CONFIG2>.
+   * addOrReplaceOutputId can be used as a short alternative to mapOutput, if you want
+   * to add or replace just a single SignalId to/in the output signal ids.
    *
-   * @param {MapConfig<CONFIG, CONFIG2>} mapper - a pure function mapping CONFIG2 to CONFIG
-   * @returns {SignalsFactory<IN, OUT, CONFIG2>} - a new SignalsFactory with different Configuration type
+   * @template K - a concrete string to be used as key for the new SignalId
+   * @template ID - a concrete SignalId type
+   * @param {K} name - the name of the new SignalId
+   * @param {ID} id - the new SignalId
+   * @returns {SignalsFactory<IN, AddOrReplaceId<OUT, K, ID>, CONFIG>} - a new SignalsFactory with modified output signals
    */
-  mapConfig<CONFIG2 extends Configuration>(
-    mapper: MapConfig<CONFIG, CONFIG2>,
-  ): SignalsFactory<IN, OUT, CONFIG2> {
-    const build = (config: CONFIG2) => this.build(mapper(config));
-    return new SignalsFactory<IN, OUT, CONFIG2>(build);
+  addOrReplaceOutputId<K extends string, ID extends SignalId<any>>(
+    name: K,
+    id: ID,
+  ): SignalsFactory<IN, AddOrReplaceId<OUT, K, ID>, CONFIG> {
+    return this.mapOutput<AddOrReplaceId<OUT, K, ID>>(output => ({
+      ...output,
+      [name]: id,
+    }));
+  }
+
+  /**
+   * removeOutputId can be used as a short alternative to mapOutput, if you want
+   * to remove just a single SignalId from the output signal ids.
+   *
+   * @template K - a concrete K of the output signals of this factory
+   * @param {K} name - the name of the SignalId to be removed
+   * @returns {SignalsFactory<IN, Omit<OUT, K>, CONFIG>} - a new SignalsFactory with modified output signals
+   */
+  removeOutputId<K extends keyof OUT>(name: K): SignalsFactory<IN, Omit<OUT, K>, CONFIG> {
+    return this.mapOutput<Omit<OUT, K>>(output => {
+      const result = { ...output };
+      delete result[name];
+      return result;
+    });
   }
 }

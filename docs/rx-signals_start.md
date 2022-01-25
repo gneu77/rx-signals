@@ -516,21 +516,21 @@ To generalize factory composition, _rx-signals_ features the `SignalsFactory` cl
 class SignalsFactory<IN extends NameToSignalId, OUT extends NameToSignalId, CONFIG extends Configuration> {
   constructor(readonly build: SignalsBuild<IN, OUT, CONFIG>) {}
   
-  bind<IN2 extends NameToSignalId, OUT2 extends NameToSignalId, CONFIG2 extends Configuration>(
-    mapper: SignalsMapToFactory<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>,
-  ): ComposedFactory<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>;
+  bind<IN2 extends NameToSignalId, OUT2 extends NameToSignalId, CONFIG2 extends Configuration>(mapper: SignalsMapToFactory<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>): ComposedFactory<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>;
 
-  fmap<IN2 extends NameToSignalId, OUT2 extends NameToSignalId>(
-    mapper: SignalsMapper<IN, OUT, IN2, OUT2, CONFIG>,
-  ): SignalsFactory<IN2, OUT2, CONFIG>;
+  fmap<IN2 extends NameToSignalId, OUT2 extends NameToSignalId>(mapper: SignalsMapper<IN, OUT, IN2, OUT2, CONFIG>): SignalsFactory<IN2, OUT2, CONFIG>;
 
   extendSetup(extend: ExtendSetup<IN, OUT, CONFIG>): SignalsFactory<IN, OUT, CONFIG>;
 
+  mapConfig<CONFIG2 extends Configuration>(mapper: MapConfig<CONFIG, CONFIG2>): SignalsFactory<IN, OUT, CONFIG2>;
+
   mapInput<IN2 extends NameToSignalId>(mapper: MapSignalIds<IN, IN2>): SignalsFactory<IN2, OUT, CONFIG>;
+  addOrReplaceInputId<K extends string, ID extends SignalId<any>>(name: K, id: ID): SignalsFactory<AddOrReplaceId<IN, K, ID>, OUT, CONFIG>;
+  removeInputId<K extends keyof IN>(name: K): SignalsFactory<Omit<IN, K>, OUT, CONFIG>;
 
   mapOutput<OUT2 extends NameToSignalId>(mapper: MapSignalIds<OUT, OUT2>): SignalsFactory<IN, OUT2, CONFIG>;
-
-  mapConfig<CONFIG2 extends Configuration>(mapper: MapConfig<CONFIG, CONFIG2>): SignalsFactory<IN, OUT, CONFIG2>;
+  addOrReplaceOutputId<K extends string, ID extends SignalId<any>>(name: K, id: ID): SignalsFactory<IN, AddOrReplaceId<OUT, K, ID>, CONFIG>
+  removeOutputId<K extends keyof OUT>(name: K): SignalsFactory<IN, Omit<OUT, K>, CONFIG>
 }
 ```
 
@@ -564,7 +564,7 @@ const getCounterWithSumSignalsFactory: SignalsFactory<ComposedInput, SumOutput> 
 
 To understand what the `bind` method does, let's have a look at the signature again:
 ```typescript
-bind<IN2 extends NameToSignalId, OUT2 extends NameToSignalId, CONFIG2 extends Configuration>(
+SignalsFactory<IN, OUT, CONFIG>::bind<IN2 extends NameToSignalId, OUT2 extends NameToSignalId, CONFIG2 extends Configuration>(
   mapper: SignalsMapToFactory<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>,
 ): ComposedFactory<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>
 
@@ -587,14 +587,15 @@ type ComposedFactory<
 > = SignalsFactory<Merged<IN1, IN2>, Merged<OUT1, OUT2>, MergedConfiguration<CONFIG1, CONFIG2>>;
 ```
 
-So the `bind` method composes two factories by taking a function parameter that maps from the `Signals<IN, OUT>` produced by the first factory to a second `SignalsFactory<IN2, OUT2, CONFIG2>` (in the given example, the `Signals` argument is not used). 
+So the `bind` method composes two factories by taking a function parameter that maps from the `Signals<IN, OUT>` produced by the first factory to a second `SignalsFactory<IN2, OUT2, CONFIG2>` (in the given example, the `Signals` argument is not used).
+
 The result of `bind` is a third factory `SignalsFactory<Merged<IN1, IN2>, Merged<OUT1, OUT2>, MergedConfiguration<CONFIG1, CONFIG2>>`.
 Simply put, the merge of input and output `NameToSignalId` works in a way that conflicting names are put under properties _conflicts1_ and _conflicts2_, as you can see in the connect, or mapInput/mapOutput method calls.
 For details of the merge-logic, please have a look at [the corresponding API-documentation](https://rawcdn.githack.com/gneu77/rx-signals/master/docs/tsdoc/index.html)
 
 The `extendSetup` method returns a new factory where the `SignalsBuild` performs additional code in its setup method.
-The `mapInput` and `mapOutput` methods can be used to change the results from `Merged<IN1, IN2>` and `Merged<OUT1, OUT2>` to our needs.
-In a similar, if our factory had any configuration, we could use the `mapConfig` method, to change the result of `MergedConfiguration<CONFIG1, CONFIG2>`.
+The `mapInput` and `mapOutput` methods can be used to change the results from `Merged<IN1, IN2>` and `Merged<OUT1, OUT2>` to your needs.
+In a similar way, if your factory has any configuration, you could use the `mapConfig` method, to change the result of `MergedConfiguration<CONFIG1, CONFIG2>`.
 
 Now let's build something that is at least a bit closer to real-world requirements.
 
@@ -770,7 +771,7 @@ Here is a generic function producing a _QueryWithResultFactory_:
 ```typescript
 type QueryWithResultConfig<FilterType, ResultType> = {
   defaultFilter: FilterType;
-  resultEffect: EffectType<[FilterType, SortParameter, PagingParameter], ResultType>;
+  resultEffect: Effect<[FilterType, SortParameter, PagingParameter], ResultType>;
 };
 const getQueryWithResultFactory = <FilterType, ResultType>() =>
   getFilteredSortedPagedQuerySignalsFactory<FilterType>()
@@ -800,11 +801,11 @@ const getQueryWithResultFactory = <FilterType, ResultType>() =>
 
 Here we used `mapConfig` for the first time. It's argument is a function mapping from target-configuration back to the `MergedConfiguration` of the source-factory (`mapInput and mapOutput` work the other way around, mapping from source-input/output to target-input/output).
 
-All those factories are generic and can be reused or composed as necessary.
+All factories created so far are generic and can be reused or composed as necessary.
 A concrete usage could be like this:
 ```typescript
 type MyFilter = { firstName: string; lastName: string };
-const resultEffect: EffectType<[MyFilter, SortParameter, PagingParameter], string[]> = (input, store) =>
+const resultEffect: Effect<[MyFilter, SortParameter, PagingParameter], string[]> = (input, store) =>
   store.getBehavior(serviceIds.myService).pipe(
     switchMap(s => s.getResults(input[0], input[1], input[2])),
   );
@@ -819,7 +820,84 @@ const myFactory = getQueryWithResultFactory<MyFilter, string[]>()
 
 ### The EffectSignalsFactory <a name="effect-signals-factory"></a>
 
-Documentation WIP
+Unfortunatelly, there's no way to tell Typescript that a function must be pure.
+With respect to immutability, you could at least wrap all data types `T` with `Readonly<T>`, though version 3.0 of _rx-signals_ got rid of this, because it makes solving type-errors harder, due to current limitations in how Typescript reports type-conflicts.
+
+Nevertheless, it is of utmost importance, to treat all the major building blocks we encountered so far as immutable data or pure functions:
+* Immutable data:
+  * Observables
+  * State
+  * Events
+  * SignalIds
+  * SignalsFactory
+* Pure functions:
+  * SignalsBuilder
+  * StateReducer
+  * SignalsMapToFactory
+  * SignalsMapper
+  * ExtendSetup
+  * MapSignalIds
+  * MapConfig
+
+There are 3 categories of side-effects:
+1. mutating input (in case of a class, `this` is implicit input)
+1. accessing (read or mutate) properties that are not part of the input
+1. missing referential transparancy (not returning the same result for the same input)
+
+You should never do the first (keep to this and debugging and reasoning about your application becomes trivial)!
+
+You should also never do the second!
+Using state-management via the _rx-signals_ store should be the solution for all scenarios where you would need this.
+If you need to read things, solve it by putting the corresponding properties into the store and pass the store to all functions that need access.
+If you need to change things, solve it by dispatching a corresponding event.
+
+The third category is something that we definitely need (for non-deterministic results like random numbers or HTTP-call results) and therefore, _rx-signals_ has dedicated way to manage/isolate such effects via the `Effect` type:
+```typescript
+type Effect<InputType, ResultType> = (
+  input: InputType,
+  store: Store,
+  previousInput?: InputType,
+  previousResult?: ResultType,
+) => Observable<ResultType>;
+```
+
+This type represents a function that gets the store in addition to the input, in order to get additional properties and returns the result as `Observable`.
+Either the `Effect` function itself could 
+
+The other two additional parameters can be used to access previous input and return values of the effect, but for now we don't care about them.
+
+While you have to implement corresponding `Effect`s yourself, you will not use them directly.
+Instead, _rx-signals_ features `getEffectSignalsFactory` to create a generic `SignalsFactory` that takes an `Effect` as configuration property (among other configuration):
+```typescript
+const getEffectSignalsFactory = <InputType, ResultType>(): EffectSignalsFactory<
+  InputType,
+  ResultType
+> => ...;
+
+// with:
+type EffectSignalsFactory<InputType, ResultType> = SignalsFactory<
+  EffectInputSignals<InputType>,
+  EffectOutputSignals<InputType, ResultType>,
+  EffectConfiguration<InputType, ResultType>
+>;
+type EffectInputSignals<InputType> = {
+  input: BehaviorId<InputType>;
+  invalidate: EventId<void>;
+  trigger: EventId<void>;
+};
+type EffectOutputSignals<InputType, ResultType> = {
+  combined: BehaviorId<CombinedEffectResult<InputType, ResultType>>;
+  errors: EventId<EffectError<InputType>>;
+  successes: EventId<EffectSuccess<InputType, ResultType>>;
+};
+type EffectConfiguration<InputType, ResultType> = {
+  effect: Effect<InputType, ResultType>;
+  effectInputEquals?: (a: InputType, b: InputType) => boolean;
+  withTrigger?: boolean;
+  initialResultGetter?: () => ResultType;
+  effectDebounceTime?: number;
+};
+```
 
 ## Testing <a name="testing"></a>
 

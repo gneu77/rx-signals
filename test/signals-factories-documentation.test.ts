@@ -1,6 +1,6 @@
 import { combineLatest, merge, of } from 'rxjs';
 import { map, mapTo } from 'rxjs/operators';
-import { EffectType } from '../src/effect-signals-factory';
+import { Effect } from '../src/effect-signals-factory';
 import { Store } from '../src/store';
 import { getEffectSignalsFactory } from './../src/effect-signals-factory';
 import { Signals, SignalsFactory } from './../src/signals-factory';
@@ -392,7 +392,7 @@ describe('signals factories documentation', () => {
 
     type QueryWithResultConfig<FilterType, ResultType> = {
       defaultFilter: FilterType;
-      resultEffect: EffectType<[FilterType, SortParameter, PagingParameter], ResultType>;
+      resultEffect: Effect<[FilterType, SortParameter, PagingParameter], ResultType>;
     };
     const getQueryWithResultFactory = <FilterType, ResultType>() =>
       getFilteredSortedPagedQuerySignalsFactory<FilterType>()
@@ -421,7 +421,7 @@ describe('signals factories documentation', () => {
 
     it('should create the factory', async () => {
       type FT = { name: string };
-      const effectMock: EffectType<[FT, SortParameter, PagingParameter], string[]> = input =>
+      const effectMock: Effect<[FT, SortParameter, PagingParameter], string[]> = input =>
         of([input[0].name]);
       const f = getQueryWithResultFactory<FT, string[]>().build({
         defaultFilter: { name: '' },

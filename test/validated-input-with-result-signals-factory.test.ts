@@ -1,6 +1,6 @@
 import { Observable, of, Subject } from 'rxjs';
 import { delay } from 'rxjs/operators';
-import { EffectType } from '../src/effect-signals-factory';
+import { Effect } from '../src/effect-signals-factory';
 import { Signals } from '../src/signals-factory';
 import { Store } from '../src/store';
 import { getBehaviorId } from './../src/store-utils';
@@ -29,14 +29,14 @@ describe('validated input with result signals factory', () => {
   const inputStateId = getBehaviorId<InputModel>();
   const inputSubject = new Subject<InputModel>();
 
-  const validationEffect: EffectType<InputModel, ValidationResult> = (input: InputModel) => {
+  const validationEffect: Effect<InputModel, ValidationResult> = (input: InputModel) => {
     if (input.searchString === 'throw') {
       throw 'unhandled';
     }
     return of(input.searchString === 'invalid' ? 'nope' : null).pipe(delay(10));
   };
 
-  const resultEffect: EffectType<InputModel, ResultModel> = (input: InputModel) => {
+  const resultEffect: Effect<InputModel, ResultModel> = (input: InputModel) => {
     if (input.searchString === 'throw') {
       throw 'unhandled';
     }

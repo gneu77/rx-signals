@@ -2,10 +2,10 @@ import { combineLatest } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith } from 'rxjs/operators';
 import {
   CombinedEffectResult,
+  Effect,
   EffectError,
   EffectOutputSignals,
   EffectSuccess,
-  EffectType,
   getEffectSignalsFactory,
 } from './effect-signals-factory';
 import { SignalsFactory } from './signals-factory';
@@ -40,9 +40,9 @@ export type ValidatedInputWithResultOutput<InputType, ValidationType, ResultType
 };
 
 export type ValidatedInputWithResultConfig<InputType, ValidationType, ResultType> = {
-  validationEffect: EffectType<InputType, ValidationType>;
+  validationEffect: Effect<InputType, ValidationType>;
   isValidationResultValid?: (validationResult: ValidationType) => boolean;
-  resultEffect: EffectType<InputType, ResultType>;
+  resultEffect: Effect<InputType, ResultType>;
   initialResultGetter?: () => ResultType;
   withResultTrigger?: boolean;
   resultEffectInputEquals?: (a: InputType, b: InputType) => boolean;
