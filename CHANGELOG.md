@@ -1,6 +1,6 @@
 # Changes
 
-## 3.0.0 ()
+## 3.0.0 (WIP)
 
 ### Breaking Changes
 
@@ -10,7 +10,7 @@
 
 ### Documentation
 
-- **Finally** added the first version of a documentation (not yet complete)!
+- **Finally** added a first version of a rudimentary, incomplete documentation
 
 ### Features
 

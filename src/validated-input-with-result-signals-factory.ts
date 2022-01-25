@@ -2,7 +2,6 @@ import { combineLatest } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith } from 'rxjs/operators';
 import {
   CombinedEffectResult,
-  Effect,
   EffectError,
   EffectOutputSignals,
   EffectSuccess,
@@ -10,7 +9,7 @@ import {
 } from './effect-signals-factory';
 import { SignalsFactory } from './signals-factory';
 import { Store } from './store';
-import { BehaviorId, EventId, getBehaviorId } from './store-utils';
+import { BehaviorId, EffectId, EventId, getBehaviorId } from './store-utils';
 import { Merged } from './type-utils';
 
 export type ValidatedInputWithResult<InputType, ValidationType, ResultType> = {
@@ -40,9 +39,9 @@ export type ValidatedInputWithResultOutput<InputType, ValidationType, ResultType
 };
 
 export type ValidatedInputWithResultConfig<InputType, ValidationType, ResultType> = {
-  validationEffect: Effect<InputType, ValidationType>;
+  validationEffectId: EffectId<InputType, ValidationType>;
   isValidationResultValid?: (validationResult: ValidationType) => boolean;
-  resultEffect: Effect<InputType, ResultType>;
+  resultEffectId: EffectId<InputType, ResultType>;
   initialResultGetter?: () => ResultType;
   withResultTrigger?: boolean;
   resultEffectInputEquals?: (a: InputType, b: InputType) => boolean;
@@ -140,10 +139,10 @@ export const getValidatedInputWithResultSignalsFactory = <
     .bind(() => getEffectSignalsFactory<InputType, ResultType>())
     .mapConfig((config: ValidatedInputWithResultConfig<InputType, ValidationType, ResultType>) => ({
       c1: {
-        effect: config.validationEffect,
+        effectId: config.validationEffectId,
       },
       c2: {
-        effect: config.resultEffect,
+        effectId: config.resultEffectId,
         initialResultGetter: config.initialResultGetter,
         withTrigger: config.withResultTrigger,
         effectInputEquals: config.resultEffectInputEquals,

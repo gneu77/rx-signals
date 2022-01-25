@@ -380,8 +380,7 @@ This is what "isolated" means in the context of this section.
 In a pure functional language (like e.g. Elm or Haskell), the side-effects are pulled up into the runtime.
 In a multi-paradigm language like JS/TS, we cannot go that far, but we can still separate/isolate side-effects from the rest of our code in a clean way.
 
-In the [**Using _rx-signals_**](https://github.com/gneu77/rx-signals/blob/master/docs/rx-signals_start.md) documentation, you will see how side-effect isolation by event-sources works (especially in the testing section).
-
+In the [**Using _rx-signals_**](https://github.com/gneu77/rx-signals/blob/master/docs/rx-signals_start.md) documentation, you will see how side-effect isolation by event-sources and effect-type works (especially in the testing section).
 
 ## Big Picture
 

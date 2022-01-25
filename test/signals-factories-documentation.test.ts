@@ -1,10 +1,16 @@
 import { combineLatest, merge, of } from 'rxjs';
 import { map, mapTo } from 'rxjs/operators';
-import { Effect } from '../src/effect-signals-factory';
-import { Store } from '../src/store';
+import { Effect, Store } from '../src/store';
 import { getEffectSignalsFactory } from './../src/effect-signals-factory';
 import { Signals, SignalsFactory } from './../src/signals-factory';
-import { BehaviorId, EventId, getBehaviorId, getEventId } from './../src/store-utils';
+import {
+  BehaviorId,
+  EffectId,
+  EventId,
+  getBehaviorId,
+  getEffectId,
+  getEventId,
+} from './../src/store-utils';
 import { expectSequence } from './test.utils';
 
 describe('signals factories documentation', () => {
@@ -392,7 +398,7 @@ describe('signals factories documentation', () => {
 
     type QueryWithResultConfig<FilterType, ResultType> = {
       defaultFilter: FilterType;
-      resultEffect: Effect<[FilterType, SortParameter, PagingParameter], ResultType>;
+      resultEffectId: EffectId<[FilterType, SortParameter, PagingParameter], ResultType>;
     };
     const getQueryWithResultFactory = <FilterType, ResultType>() =>
       getFilteredSortedPagedQuerySignalsFactory<FilterType>()
@@ -415,19 +421,25 @@ describe('signals factories documentation', () => {
             defaultModel: config.defaultFilter,
           },
           c2: {
-            effect: config.resultEffect,
+            effectId: config.resultEffectId,
           },
         }));
 
     it('should create the factory', async () => {
-      type FT = { name: string };
-      const effectMock: Effect<[FT, SortParameter, PagingParameter], string[]> = input =>
-        of([input[0].name]);
-      const f = getQueryWithResultFactory<FT, string[]>().build({
-        defaultFilter: { name: '' },
-        resultEffect: effectMock,
+      type MyFilter = { firstName: string; lastName: string };
+      const resultEffectId = getEffectId<[MyFilter, SortParameter, PagingParameter], string[]>();
+      const effectMock: Effect<[MyFilter, SortParameter, PagingParameter], string[]> = input =>
+        of([`${input[0].firstName} ${input[0].lastName}`]);
+      store.addEffect(resultEffectId, effectMock);
+      const myFactory = getQueryWithResultFactory<MyFilter, string[]>().build({
+        defaultFilter: {
+          firstName: '',
+          lastName: '',
+        },
+        resultEffectId,
       });
-      expect(f.output.model.toString()).toEqual('Symbol(B)');
+
+      expect(myFactory.output.model.toString()).toEqual('Symbol(B)');
     });
   });
 });

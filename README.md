@@ -38,6 +38,8 @@ It is however not limited to MVU, but can be used in all architectures that woul
 
 Though it heavily relies on _RxJs_, this lib is **not** Angular-specific. You can (and should) also use it in any other context where you have _RxJs_ at your disposal!
 
+(Use it in the backend or with any presentation-framework you like. Decoupling all application-logic from presentation-logic is a strength of this library.)
+
 _rx-signals_ itself is implemented with TypeScript and therefore naturally comes **fully typed** (in case you're using it with TS).
 
 ### High-level overview

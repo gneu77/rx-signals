@@ -137,6 +137,7 @@ The output will be in order of the numbers:
 Please have in mind that dispatching an event is always a side-effect. That means
 * you should use `dispatch` only to translate non-store events (like browser events) to store events
 * event-sources are either effects or event-transformers (mapping from one _event-type_ to another)
+  * though on a low-level, all side-effects could be implemented via event-sources, the store has an additional way to describe input-output-effects via the `Effect` type. This will be described later in the [EffectSignalsFactory section](#effect-signals-factory).
 
 The previous example was already a bit complicated and you should strive for a low number of event-sources that would lead to automatic dispatch->state->dispatch cycles.
 Nevertheless, it's important to fully understand how the dispatch-queue works.
@@ -302,7 +303,7 @@ store.addEventSource(
 
 Phew, a lot of code for a trivial (simplified) example!
 But don't fear, there's no need to repeat such common patterns thanks to `Signals` and `SignalsFactories`.
-Also, there's a better and more general way to cope with effects, all of this being demonstrated in the [SignalsFactory-section](#signals-factory-type).
+Also, there's a better and more general way to cope with effects, all of this being demonstrated in the [EffectSignalsFactory section](#effect-signals-factory).
 
 Here's a visual representation of the above setup:
 
@@ -316,7 +317,7 @@ In general, you should aim for as many lazy behaviors as possible.
 
 However, there are definitely behaviors that must be non-lazy.
 The rule is simple: If it would be a logical error that a behavior misses one of the events it depends on, then it must be non-lazy.
-(See the docstring for store.addBehavior to get some more guidance on when to use lazy vs. non-lazy.)
+(See the docstring for store.addBehavior to get some more guidance on when to use lazy vs. non-lazy!)
 
 So far, defining a behavior that depends on multiple different events would be a bit clumsy (you'd have to use `getTypedEventStream` instead of `getEventStream` to differentiate between the merged events).
 For such cases, the state-reducer API from the next section is much more straight forward.
@@ -393,6 +394,9 @@ type SignalIds<IN extends NameToSignalId, OUT extends NameToSignalId> = {
 };
 type SetupWithStore = { readonly setup: (store: Store) => void; };
 ```
+
+:warning: Similar to `const x: Observable<T>` being the reactive counterpart of `let x: T`, you could see the `Signals` type as reactive counterpart of a class.
+Following this analogy, `SetupWithStore` is the reactive counterpart of a class-constructor and in/out-`NameToSignalId` is the reactive counterpart of a class-interface.
 
 Let's see an example, where we encapsulate the creation of signals for counters:
 ```typescript
@@ -487,15 +491,17 @@ const getCounterWithSumSignals: () => Signals<ComposedInput, SumOutput> = () => 
 
 (Again, please note that the order in which the setup functions are called is irrelevant.)
 
+Also we learned about a new store method `connect` which is a shorter convenience method to connect an event or behavior to another event or behavior based on IDs (under the hood a corresponding event-source or behavior for the target id will be added to the store).
+
 The above way to compose a signals factory from two other factories might be OK in this trivial example.
 But as soon as things get more complex, this kind of 'manual' composition becomes inflexible, verbose and error-prone.
 E.g. it's easy to forget calling the setup of one of the signals.
 And even if you don't forget it, it's still boilerplate.
 The next section presents a signals factory type that allows for a better, generalized composition.
 
-## Reusability and Composition via SignalsFactory-type <a name="signals-factory-type"></a>
+## Reusability and Composition via SignalsFactory <a name="signals-factory-type"></a>
 
-The previous section introduced the `Signals` type as means of encapsulation/isolation for the creation of IDs and setup of corresponding signals in the `Store`.
+The previous section introduced the `Signals` type as means of encapsulation/isolation for the creation of IDs and setup of corresponding signals in the `Store` (remember that `Signals` can be interpreted as reactive counterpart of classes).
 The given example even used factory functions to produce `Signals` and a new factory function was composed from the two initial factory functions.
 For more complex Signals, it might be neccessary to configure this kind of factory.
 Therefore, _rx-signals_ formalizes such configurable factory as `SignalsBuild` type:
@@ -534,7 +540,7 @@ class SignalsFactory<IN extends NameToSignalId, OUT extends NameToSignalId, CONF
 }
 ```
 
-`SignalsFactory` instances are immutable, hence all methods return a new `SignalsFactory` instance.
+Like `Signals`, also `SignalsFactory` instances are immutable, hence all methods return a new `SignalsFactory` instance.
 
 Before coming to a more real-world example, let's generalize the counter-sum-example from the previous section by turning the 'custom' signals factories into a `SignalsFactory`.
 Based on our definitions for `getCounterSignals` and `getSumSignals`, we can turn these into `SignalsFactories` as follows:
@@ -562,7 +568,7 @@ const getCounterWithSumSignalsFactory: SignalsFactory<ComposedInput, SumOutput> 
     }));
 ```
 
-To understand what the `bind` method does, let's have a look at the signature again:
+To understand the `bind` method, let's have a look at the signature again:
 ```typescript
 SignalsFactory<IN, OUT, CONFIG>::bind<IN2 extends NameToSignalId, OUT2 extends NameToSignalId, CONFIG2 extends Configuration>(
   mapper: SignalsMapToFactory<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>,
@@ -587,7 +593,9 @@ type ComposedFactory<
 > = SignalsFactory<Merged<IN1, IN2>, Merged<OUT1, OUT2>, MergedConfiguration<CONFIG1, CONFIG2>>;
 ```
 
-So the `bind` method composes two factories by taking a function parameter that maps from the `Signals<IN, OUT>` produced by the first factory to a second `SignalsFactory<IN2, OUT2, CONFIG2>` (in the given example, the `Signals` argument is not used).
+Phew, seems complicated, but this gives us all the type safety to catch errors at compile-time instead of runtime and to make working with these methods in your IDE simple.
+
+So the `bind` method composes two factories by taking a function parameter that maps from the `Signals<IN, OUT>` produced by the first (source) factory to a second `SignalsFactory<IN2, OUT2, CONFIG2>` (in the given example, the `Signals` argument is not used).
 
 The result of `bind` is a third factory `SignalsFactory<Merged<IN1, IN2>, Merged<OUT1, OUT2>, MergedConfiguration<CONFIG1, CONFIG2>>`.
 Simply put, the merge of input and output `NameToSignalId` works in a way that conflicting names are put under properties _conflicts1_ and _conflicts2_, as you can see in the connect, or mapInput/mapOutput method calls.
@@ -615,7 +623,7 @@ We will compose a corresponding `SignalsFactory` from smaller, generic and reusa
 So in the above diagram, the arrows show the direction of composition, hence dependencies are in the opposite direction.
 There are 4 low-level components and 2 composed ones.
 
-Here is a possible implementation for a generic `SignalsBuild<ModelInput<T>, ModelOutput<T>, T>` of a _ModelFactory_ that could be used for any form-controlled model (and will be used to model the filter of our query):
+Here is a possible implementation for a generic `SignalsBuild<ModelInput<T>, ModelOutput<T>, ModelConfig<T>>` of a _ModelFactory_ that could be used for any form-controlled model (and will be used to model the filter of our query):
 ```typescript
 type ModelInput<T> = {
   setModel: EventId<T>;
@@ -731,12 +739,12 @@ const pagingSignalsFactory = new SignalsFactory(getPagingSignals);
 
 Now we can compose a generic function producing a _QueryInputFactory_:
 ```typescript
-type FilteredSortedPagedQueryInput<FilterType> = ModelInput<FilterType> &
-  SortingInput &
-  PagingInput;
-type FilteredSortedPagedQueryOutput<FilterType> = ModelOutput<FilterType> &
-  SortingOutput &
-  PagingOutput;
+type FilteredSortedPagedQueryInput<FilterType> = ModelInput<FilterType>
+  & SortingInput
+  & PagingInput;
+type FilteredSortedPagedQueryOutput<FilterType> = ModelOutput<FilterType>
+  & SortingOutput
+  & PagingOutput;
 const getFilteredSortedPagedQuerySignalsFactory = <FilterType>(): SignalsFactory<
   FilteredSortedPagedQueryInput<FilterType>,
   FilteredSortedPagedQueryOutput<FilterType>,
@@ -765,7 +773,7 @@ const getFilteredSortedPagedQuerySignalsFactory = <FilterType>(): SignalsFactory
 
 In addition to just combining all signals, there is additional logic in the `extendSetup` block, adding an effect to reset the page (of the PagingParameter) to `0` whenever the filter or the sorting changes.
 
-For the _EffectFactory_, we're using the `EffectSignalsFactory` that comes with _rx-signals_ and that will be explained in more details in the next sub-section of this document.
+For the _EffectFactory_, we're using the `EffectSignalsFactory` that comes with _rx-signals_ and that will be explained in more detail in the next sub-section of this document.
 
 Here is a generic function producing a _QueryWithResultFactory_:
 ```typescript
@@ -805,22 +813,22 @@ All factories created so far are generic and can be reused or composed as necess
 A concrete usage could be like this:
 ```typescript
 type MyFilter = { firstName: string; lastName: string };
-const resultEffect: Effect<[MyFilter, SortParameter, PagingParameter], string[]> = (input, store) =>
-  store.getBehavior(serviceIds.myService).pipe(
-    switchMap(s => s.getResults(input[0], input[1], input[2])),
-  );
-const myFactory = getQueryWithResultFactory<MyFilter, string[]>()
-  .build({
-    defaultFilter: {
-      firstName: '', lastName: ''
-    },
-    resultEffect,
-  });
+const resultEffectId = getEffectId<[MyFilter, SortParameter, PagingParameter], string[]>();
+const effectMock: Effect<[MyFilter, SortParameter, PagingParameter], string[]> = input =>
+  of([`${input[0].firstName} ${input[0].lastName}`]);
+store.addEffect(resultEffectId, effectMock);
+const myFactory = getQueryWithResultFactory<MyFilter, string[]>().build({
+  defaultFilter: {
+    firstName: '',
+    lastName: '',
+  },
+  resultEffectId,
+});
 ```
 
 ### The EffectSignalsFactory <a name="effect-signals-factory"></a>
 
-Unfortunatelly, there's no way to tell Typescript that a function must be pure.
+Unfortunately, there's no way to tell Typescript that a function must be pure.
 With respect to immutability, you could at least wrap all data types `T` with `Readonly<T>`, though version 3.0 of _rx-signals_ got rid of this, because it makes solving type-errors harder, due to current limitations in how Typescript reports type-conflicts.
 
 Nevertheless, it is of utmost importance, to treat all the major building blocks we encountered so far as immutable data or pure functions:
@@ -829,6 +837,7 @@ Nevertheless, it is of utmost importance, to treat all the major building blocks
   * State
   * Events
   * SignalIds
+  * Signals
   * SignalsFactory
 * Pure functions:
   * SignalsBuilder
@@ -846,12 +855,13 @@ There are 3 categories of side-effects:
 
 You should never do the first (keep to this and debugging and reasoning about your application becomes trivial)!
 
-You should also never do the second!
+You should also never do the second directly!
 Using state-management via the _rx-signals_ store should be the solution for all scenarios where you would need this.
 If you need to read things, solve it by putting the corresponding properties into the store and pass the store to all functions that need access.
-If you need to change things, solve it by dispatching a corresponding event.
+If you need to change things, solve it by dispatching a corresponding event (or setup an event-source).
 
-The third category is something that we definitely need (for non-deterministic results like random numbers or HTTP-call results) and therefore, _rx-signals_ has dedicated way to manage/isolate such effects via the `Effect` type:
+The third category is something that we definitely need (for non-deterministic results like random numbers or HTTP-call results).
+In the section about events, I already mentioned that you could solve this on a low-level via event-sources. However, _rx-signals_ has another dedicated way to manage/isolate such result-effects via the `Effect` type:
 ```typescript
 type Effect<InputType, ResultType> = (
   input: InputType,
@@ -861,13 +871,13 @@ type Effect<InputType, ResultType> = (
 ) => Observable<ResultType>;
 ```
 
-This type represents a function that gets the store in addition to the input, in order to get additional properties and returns the result as `Observable`.
-Either the `Effect` function itself could 
+This type represents a potentially impure function that can be added to the store via `addEffect`. A corresponding effect-observable can be retrieved reactively via `getEffect`.
 
+The `Effect` function takes an input and the store and must produce a result-observable. 
 The other two additional parameters can be used to access previous input and return values of the effect, but for now we don't care about them.
 
-While you have to implement corresponding `Effect`s yourself, you will not use them directly.
-Instead, _rx-signals_ features `getEffectSignalsFactory` to create a generic `SignalsFactory` that takes an `Effect` as configuration property (among other configuration):
+While you have to implement corresponding `Effect`s yourself, you will not normally not use them directly.
+Instead, _rx-signals_ features `getEffectSignalsFactory` to create a generic `EffectSignalsFactory` that takes an `EffectId` (to retrieve the corresponding `Effect` from the store) as configuration property (among other configuration):
 ```typescript
 const getEffectSignalsFactory = <InputType, ResultType>(): EffectSignalsFactory<
   InputType,
@@ -891,7 +901,7 @@ type EffectOutputSignals<InputType, ResultType> = {
   successes: EventId<EffectSuccess<InputType, ResultType>>;
 };
 type EffectConfiguration<InputType, ResultType> = {
-  effect: Effect<InputType, ResultType>;
+  effectId: EffectId<InputType, ResultType>;
   effectInputEquals?: (a: InputType, b: InputType) => boolean;
   withTrigger?: boolean;
   initialResultGetter?: () => ResultType;
@@ -899,6 +909,8 @@ type EffectConfiguration<InputType, ResultType> = {
 };
 ```
 
+:warning: WIP
+
 ## Testing <a name="testing"></a>
 
-Documentation WIP
+:warning: WIP

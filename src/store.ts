@@ -13,7 +13,7 @@ import {
 import { ControlledSubject } from './controlled-subject';
 import { DelayedEventQueue } from './delayed-event-queue';
 import { SourceObservable } from './source-observable';
-import { BehaviorId, EventId, isBehaviorId, NO_VALUE, SignalId } from './store-utils';
+import { BehaviorId, EffectId, EventId, isBehaviorId, NO_VALUE, SignalId } from './store-utils';
 
 /**
  * The rx-signals Store uses the TypedEvent<T> to bundle certain events and their
@@ -43,6 +43,32 @@ export type TypedEvent<T> = Readonly<{
  * @returns {T} - the new state
  */
 export type StateReducer<T, E> = (state: T, event: E) => T;
+
+/**
+ * The Effect type specifies a potentially impure function that takes an input and the store as arguments
+ * and returns an effectful result as Observable.
+ * It is the low-level abstraction used by rx-signals for side-effect isolation.
+ * The high-level abstraction EffectSignalsFactory takes an EffectId as configuration to access
+ * the corresponding Effect.
+ * The store argument can be used to access additional input from the store (thus, the Effect itself could also
+ * be pure and just use something impure that was put into the store, e.g. another Effect).
+ * The previousInput argument can be used e.g. to decide whether the effect must perform
+ * a computation/query/etc., or if maybe the previousResult can be returned directly.
+ *
+ * @typedef {function} Effect<InputType, ResultType> - function performing an effect and returning an observable with the result
+ * @template InputType - specifies the input type for the effect
+ * @template ResultType - specifies the result type for the effect
+ * @property {InputType} input - the effect input
+ * @property {Store} store - the Store instance that will be passed to the function (e.g. to inject some other Effect).
+ * @property {InputType | undefined} previousInput - the input of the previous function invocation, or undefined
+ * @property {ResultType | undefined} previousResult - the result of the previous function invocation, or undefined
+ */
+export type Effect<InputType, ResultType> = (
+  input: InputType,
+  store: Store,
+  previousInput?: InputType,
+  previousResult?: ResultType,
+) => Observable<ResultType>;
 
 /**
  * The rx-signals Store provides RxJs-Observables for RP (reactive programming) BehaviorStreams
@@ -720,6 +746,43 @@ export class Store {
           })),
         ),
       this.parentStore ? this.parentStore.getTypedEventStream(identifier) : NEVER,
+    );
+  }
+
+  /**
+   * This method adds an Effect to the store.
+   *
+   * @param {EffectId<InputType, ResultType>} id - the unique identifier for the effect
+   * @param {Effect<InputType, ResultType>} effect - the Effect function
+   * @returns {void}
+   */
+  addEffect<InputType, ResultType>(
+    id: EffectId<InputType, ResultType>,
+    effect: Effect<InputType, ResultType>,
+  ): void {
+    this.addState<Effect<InputType, ResultType>>(
+      id as unknown as BehaviorId<Effect<InputType, ResultType>>,
+      () => effect,
+    );
+  }
+
+  /**
+   * This method returns an Observable for the effect specified by identifier.
+   * It does not matter, if the effect has already been added or not.
+   * If it has already been added, a subscriber will get it immediately. Else, a subscriber will
+   * get the effect as soon as it is added to the store.
+   * If this store has a parent store, then as long as no effect is added for the child, the
+   * effect will be received from the parent. As soon, as a corresponding effect is added to the child,
+   * subscribers will receive the effect from the child.
+   *
+   * @param {EffectId<InputType, ResultType>} id - the unique identifier for the effect
+   * @returns {Observable<Effect<InputType, ResultType>>} - the effect observable
+   */
+  getEffect<InputType, ResultType>(
+    id: EffectId<InputType, ResultType>,
+  ): Observable<Effect<InputType, ResultType>> {
+    return this.getBehavior<Effect<InputType, ResultType>>(
+      id as unknown as BehaviorId<Effect<InputType, ResultType>>,
     );
   }
 

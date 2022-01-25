@@ -1,30 +1,8 @@
-import { combineLatest, Observable, of, throwError } from 'rxjs';
+import { combineLatest, of, throwError } from 'rxjs';
 import { catchError, debounceTime, filter, map, mapTo, switchMap, take } from 'rxjs/operators';
 import { Signals, SignalsFactory } from './signals-factory';
 import { Store } from './store';
-import { BehaviorId, EventId, getBehaviorId, getEventId, NO_VALUE } from './store-utils';
-
-/**
- * This type specifies the effect function used by EffectSignals<InputType, ResultType>.
- * It is a mandatory field of EffectFactoryConfiguration<InputType, ResultType> (the argument
- * to the build method of an EffectSignalsFactory<InputType, ResultType>).
- * The previousInput can be used e.g. to decide whether the effect must be performed,
- * or if maybe the previousResult can be returned directly.
- *
- * @typedef {function} Effect<InputModel, ResultType> - function performing an effect and returning an observable with the result
- * @template InputType - specifies the input type for the effect
- * @template ResultType - specifies the result type for the effect
- * @property {InputType} input - the effect input
- * @property {Store} store - the Store instance that will be passed to the function (e.g. to inject some service dependency).
- * @property {InputType | undefined} previousInput - the input of the previous function invocation, or undefined
- * @property {ResultType | undefined} previousResult - the result of the previous function invocation, or undefined
- */
-export type Effect<InputType, ResultType> = (
-  input: InputType,
-  store: Store,
-  previousInput?: InputType,
-  previousResult?: ResultType,
-) => Observable<ResultType>;
+import { BehaviorId, EffectId, EventId, getBehaviorId, getEventId, NO_VALUE } from './store-utils';
 
 /**
  * This specifies the type for the lazy behavior produced by EffectSignals.
@@ -135,14 +113,14 @@ export type EffectSignals<InputType, ResultType> = Signals<
  * @typedef {object} EffectConfiguration<InputType, ResultType>
  * @template InputType - specifies the input type for the effect
  * @template ResultType - specifies the result type of the effect
- * @property {EffectType<InputType, ResultType>} effect - the specific EffectType function to be used (mandatory).
+ * @property {EffectId<InputType, ResultType>} effectId - the id for the specific Effect function to be used (mandatory).
  * @property {function | undefined} effectInputEquals - optional function used to determine whether a new input equals the previous one. Defaults to strict equals (a === b)
  * @property {boolean | undefined} withTrigger - optional bool that defaults to false. If true, the effect will only be performed in case a trigger event is received (else, whenever the input changes).
  * @property {function | undefined} initialResultGetter - optional function that defaults to undefined. If not undefined, it will be used to determine an initial result for the result behavior.
  * @property {number | undefined} effectDebounceTime - optional number that defaults to undefined. If a number > 0 is specified, then it will be used as milliseconds to debounce new input to the effect (please DON't debounce the input signal yourself, because that would debounce before trigger and/or input equals).
  */
 export type EffectConfiguration<InputType, ResultType> = {
-  effect: Effect<InputType, ResultType>;
+  effectId: EffectId<InputType, ResultType>;
   effectInputEquals?: (a: InputType, b: InputType) => boolean;
   withTrigger?: boolean;
   initialResultGetter?: () => ResultType;
@@ -179,18 +157,17 @@ const getOutputSignalIds = <InputType, ResultType>(): EffectOutputSignals<
 const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
   config: EffectConfiguration<IT, RT>,
 ): EffectSignals<IT, RT> => {
-  const internalResultEffect = (
-    input: IT,
-    store: Store,
-    previousInput?: IT,
-    previousResult?: RT,
-  ) => {
-    try {
-      return config.effect(input, store, previousInput, previousResult).pipe(take(1));
-    } catch (error) {
-      return throwError(() => error);
-    }
-  };
+  const internalResultEffect = (input: IT, store: Store, previousInput?: IT, previousResult?: RT) =>
+    store.getEffect(config.effectId).pipe(
+      take(1),
+      switchMap(effect => {
+        try {
+          return effect(input, store, previousInput, previousResult).pipe(take(1));
+        } catch (error) {
+          return throwError(() => error);
+        }
+      }),
+    );
 
   const effectInputEquals = config.effectInputEquals ?? ((a, b) => a === b);
 

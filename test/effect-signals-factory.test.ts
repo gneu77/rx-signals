@@ -2,31 +2,32 @@ import { Observable, of, Subject } from 'rxjs';
 import { delay, filter, take } from 'rxjs/operators';
 import {
   CombinedEffectResult,
-  Effect,
   EffectInputSignals,
   EffectOutputSignals,
   EffectSignalsFactory,
   getEffectSignalsFactory,
 } from '../src/effect-signals-factory';
-import { Store } from '../src/store';
+import { Effect, Store } from '../src/store';
 import { getBehaviorId } from '../src/store-utils';
+import { getEffectId } from './../src/store-utils';
 import { expectSequence, withSubscription } from './test.utils';
 
 describe('effect signals factory', () => {
-  interface InputModel {
-    readonly searchString: string;
-    readonly page: number;
-  }
+  type InputModel = {
+    searchString: string;
+    page: number;
+  };
 
-  interface ResultModel {
-    readonly results: string[];
-    readonly totalResults: number;
-  }
+  type ResultModel = {
+    results: string[];
+    totalResults: number;
+  };
 
   const inputStateId = getBehaviorId<InputModel>();
   const inputSubject = new Subject<InputModel>();
   let effectCalled = 0;
 
+  const resultEffectId = getEffectId<InputModel, ResultModel>();
   const resultEffect: Effect<InputModel, ResultModel> = (
     input: InputModel,
     _,
@@ -58,6 +59,7 @@ describe('effect signals factory', () => {
   beforeEach(() => {
     effectCalled = 0;
     store = new Store();
+    store.addEffect(resultEffectId, resultEffect);
     store.addNonLazyBehavior(inputStateId, inputSubject.asObservable());
   });
 
@@ -76,7 +78,7 @@ describe('effect signals factory', () => {
       beforeEach(() => {
         const factoryResult = factory
           .extendSetup((store, inIds) => store.connect(inputStateId, inIds.input))
-          .build({ effect: resultEffect });
+          .build({ effectId: resultEffectId });
         inIds = factoryResult.input;
         outIds = factoryResult.output;
         factoryResult.setup(store);
@@ -521,7 +523,7 @@ describe('effect signals factory', () => {
       beforeEach(() => {
         const factoryResult = factory
           .extendSetup((store, inIds) => store.connect(inputStateId, inIds.input))
-          .build({ effect: resultEffect, withTrigger: true });
+          .build({ effectId: resultEffectId, withTrigger: true });
         inIds = factoryResult.input;
         outIds = factoryResult.output;
         factoryResult.setup(store);
@@ -599,7 +601,7 @@ describe('effect signals factory', () => {
         const factoryResult = factory
           .extendSetup((store, inIds) => store.connect(inputStateId, inIds.input))
           .build({
-            effect: resultEffect,
+            effectId: resultEffectId,
             initialResultGetter: () => ({
               results: [],
               totalResults: 0,
@@ -662,7 +664,7 @@ describe('effect signals factory', () => {
         const factoryResult = factory
           .extendSetup((store, inIds) => store.connect(inputStateId, inIds.input))
           .build({
-            effect: resultEffect,
+            effectId: resultEffectId,
             effectDebounceTime: 50,
           });
         outIds = factoryResult.output;
@@ -734,7 +736,7 @@ describe('effect signals factory', () => {
         const factoryResult = factory
           .extendSetup((store, inIds) => store.connect(inputStateId, inIds.input))
           .build({
-            effect: resultEffect,
+            effectId: resultEffectId,
             effectInputEquals: (a, b) => a.searchString === b.searchString,
           });
         outIds = factoryResult.output;

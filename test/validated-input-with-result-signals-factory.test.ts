@@ -1,9 +1,8 @@
 import { Observable, of, Subject } from 'rxjs';
 import { delay } from 'rxjs/operators';
-import { Effect } from '../src/effect-signals-factory';
 import { Signals } from '../src/signals-factory';
-import { Store } from '../src/store';
-import { getBehaviorId } from './../src/store-utils';
+import { Effect, Store } from '../src/store';
+import { getBehaviorId, getEffectId } from './../src/store-utils';
 import {
   getValidatedInputWithResultSignalsFactory,
   ValidatedInputWithResult,
@@ -14,21 +13,22 @@ import {
 import { expectSequence, withSubscription } from './test.utils';
 
 describe('validated input with result signals factory', () => {
-  interface InputModel {
-    readonly searchString: string;
-    readonly page: number;
-  }
+  type InputModel = {
+    searchString: string;
+    page: number;
+  };
 
   type ValidationResult = string | null;
 
-  interface ResultModel {
-    readonly results: string[];
-    readonly totalResults: number;
-  }
+  type ResultModel = {
+    results: string[];
+    totalResults: number;
+  };
 
   const inputStateId = getBehaviorId<InputModel>();
   const inputSubject = new Subject<InputModel>();
 
+  const validationEffectId = getEffectId<InputModel, ValidationResult>();
   const validationEffect: Effect<InputModel, ValidationResult> = (input: InputModel) => {
     if (input.searchString === 'throw') {
       throw 'unhandled';
@@ -36,6 +36,7 @@ describe('validated input with result signals factory', () => {
     return of(input.searchString === 'invalid' ? 'nope' : null).pipe(delay(10));
   };
 
+  const resultEffectId = getEffectId<InputModel, ResultModel>();
   const resultEffect: Effect<InputModel, ResultModel> = (input: InputModel) => {
     if (input.searchString === 'throw') {
       throw 'unhandled';
@@ -56,6 +57,8 @@ describe('validated input with result signals factory', () => {
 
   beforeEach(() => {
     store = new Store();
+    store.addEffect(validationEffectId, validationEffect);
+    store.addEffect(resultEffectId, resultEffect);
     store.addNonLazyBehavior(inputStateId, inputSubject.asObservable());
   });
 
@@ -72,8 +75,8 @@ describe('validated input with result signals factory', () => {
         store.connect(inputStateId, inIds.input);
       });
       const signals = factory.build({
-        resultEffect,
-        validationEffect,
+        resultEffectId,
+        validationEffectId,
       });
       signals.setup(store);
       observable = store.getBehavior(signals.output.combined);
@@ -183,8 +186,8 @@ describe('validated input with result signals factory', () => {
         ResultModel
       >().extendSetup((store, inIds) => store.connect(inputStateId, inIds.input));
       signals = factory.build({
-        resultEffect,
-        validationEffect,
+        resultEffectId,
+        validationEffectId,
         withResultTrigger: true,
       });
       signals.setup(store);
@@ -428,8 +431,8 @@ describe('validated input with result signals factory', () => {
         ResultModel
       >().extendSetup((store, inIds) => store.connect(inputStateId, inIds.input));
       const signals = factory.build({
-        resultEffect,
-        validationEffect,
+        resultEffectId,
+        validationEffectId,
         initialResultGetter: () => ({
           results: [],
           totalResults: 0,
@@ -514,8 +517,8 @@ describe('validated input with result signals factory', () => {
         ResultModel
       >().extendSetup((store, inIds) => store.connect(inputStateId, inIds.input));
       const signals = factory.build({
-        resultEffect,
-        validationEffect,
+        resultEffectId,
+        validationEffectId,
         resultEffectInputEquals: (a, b) => a.searchString === b.searchString,
       });
       signals.setup(store);
