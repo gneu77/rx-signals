@@ -501,7 +501,7 @@ The next section presents a signals factory type that allows for a better, gener
 
 ## Reusability and Composition via SignalsFactory <a name="signals-factory-type"></a>
 
-The previous section introduced the `Signals` type as means of encapsulation/isolation for the creation of IDs and setup of corresponding signals in the `Store` (remember that `Signals` can be interpreted as reactive counterpart of classes).
+The previous section introduced the `Signals` type as means of encapsulation/isolation of signal-IDs and setup of corresponding signals in the `Store` (remember that `Signals` can be interpreted as reactive counterpart of classes).
 The given example even used factory functions to produce `Signals` and a new factory function was composed from the two initial factory functions.
 For more complex Signals, it might be neccessary to configure this kind of factory.
 Therefore, _rx-signals_ formalizes such configurable factory as `SignalsBuild` type:
@@ -517,30 +517,29 @@ type Configuration = Record<string, any>;
 ```
 
 As mentioned at the end of the previous section, the manual composition of such `SignalsBuild` functions is error-prone and needs a lot of boilerplate code.
-To generalize factory composition, _rx-signals_ features the `SignalsFactory` class as a wrapper for `SignalsBuild`:
+To generalize factory composition, _rx-signals_ features the `SignalsFactory` class as a wrapper for `SignalsBuild`.
+The following snippet just shows a part of the SignalsFactory methods.
+We will encounter more methods later and you can consult [the corresponding API-documentation](https://rawcdn.githack.com/gneu77/rx-signals/master/docs/tsdoc/classes/SignalsFactory.html) for details of all methods.
 ```typescript
+// This snippet only show a small part of the full API:
 class SignalsFactory<IN extends NameToSignalId, OUT extends NameToSignalId, CONFIG extends Configuration> {
   constructor(readonly build: SignalsBuild<IN, OUT, CONFIG>) {}
   
-  bind<IN2 extends NameToSignalId, OUT2 extends NameToSignalId, CONFIG2 extends Configuration>(mapper: SignalsMapToFactory<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>): ComposedFactory<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>;
-
-  fmap<IN2 extends NameToSignalId, OUT2 extends NameToSignalId>(mapper: SignalsMapper<IN, OUT, IN2, OUT2, CONFIG>): SignalsFactory<IN2, OUT2, CONFIG>;
+  compose<IN2 extends NameToSignalId, OUT2 extends NameToSignalId, CONFIG2 extends Configuration>(
+    factory2: SignalsFactory<IN2, OUT2, CONFIG2>,
+  ): ComposedFactory<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>
 
   extendSetup(extend: ExtendSetup<IN, OUT, CONFIG>): SignalsFactory<IN, OUT, CONFIG>;
 
   mapConfig<CONFIG2 extends Configuration>(mapper: MapConfig<CONFIG, CONFIG2>): SignalsFactory<IN, OUT, CONFIG2>;
 
   mapInput<IN2 extends NameToSignalId>(mapper: MapSignalIds<IN, IN2>): SignalsFactory<IN2, OUT, CONFIG>;
-  addOrReplaceInputId<K extends string, ID extends SignalId<any>>(name: K, id: ID): SignalsFactory<AddOrReplaceId<IN, K, ID>, OUT, CONFIG>;
-  removeInputId<K extends keyof IN>(name: K): SignalsFactory<Omit<IN, K>, OUT, CONFIG>;
-
+  
   mapOutput<OUT2 extends NameToSignalId>(mapper: MapSignalIds<OUT, OUT2>): SignalsFactory<IN, OUT2, CONFIG>;
-  addOrReplaceOutputId<K extends string, ID extends SignalId<any>>(name: K, id: ID): SignalsFactory<IN, AddOrReplaceId<OUT, K, ID>, CONFIG>
-  removeOutputId<K extends keyof OUT>(name: K): SignalsFactory<IN, Omit<OUT, K>, CONFIG>
 }
 ```
 
-Like `Signals`, also `SignalsFactory` instances are immutable, hence all methods return a new `SignalsFactory` instance.
+Like `Signals`, also `SignalsFactory` instances are immutable, hence all methods return a new `SignalsFactory` instance (otherwise, it would not enable composition in a re-usable way)!
 
 Before coming to a more real-world example, let's generalize the counter-sum-example from the previous section by turning the 'custom' signals factories into a `SignalsFactory`.
 Based on our definitions for `getCounterSignals` and `getSumSignals`, we can turn these into `SignalsFactories` as follows:
@@ -553,8 +552,8 @@ Now, composition of these factories is simple:
 ```typescript
 const getCounterWithSumSignalsFactory: SignalsFactory<ComposedInput, SumOutput> = 
   counterFactory
-    .bind(() => counterFactory)
-    .bind(() => sumFactory)
+    .compose(counterFactory)
+    .compose(sumFactory)
     .extendSetup((store, input, output) => {
       store.connect(output.conflicts1.counter, input.inputA);
       store.connect(output.conflicts2.counter, input.inputB);
@@ -568,21 +567,13 @@ const getCounterWithSumSignalsFactory: SignalsFactory<ComposedInput, SumOutput> 
     }));
 ```
 
-To understand the `bind` method, let's have a look at the signature again:
+To understand the `compose` method, let's have a look at the signature again:
 ```typescript
-SignalsFactory<IN, OUT, CONFIG>::bind<IN2 extends NameToSignalId, OUT2 extends NameToSignalId, CONFIG2 extends Configuration>(
-  mapper: SignalsMapToFactory<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>,
+compose<IN2 extends NameToSignalId, OUT2 extends NameToSignalId, CONFIG2 extends Configuration>(
+  factory2: SignalsFactory<IN2, OUT2, CONFIG2>,
 ): ComposedFactory<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>
 
 // with:
-type SignalsMapToFactory<
-  IN1 extends NameToSignalId,
-  OUT1 extends NameToSignalId,
-  CONFIG1 extends Configuration,
-  IN2 extends NameToSignalId,
-  OUT2 extends NameToSignalId,
-  CONFIG2 extends Configuration,
-> = (signals: Signals<IN1, OUT1>, config: CONFIG1) => SignalsFactory<IN2, OUT2, CONFIG2>;
 type ComposedFactory<
   IN1 extends NameToSignalId,
   OUT1 extends NameToSignalId,
@@ -593,15 +584,11 @@ type ComposedFactory<
 > = SignalsFactory<Merged<IN1, IN2>, Merged<OUT1, OUT2>, MergedConfiguration<CONFIG1, CONFIG2>>;
 ```
 
-Phew, seems complicated, but this gives us all the type safety to catch errors at compile-time instead of runtime and to make working with these methods in your IDE simple.
+So the `compose` method composes two factories by taking a second `SignalsFactory<IN2, OUT2, CONFIG2>` and returning a new `SignalsFactory<Merged<IN1, IN2>, Merged<OUT1, OUT2>, MergedConfiguration<CONFIG1, CONFIG2>>`.
+Simply put, the merge of input and output `NameToSignalId` works in a way that conflicting names are put under properties _conflicts1_ and _conflicts2_, as you can see in the connect, or mapInput/mapOutput method calls of our previous composition example.
+For details of the merge-logic, please have a look at [the corresponding API-documentation](https://rawcdn.githack.com/gneu77/rx-signals/master/docs/tsdoc/modules.html#Merged)
 
-So the `bind` method composes two factories by taking a function parameter that maps from the `Signals<IN, OUT>` produced by the first (source) factory to a second `SignalsFactory<IN2, OUT2, CONFIG2>` (in the given example, the `Signals` argument is not used).
-
-The result of `bind` is a third factory `SignalsFactory<Merged<IN1, IN2>, Merged<OUT1, OUT2>, MergedConfiguration<CONFIG1, CONFIG2>>`.
-Simply put, the merge of input and output `NameToSignalId` works in a way that conflicting names are put under properties _conflicts1_ and _conflicts2_, as you can see in the connect, or mapInput/mapOutput method calls.
-For details of the merge-logic, please have a look at [the corresponding API-documentation](https://rawcdn.githack.com/gneu77/rx-signals/master/docs/tsdoc/index.html)
-
-The `extendSetup` method returns a new factory where the `SignalsBuild` performs additional code in its setup method.
+The `extendSetup` method returns a new factory where the wrapped `SignalsBuild` performs additional code in its setup method.
 The `mapInput` and `mapOutput` methods can be used to change the results from `Merged<IN1, IN2>` and `Merged<OUT1, OUT2>` to your needs.
 In a similar way, if your factory has any configuration, you could use the `mapConfig` method, to change the result of `MergedConfiguration<CONFIG1, CONFIG2>`.
 
@@ -753,8 +740,8 @@ const getFilteredSortedPagedQuerySignalsFactory = <FilterType>(): SignalsFactory
   new SignalsFactory<ModelInput<FilterType>, ModelOutput<FilterType>, ModelConfig<FilterType>>(
     getModelSignals,
   )
-    .bind(() => sortingSignalsFactory)
-    .bind(() => pagingSignalsFactory)
+    .compose(sortingSignalsFactory)
+    .compose(pagingSignalsFactory)
     .extendSetup((store, input) => {
       store.addEventSource(
         Symbol('resetPagingEffect'),
@@ -773,7 +760,7 @@ const getFilteredSortedPagedQuerySignalsFactory = <FilterType>(): SignalsFactory
 
 In addition to just combining all signals, there is additional logic in the `extendSetup` block, adding an effect to reset the page (of the PagingParameter) to `0` whenever the filter or the sorting changes.
 
-For the _EffectFactory_, we're using the `EffectSignalsFactory` that comes with _rx-signals_ and that will be explained in more detail in the next sub-section of this document.
+Finally, to compose our _EffectFactory_, we're using the `EffectSignalsFactory` that comes with _rx-signals_ and that will be explained in more detail in the next sub-section of this document.
 
 Here is a generic function producing a _QueryWithResultFactory_:
 ```typescript
@@ -783,9 +770,7 @@ type QueryWithResultConfig<FilterType, ResultType> = {
 };
 const getQueryWithResultFactory = <FilterType, ResultType>() =>
   getFilteredSortedPagedQuerySignalsFactory<FilterType>()
-    .bind(() =>
-      getEffectSignalsFactory<[FilterType, SortParameter, PagingParameter], ResultType>(),
-    )
+    .compose(getEffectSignalsFactory<[FilterType, SortParameter, PagingParameter], ResultType>())
     .extendSetup((store, input, output) => {
       store.connectObservable(
         combineLatest([
@@ -809,7 +794,7 @@ const getQueryWithResultFactory = <FilterType, ResultType>() =>
 
 Here we used `mapConfig` for the first time. It's argument is a function mapping from target-configuration back to the `MergedConfiguration` of the source-factory (`mapInput and mapOutput` work the other way around, mapping from source-input/output to target-input/output).
 
-All factories created so far are generic and can be reused or composed as necessary.
+All factories created so far are generic and can be re-used or composed as necessary.
 A concrete usage could be like this:
 ```typescript
 type MyFilter = { firstName: string; lastName: string };
@@ -842,8 +827,8 @@ Nevertheless, it is of utmost importance, to treat all the major building blocks
 * Pure functions:
   * SignalsBuilder
   * StateReducer
-  * SignalsMapToFactory
-  * SignalsMapper
+  * BindMapper
+  * BuildMapper
   * ExtendSetup
   * MapSignalIds
   * MapConfig

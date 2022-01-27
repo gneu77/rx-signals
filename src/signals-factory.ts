@@ -34,8 +34,10 @@ export type SetupWithStore = {
 };
 
 /**
- * This type defines an object that encapsulates SignalIds and SetupWithStore.
+ * This type defines an immutable object that encapsulates SignalIds and SetupWithStore.
  * The setup method creates all the necessary wireing to configure the store for the SignalIds.
+ * The Signals type represents the reactive counterpart to a class (SetupWithStore being the couterpart to a
+ * class-constructor and IN/OUT-NameToSignalId being the counterpart to a class-interface).
  *
  * @typedef {object} Signals<IN, OUT> - composition of SetupWithStore and SignalIds<IN, OUT>
  * @template IN - concrete NameToSignalIds defining input signal-ids. SetupWithStore does NOT configure corresponding signals in the store (hence this must be done by the user of this Signals object, e.g. via connect)
