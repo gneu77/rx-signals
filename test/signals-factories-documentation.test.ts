@@ -226,12 +226,15 @@ describe('signals factories documentation', () => {
       const sumFactory = new SignalsFactory(getSumSignals);
       const getCounterWithSumSignalsFactory: SignalsFactory<ComposedInput, SumOutput> =
         counterFactory
-          .bind(() => counterFactory)
-          .bind(() => sumFactory)
+          .compose(counterFactory)
+          .compose(sumFactory)
           .extendSetup((store, input, output) => {
             store.connect(output.conflicts1.counter, input.inputA);
-            store.connect(output.conflicts2.counter, input.inputB);
           })
+          .connect(
+            (store, output) => store.getBehavior(output.conflicts2.counter),
+            input => input.inputB,
+          )
           .mapInput(ids => ({
             inputA: ids.conflicts1,
             inputB: ids.conflicts2,
@@ -379,8 +382,8 @@ describe('signals factories documentation', () => {
       new SignalsFactory<ModelInput<FilterType>, ModelOutput<FilterType>, ModelConfig<FilterType>>(
         getModelSignals,
       )
-        .bind(() => sortingSignalsFactory)
-        .bind(() => pagingSignalsFactory)
+        .compose(sortingSignalsFactory)
+        .compose(pagingSignalsFactory)
         .extendSetup((store, input) => {
           store.addEventSource(
             Symbol('resetPagingEffect'),
@@ -402,7 +405,7 @@ describe('signals factories documentation', () => {
     };
     const getQueryWithResultFactory = <FilterType, ResultType>() =>
       getFilteredSortedPagedQuerySignalsFactory<FilterType>()
-        .bind(() =>
+        .compose(
           getEffectSignalsFactory<[FilterType, SortParameter, PagingParameter], ResultType>(),
         )
         .extendSetup((store, input, output) => {

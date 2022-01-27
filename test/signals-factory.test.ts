@@ -111,5 +111,27 @@ describe('SignalsFactory', () => {
       store.dispatch(myEvent, 7);
       await sequence;
     });
+
+    it('should rename a single input signal id', async () => {
+      const myEvent = getEventId<number>();
+      const signals = baseFactory.renameInputId('inputA', 'test').build({});
+      const sequence = expectSequence(store.getBehavior(signals.input.test), [5, 7]);
+      store.connect(myEvent, signals.input.test);
+      store.dispatch(myEvent, 5);
+      store.dispatch(myEvent, 7);
+      await sequence;
+    });
+
+    it('should rename a single output signal id', async () => {
+      const myEvent = getEventId<number>();
+      const signals = baseFactory.renameOutputId('result', 'test').build({});
+      const sequence = expectSequence(store.getBehavior(signals.output.test), [10, 12]);
+      store.connect(myEvent, signals.input.inputA);
+      store.connect(myEvent, signals.input.inputB);
+      signals.setup(store);
+      store.dispatch(myEvent, 5);
+      store.dispatch(myEvent, 7);
+      await sequence;
+    });
   });
 });

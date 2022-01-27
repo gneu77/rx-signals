@@ -136,7 +136,7 @@ export const getValidatedInputWithResultSignalsFactory = <
   ResultType,
 >(): ValidatedInputWithResultFactory<InputType, ValidationType, ResultType> =>
   getEffectSignalsFactory<InputType, ValidationType>()
-    .bind(() => getEffectSignalsFactory<InputType, ResultType>())
+    .compose(getEffectSignalsFactory<InputType, ResultType>())
     .mapConfig((config: ValidatedInputWithResultConfig<InputType, ValidationType, ResultType>) => ({
       c1: {
         effectId: config.validationEffectId,
@@ -159,33 +159,29 @@ export const getValidatedInputWithResultSignalsFactory = <
         true,
       );
     })
-    .fmap((signals, config) => {
-      const combined =
-        getBehaviorId<ValidatedInputWithResult<InputType, ValidationType, ResultType>>();
-      const setup = (store: Store) => {
-        signals.setup(store);
-        setupCombinedBehavior(
-          store,
-          signals.output,
-          combined,
-          config.isValidationResultValid ?? (validationResult => validationResult === null),
-          config.initialResultGetter,
-        );
-      };
-      return {
-        setup,
-        input: {
-          input: signals.input.conflicts1.input,
-          validationInvalidate: signals.input.conflicts1.invalidate,
-          resultInvalidate: signals.input.conflicts2.invalidate,
-          resultTrigger: signals.input.conflicts2.trigger,
-        },
-        output: {
-          combined,
-          validationErrors: signals.output.conflicts1.errors,
-          validationSuccesses: signals.output.conflicts1.successes,
-          resultErrors: signals.output.conflicts2.errors,
-          resultSuccesses: signals.output.conflicts2.successes,
-        },
-      };
-    });
+    .addOrReplaceOutputId(
+      'combined',
+      getBehaviorId<ValidatedInputWithResult<InputType, ValidationType, ResultType>>(),
+    )
+    .extendSetup((store, _, output, config) => {
+      setupCombinedBehavior(
+        store,
+        output,
+        output.combined,
+        config.isValidationResultValid ?? (validationResult => validationResult === null),
+        config.initialResultGetter,
+      );
+    })
+    .mapInput(input => ({
+      input: input.conflicts1.input,
+      validationInvalidate: input.conflicts1.invalidate,
+      resultInvalidate: input.conflicts2.invalidate,
+      resultTrigger: input.conflicts2.trigger,
+    }))
+    .mapOutput(output => ({
+      combined: output.combined,
+      validationErrors: output.conflicts1.errors,
+      validationSuccesses: output.conflicts1.successes,
+      resultErrors: output.conflicts2.errors,
+      resultSuccesses: output.conflicts2.successes,
+    }));
