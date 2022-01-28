@@ -194,3 +194,17 @@ export type MergedConfiguration<
       c1: T1;
       c2: T2;
     };
+
+/**
+ * This type gives all keys of a Record T that map on a type VT.
+ */
+export type KeysOfValueType<T extends Record<string, any>, VT> = {
+  [K in keyof T]: T[K] extends VT ? K : never;
+}[keyof T];
+
+/**
+ * This type represent a subset of Record T that contains only entries with a value that extends VT.
+ */
+export type WithValueType<T extends Record<string, any>, VT> = {
+  [K in KeysOfValueType<T, VT>]: T[K];
+};

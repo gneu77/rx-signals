@@ -231,7 +231,7 @@ describe('signals factories documentation', () => {
           .extendSetup((store, input, output) => {
             store.connect(output.conflicts1.counter, input.inputA);
           })
-          .connect(
+          .connectObservable(
             (store, output) => store.getBehavior(output.conflicts2.counter),
             input => input.inputB,
           )

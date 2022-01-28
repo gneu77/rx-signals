@@ -2,7 +2,7 @@ import { combineLatest, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Store } from '../src/store';
 import { SignalsFactory } from './../src/signals-factory';
-import { BehaviorId, getBehaviorId, getEventId } from './../src/store-utils';
+import { BehaviorId, EventId, getBehaviorId, getEventId } from './../src/store-utils';
 import { expectSequence } from './test.utils';
 
 describe('SignalsFactory', () => {
@@ -131,6 +131,64 @@ describe('SignalsFactory', () => {
       signals.setup(store);
       store.dispatch(myEvent, 5);
       store.dispatch(myEvent, 7);
+      await sequence;
+    });
+  });
+
+  describe('composition', () => {
+    type TripledInput = {
+      tripleInput: BehaviorId<number>;
+      someNotUsedFakeInput: BehaviorId<string>;
+      someOtherNotUsedFakeInput: EventId<number>;
+    };
+    type TripledOutput = {
+      tripledResult: BehaviorId<number>;
+      subIds: {
+        someNotUsedFakeOutput: BehaviorId<number>;
+      };
+    };
+    type TripledFactory = SignalsFactory<TripledInput, TripledOutput, {}>;
+
+    const tripledFactory: TripledFactory = new SignalsFactory<TripledInput, TripledOutput, {}>(
+      () => {
+        const tripleInput = getBehaviorId<number>();
+        const someNotUsedFakeInput = getBehaviorId<string>();
+        const someOtherNotUsedFakeInput = getEventId<number>();
+        const someNotUsedFakeOutput = getBehaviorId<number>();
+        const tripledResult = getBehaviorId<number>();
+        return {
+          input: {
+            tripleInput,
+            someNotUsedFakeInput,
+            someOtherNotUsedFakeInput,
+          },
+          output: {
+            tripledResult,
+            subIds: {
+              someNotUsedFakeOutput,
+            },
+          },
+          setup: store => {
+            store.addLazyBehavior(
+              tripledResult,
+              store.getBehavior(tripleInput).pipe(map(n => 3 * n)),
+            );
+          },
+        };
+      },
+    );
+
+    it('should compose and connect output to input', async () => {
+      const signals = baseFactory
+        .compose(tripledFactory)
+        .connect('result', 'tripleInput')
+        // .connect('result', 'someNotUsedFakeInput') // here the compiler should complain!
+        .connect('result', 'someOtherNotUsedFakeInput') // does nothing, but must be OK for the compiler
+        .build({});
+      signals.setup(store);
+      const sequence = expectSequence(store.getBehavior(signals.output.tripledResult), [15, 21, 9]);
+      store.addLazyBehavior(signals.input.inputA, of(4));
+      store.addLazyBehavior(signals.input.inputB, of(1, 3, -1));
       await sequence;
     });
   });

@@ -380,7 +380,7 @@ But of course, we still want to be able to somehow encapsulate certain behaviors
 This leads to the following requirements:
 * The creation of `SignalId`s and the setup of the store (using the `SignalId`s) must be separated somehow.
   * Because all `SignalId`s used in wireing must be available, when the setup starts.
-* It must be possible to 'bundle' the setup of certain behaviors and event-sources with the creation of corresponding `SignalId`s
+* It must be possible to 'bundle' the setup of certain behaviors and event-sources with the corresponding `SignalId`s
 
 Therefore, _rx-signals_ defines the `Signals` type as follows:
 ```typescript
@@ -395,8 +395,11 @@ type SignalIds<IN extends NameToSignalId, OUT extends NameToSignalId> = {
 type SetupWithStore = { readonly setup: (store: Store) => void; };
 ```
 
-:warning: Similar to `const x: Observable<T>` being the reactive counterpart of `let x: T`, you could see the `Signals` type as reactive counterpart of a class.
-Following this analogy, `SetupWithStore` is the reactive counterpart of a class-constructor and in/out-`NameToSignalId` is the reactive counterpart of a class-interface.
+The setup function must only add behavior- and/or event-sources to the store for output-signal-ids and signal-ids that are created by the setup function itself.
+In contrast, it must not add any sources to the store using one of the input-ids!
+
+:warning: Similar to `const x: Observable<T>` being the reactive counterpart of `let x: T`, you could see the `Signals` type as reactive counterpart of a class-instance.
+Following this analogy, the in/out-`NameToSignalId` is the reactive counterpart of a class-interface.
 
 Let's see an example, where we encapsulate the creation of signals for counters:
 ```typescript
@@ -491,17 +494,17 @@ const getCounterWithSumSignals: () => Signals<ComposedInput, SumOutput> = () => 
 
 (Again, please note that the order in which the setup functions are called is irrelevant.)
 
-Also we learned about a new store method `connect` which is a shorter convenience method to connect an event or behavior to another event or behavior based on IDs (under the hood a corresponding event-source or behavior for the target id will be added to the store).
+Also we learned about a new store method `connect` which is a shorter convenience method to connect an event or behavior to another event or behavior based on IDs (under the hood a corresponding event-source or behavior for the target id will be added to the store), hence to connect some output-signal to some input-signal.
 
 The above way to compose a signals factory from two other factories might be OK in this trivial example.
 But as soon as things get more complex, this kind of 'manual' composition becomes inflexible, verbose and error-prone.
-E.g. it's easy to forget calling the setup of one of the signals.
+E.g. it's easy to forget calling the setup function of one of the signals being composed.
 And even if you don't forget it, it's still boilerplate.
 The next section presents a signals factory type that allows for a better, generalized composition.
 
 ## Reusability and Composition via SignalsFactory <a name="signals-factory-type"></a>
 
-The previous section introduced the `Signals` type as means of encapsulation/isolation of signal-IDs and setup of corresponding signals in the `Store` (remember that `Signals` can be interpreted as reactive counterpart of classes).
+The previous section introduced the `Signals` type as means of encapsulation/isolation of signal-ids and setup of corresponding signals in the `Store`.
 The given example even used factory functions to produce `Signals` and a new factory function was composed from the two initial factory functions.
 For more complex Signals, it might be neccessary to configure this kind of factory.
 Therefore, _rx-signals_ formalizes such configurable factory as `SignalsBuild` type:
@@ -515,6 +518,8 @@ type SignalsBuild<
 // with:
 type Configuration = Record<string, any>;
 ```
+
+:warning: Back to our analogy of the `Signals` type being the reactive counterpart of a class-instance, a `SignalsBuild` is the reactive counterpart of a class/class-constructor.
 
 As mentioned at the end of the previous section, the manual composition of such `SignalsBuild` functions is error-prone and needs a lot of boilerplate code.
 To generalize factory composition, _rx-signals_ features the `SignalsFactory` class as a wrapper for `SignalsBuild`.
@@ -591,6 +596,7 @@ For details of the merge-logic, please have a look at [the corresponding API-doc
 The `extendSetup` method returns a new factory where the wrapped `SignalsBuild` performs additional code in its setup method.
 The `mapInput` and `mapOutput` methods can be used to change the results from `Merged<IN1, IN2>` and `Merged<OUT1, OUT2>` to your needs.
 In a similar way, if your factory has any configuration, you could use the `mapConfig` method, to change the result of `MergedConfiguration<CONFIG1, CONFIG2>`.
+(The `SignalsFactory` has also other, more simple and more expressive methods to perform output-input connects, while `extendSetup` is more general and allows for other additional setup.)
 
 Now let's build something that is at least a bit closer to real-world requirements.
 
@@ -814,7 +820,7 @@ const myFactory = getQueryWithResultFactory<MyFilter, string[]>().build({
 ### The EffectSignalsFactory <a name="effect-signals-factory"></a>
 
 Unfortunately, there's no way to tell Typescript that a function must be pure.
-With respect to immutability, you could at least wrap all data types `T` with `Readonly<T>`, though version 3.0 of _rx-signals_ got rid of this, because it makes solving type-errors harder, due to current limitations in how Typescript reports type-conflicts.
+With respect to immutability, you could at least wrap all data types `T` with `Readonly<T>`, though I advise against this, because it makes solving type-errors harder, due to current limitations in how Typescript reports type-conflicts.
 
 Nevertheless, it is of utmost importance, to treat all the major building blocks we encountered so far as immutable data or pure functions:
 * Immutable data:
@@ -892,9 +898,63 @@ type EffectConfiguration<InputType, ResultType> = {
   initialResultGetter?: () => ResultType;
   effectDebounceTime?: number;
 };
+type CombinedEffectResult<InputType, ResultType> = {
+  currentInput?: InputType;
+  result?: ResultType;
+  resultInput?: InputType;
+  resultPending: boolean;
+};
 ```
 
-:warning: WIP
+The `EffectSignalsFactory` gives you the following guarantees:
+* The `CombinedEffectResult<InputType, ResultType>` is lazy, hence, as long as it's not subscribed, the corresponding `Effect` will not be triggered (subscribed).
+  * If you don't specify `withTrigger`, or set it to false, the `Effect` corresponding to the given `effectId` will be executed whenever the `currentInput` does not match the `resultInput` (the `effectInputEquals` defaults to strict equals).
+  * If you set `withTrigger` to true, the `Effect` will be triggered only if `currentInput` does not match `resultInput` **AND** `trigger` event is received.
+  * While `currentInput` does not match the `resultInput` and the `Effect` is triggered, `resultPending` will be true.
+  * If `result` has a value, it will always be the value produced by `resultInput`.
+  * `currentInput` will always match the received `input` (so it's possible that `resultInput` differs from `currentInput` and consequently, `resultPending` is true at that time).
+* Unhandled errors in your `Effect` are caught and dispatched as `EffectError<InputType>` event.
+  * Subscribing to this event stream will NOT subscribe the `Effect`.
+  * Therefore, you can subscribe e.g. some generic error-handler without triggering the `Effect`.
+* In addition to the `CombinedEffectResult<InputType, ResultType>` behavior, also an event stream for `EffectSuccess<InputType, ResultType>` is provided.
+  * In contrast to the combined behavior, subscribing to this event stream will NOT subscribe the `Effect`.
+  * Thus, you can use this, if you have some subscriber that is interested in effect-successes, but should not trigger the `Effect`, because it's permanently subscribed (e.g. some listener to close a generic popup upon effect-success.)
+
+You already saw the `EffectSignalsFactory` in use in the last example of the previous section.
+For more details, please consult the [API documentation](https://rawcdn.githack.com/gneu77/rx-signals/master/docs/tsdoc/index.html).
+
+_rx-signals_ even features the `ValidatedInputWithResultFactory` wich is a composition of two `EffectSignalsFactory` to cover the common task of validating an input model and performing a subsequent effect only if the validation passes.
+Here, validation is also an `Effect`, because that way we can treat pure-local validation exacly the same as validation that e.g. must access some backend service.
+
+I skip an example and instead show only the corresponding types:
+```typescript
+type ValidatedInputWithResultInput<InputType> = {
+  input: BehaviorId<InputType>;
+  validationInvalidate: EventId<void>;
+  resultInvalidate: EventId<void>;
+  resultTrigger: EventId<void>;
+};
+type ValidatedInputWithResultOutput<InputType, ValidationType, ResultType> = {
+  combined: BehaviorId<ValidatedInputWithResult<InputType, ValidationType, ResultType>>;
+  validationErrors: EventId<EffectError<InputType>>;
+  validationSuccesses: EventId<EffectSuccess<InputType, ValidationType>>;
+  resultErrors: EventId<EffectError<InputType>>;
+  resultSuccesses: EventId<EffectSuccess<InputType, ResultType>>;
+};
+type ValidatedInputWithResultConfig<InputType, ValidationType, ResultType> = {
+  validationEffectId: EffectId<InputType, ValidationType>;
+  isValidationResultValid?: (validationResult: ValidationType) => boolean;
+  resultEffectId: EffectId<InputType, ResultType>;
+  initialResultGetter?: () => ResultType;
+  withResultTrigger?: boolean;
+  resultEffectInputEquals?: (a: InputType, b: InputType) => boolean;
+};
+type ValidatedInputWithResultFactory<InputType, ValidationType, ResultType> = SignalsFactory<
+  ValidatedInputWithResultInput<InputType>,
+  ValidatedInputWithResultOutput<InputType, ValidationType, ResultType>,
+  ValidatedInputWithResultConfig<InputType, ValidationType, ResultType>
+>;
+```
 
 ## Testing <a name="testing"></a>
 

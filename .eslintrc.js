@@ -5,8 +5,8 @@ module.exports = {
     project: './tsconfig.json',
     extraFileExtensions: ['.txt'],
   },
-  plugins: ['@typescript-eslint', 'jest'],
-  extends: ['airbnb-typescript/base', 'prettier'],
+  plugins: ['import', '@typescript-eslint', 'jest'],
+  extends: ['airbnb-typescript/base', 'prettier', 'plugin:import/recommended'],
   env: {
     'jest/globals': true,
   },

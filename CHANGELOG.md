@@ -6,6 +6,10 @@
 
 - TODO (WIP)
 
+# End of 2.x
+
+Please don't look back at 2.x, but directly head over to 3.x
+
 ## 2.7.0 (2022-01-13)
 
 ### Documentation

@@ -1,8 +1,8 @@
-import { Observable } from 'rxjs';
 /* eslint-disable @typescript-eslint/no-use-before-define */
+import { Observable } from 'rxjs';
 import { Store } from './store';
-import { SignalId } from './store-utils';
-import { Configuration, merge, Merged, MergedConfiguration } from './type-utils';
+import { SignalId, ToSignalId } from './store-utils';
+import { Configuration, merge, Merged, MergedConfiguration, WithValueType } from './type-utils';
 
 /**
  * This type defines an object that maps identifier names to signal ids or nested NameToSignalIds.
@@ -36,8 +36,10 @@ export type SetupWithStore = {
 /**
  * This type defines an immutable object that encapsulates SignalIds and SetupWithStore.
  * The setup method creates all the necessary wireing to configure the store for the SignalIds.
- * The Signals type represents the reactive counterpart to a class (SetupWithStore being the couterpart to a
- * class-constructor and IN/OUT-NameToSignalId being the counterpart to a class-interface).
+ * The Signals type represents the reactive counterpart to a class-instance (the IN/OUT-NameToSignalId
+ * being the counterpart to a class-interface).
+ * SetupWithStore must add sources to the store for all output-ids, but it must NOT any sources for
+ * the input-ids.
  *
  * @typedef {object} Signals<IN, OUT> - composition of SetupWithStore and SignalIds<IN, OUT>
  * @template IN - concrete NameToSignalIds defining input signal-ids. SetupWithStore does NOT configure corresponding signals in the store (hence this must be done by the user of this Signals object, e.g. via connect)
@@ -48,7 +50,9 @@ export type Signals<IN extends NameToSignalId, OUT extends NameToSignalId> = Set
 
 /**
  * This type defines a function taking some config-object as argument and returning a Signals object.
- * It creates input-, as well as output-ids. However, the setup method of the returned Signals only adds signals to the store
+ * It creates input-, as well as output-ids.
+ * It is the reactive counterpart of a class/class-constructor.
+ * However, the setup method of the returned Signals only adds signals to the store
  * for the output-ids. For the input-ids, corresponding signals must be setup somewhere else (e.g. via store.connect).
  * If you have a scenario, where setup needs a SignalId that is NOT created by SignalsBuild, then you can pass it via CONFIG.
  *
@@ -219,8 +223,8 @@ export class SignalsFactory<
     factory2: SignalsFactory<IN2, OUT2, CONFIG2>,
   ): ComposedFactory<IN, OUT, CONFIG, IN2, OUT2, CONFIG2> {
     const build = (config: MergedConfiguration<CONFIG, CONFIG2>) => {
-      const s1 = this.build(config?.c1);
-      const s2 = factory2.build(config?.c2);
+      const s1 = this.build(config?.c1 ?? config);
+      const s2 = factory2.build(config?.c2 ?? config);
       return {
         setup: (store: Store) => {
           s1.setup(store);
@@ -293,22 +297,51 @@ export class SignalsFactory<
   }
 
   /**
-   * The connect method takes three arguments, a function mapping from store+OUT+CONFIG to Observable<T>, a function mapping from
+   * The connect method offers an easy way to connect an output signal to an input signal.
+   * It takes the name of an output-id (a key of OUT) as first argument and the name of an input-id (a key of IN).
+   * It returns a new SignalsFactory of the same type as this SignalsFactory, but with an extended setup logic,
+   * that conncets the Signal<T> that corresponds to the named output-id to a new Signal<T> corresponding to the
+   * named input-id.
+   * The method signature will enforce that both names (keys) map to a SignalId<T> with the same T (though one might be
+   * an EventId<T> and the other a BehaviorId<T>).
+   *
+   * @param {keyof OUT} fromName - a key of OUT, where OUT[fromName] must be of type Signal<T>
+   * @param {keyof IN} toName - a key of IN, where IN[toName] must be of type Signal<T>
+   * @param {boolean} lazy - defaults to true and specifies whether the target signal should be subscribed lazy or not
+   * @returns {SignalsFactory<IN, OUT, CONFIG>} - a new SignalsFactory with extended store setup
+   */
+  connect<KOUT extends keyof WithValueType<OUT, SignalId<any>>>(
+    fromName: KOUT,
+    toName: keyof WithValueType<IN, ToSignalId<OUT[KOUT]>>,
+    lazy: boolean = true,
+  ): SignalsFactory<IN, OUT, CONFIG> {
+    return this.extendSetup((store, input, output) => {
+      const fromId: SignalId<any> = output[fromName] as SignalId<any>;
+      const toId: SignalId<any> = input[toName] as SignalId<any>;
+      store.connect(fromId, toId, lazy);
+    });
+  }
+
+  /**
+   * The connectObservable method is more complex compared to the connect method, but also more flexible.
+   * It takes three arguments, a function mapping from store+OUT+CONFIG to Observable<T>, a function mapping from
    * IN to a concrete SignalId<T> and a boolean defaulting to false.
    * It returns a new SignalsFactory of the same type as this SignalsFactory, but with an extended setup logic, that conncets the
    * observable returned by the first argument, to the SignalId<T>. If the third parameter is set to true, the store will
    * subscribe the observable eagerly.
    *
-   * @param {ExtendSetup<IN, OUT, CONFIG>} extend - a function extending the setup method of the Signals produced by the SignalsBuild of the resulting SignalsFactory
+   * @param {function} sourceGetter - a function mapping from store, output and config to the source observable
+   * @param {function} targetIdGetter - a function mapping from IN to the target signal-id
+   * @param {boolean} lazy - defaults to true and specifies whether the target signal should be subscribed lazy or not
    * @returns {SignalsFactory<IN, OUT, CONFIG>} - a new SignalsFactory with extended store setup
    */
-  connect<T>(
+  connectObservable<T>(
     sourceGetter: (store: Store, output: OUT, config: CONFIG) => Observable<T>,
     targetIdGetter: (input: IN) => SignalId<T>,
-    nonLazyObservable: boolean = false,
+    lazy: boolean = true,
   ): SignalsFactory<IN, OUT, CONFIG> {
     return this.extendSetup((st, ip, op, conf) => {
-      st.connectObservable(sourceGetter(st, op, conf), targetIdGetter(ip), !nonLazyObservable);
+      st.connectObservable(sourceGetter(st, op, conf), targetIdGetter(ip), lazy);
     });
   }
 
