@@ -181,9 +181,9 @@ describe('SignalsFactory', () => {
     it('should compose and connect output to input', async () => {
       const signals = baseFactory
         .compose(tripledFactory)
-        .connect('result', 'tripleInput')
-        // .connect('result', 'someNotUsedFakeInput') // here the compiler should complain!
-        .connect('result', 'someOtherNotUsedFakeInput') // does nothing, but must be OK for the compiler
+        .connect('result', 'tripleInput', false)
+        // .connect('result', 'someNotUsedFakeInput', false) // here the compiler should complain!
+        .connect('result', 'someOtherNotUsedFakeInput', false) // does nothing, but must be OK for the compiler
         .build({});
       signals.setup(store);
       const sequence = expectSequence(store.getBehavior(signals.output.tripledResult), [15, 21, 9]);

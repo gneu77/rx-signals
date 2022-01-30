@@ -776,29 +776,33 @@ type QueryWithResultConfig<FilterType, ResultType> = {
 };
 const getQueryWithResultFactory = <FilterType, ResultType>() =>
   getFilteredSortedPagedQuerySignalsFactory<FilterType>()
-    .compose(getEffectSignalsFactory<[FilterType, SortParameter, PagingParameter], ResultType>())
-    .extendSetup((store, input, output) => {
-      store.connectObservable(
+    .compose(
+      getEffectSignalsFactory<[FilterType, SortParameter, PagingParameter], ResultType>(),
+    )
+    .connectObservable(
+      (store, output) =>
         combineLatest([
           store.getBehavior(output.model),
           store.getBehavior(output.sorting),
           store.getBehavior(output.paging),
         ]),
-        input.input,
-        false,
-      );
-    })
+      'input',
+      false, // we don't want to keep 'input' inthe composed factory
+      true, // as we're connecting behaviors, we can safely subscribe lazily
+    )
     .mapConfig((config: QueryWithResultConfig<FilterType, ResultType>) => ({
       c1: {
         defaultModel: config.defaultFilter,
       },
       c2: {
-        effect: config.resultEffect,
+        effectId: config.resultEffectId,
       },
     }));
 ```
 
 Here we used `mapConfig` for the first time. It's argument is a function mapping from target-configuration back to the `MergedConfiguration` of the source-factory (`mapInput and mapOutput` work the other way around, mapping from source-input/output to target-input/output).
+
+Also with `connectObservable` we used one of three convenience methods that offer an alternative to performing similar connection logic in `extendSetup`.
 
 All factories created so far are generic and can be re-used or composed as necessary.
 A concrete usage could be like this:
@@ -958,4 +962,148 @@ type ValidatedInputWithResultFactory<InputType, ValidationType, ResultType> = Si
 
 ## Testing <a name="testing"></a>
 
-:warning: WIP
+Testing pure functions is simple, due to referential transparency and being free of the need to mock anything.
+In testing, only side-effects need mockup.
+
+In _rx-signals_, a side-effect comes in two forms:
+1. Dispatching an event
+2. Isolated as `Effect`
+
+Mocking the first in testing is done by just calling store.dispatch with whatever mockup-data.
+As any `Effect` is just a function, mocking an `Effect` is simply done by calling store.addEffect(effectId, someMockupFunction).
+Due to reactive-DI, you only need to add corresponding mockup-functions to the store, if you really want to test something that is based on an `Effect` result.
+
+Let's have a look at an example, starting with a single counter factory:
+```typescript
+type CounterInput = {
+  inc: EventId<void>;
+  dec: EventId<void>;
+};
+type CounterOutput = {
+  counter: BehaviorId<number>;
+};
+const counterFactory = new SignalsFactory<CounterInput, CounterOutput, {}>(() => {
+  const counter = getBehaviorId<number>();
+  const inc = getEventId<void>();
+  const dec = getEventId<void>();
+  return {
+    input: { inc, dec },
+    output: { counter },
+    setup: store => {
+      store.addState(counter, 0);
+      store.addReducer(counter, inc, state => state + 1);
+      store.addReducer(counter, dec, state => state - 1);
+    },
+  };
+});
+```
+
+There is no `Effect` we have to mock, so a test is simple dispatching input and expecting corresponding output:
+```typescript
+it('should test the counter factory for correct state after inc and dec', async () => {
+  const store = new Store(); // we need a Store instance
+  const { input, output, setup } = counterFactory.build({}); // building signals
+  setup(store); // calling setup for our signals
+  const sequence = expectSequence(store.getBehavior(output.counter), [0, 1, 2, 1]);
+  store.dispatch(input.inc, null);
+  store.dispatch(input.inc, null);
+  store.dispatch(input.dec, null);
+  await sequence; // expectSequence returns a Promise that gets resolved, if the given Observable
+                  // produced the expected sequence.
+});
+```
+
+Ok, now say we have some signals that are composed of two counter-signals and an effect-signals-factory to produce a random number in the range defined by the two counters:
+```typescript
+type RandomRange = [number, number];
+const randomNumberEffectId = getEffectId<RandomRange, number>();
+const randomNumberEffect: Effect<RandomRange, number> = ([from, to]) => of(from + to * Math.random());
+
+const randomNumberSignals = counterFactory
+  .renameOutputId('counter', 'from') // renaming the counter-behavior from the first counter
+  .compose(counterFactory) // composing with second counter
+  .renameOutputId('counter', 'to') // renaming the counter-behavior from the second counter
+  .compose(getEffectSignalsFactory<RandomRange, number>()) // composing with the random effect
+  .connectObservable( // connecting the two outputs from the counters with the effect input
+    (store, output) =>
+      combineLatest([store.getBehavior(output.from), store.getBehavior(output.to)]),
+    'input',
+    false,
+    true,
+  )
+  .mapInput(input => ({ // mapping the resulting input signal-id-names
+    incFrom: input.conflicts1.inc,
+    decFrom: input.conflicts1.dec,
+    incTo: input.conflicts2.inc,
+    decTo: input.conflicts2.dec,
+  }))
+  .build({ // building the signals takes the effect-id as configuration
+    effectId: randomNumberEffectId,
+  });
+```
+
+So now we have an `Effect` that encapsulates the side-effect of calling `Math.random()`.
+But do we have to mock this effect in all cases, when testing our `randomNumberSignals`?
+The answer (as promised) is no:
+```typescript
+it('should be testable WITHOUT effect-mock', async () => {
+  const store = new Store(); // we need a Store instance
+  randomNumberSignals.setup(store); // calling setup for our signals
+
+  const sequence = expectSequence(
+    store.getBehavior(randomNumberSignals.output.combined).pipe(map(c => c.currentInput)),
+    [
+      [0, 0], // initial
+      [0, 1], // incTo
+      [0, 2], // incTo
+      [1, 2], // incFrom
+    ],
+  );
+  store.dispatch(randomNumberSignals.input.incTo, null);
+  store.dispatch(randomNumberSignals.input.incTo, null);
+  store.dispatch(randomNumberSignals.input.incFrom, null);
+
+  await sequence;
+});
+```
+
+The above test is concerned about the `currentInput` of the combined-behavior produced by our signals and of course, as the input does not depend on the output of the effect, there is no need to mock the effect at all.
+
+If we want to test the result of the produced combined-behavior, we simple have to add a corresponding mockup-function to our store:
+```typescript
+it('should be testable with effect-mock', async () => {
+  const store = new Store();
+  randomNumberSignals.setup(store);
+  store.addEffect(randomNumberEffectId, ([from, to]) => of(from + to * 10)); // mock
+
+  const sequence = expectSequence(
+    store.getBehavior(randomNumberSignals.output.combined).pipe(
+      map(c => c.result),
+      distinctUntilChanged(),
+    ),
+    [undefined, 0, 10, 20, 21],
+  );
+  store.dispatch(randomNumberSignals.input.incTo, null);
+  store.dispatch(randomNumberSignals.input.incTo, null);
+  store.dispatch(randomNumberSignals.input.incFrom, null);
+
+  await sequence;
+});
+```
+
+So in addition to individual unit-test for each `Signals` or `SignalsFactory`, we can just write integration-tests for all composed factories and supply `Effect`-mocks only where explicitly needed.
+
+If you compose the state and data-logic of your entire application from `Signals` and `SignalFactory`, you will end up with a single `Signals` type, or e.g. multiple `Signals`-types for different features (multiple types, if there are no explicit dependencies between them).
+All you have to do at application startup is:
+1. Create a `Store` instance
+1. Call `setup(store)` for all your independent `Signals`
+  1. Of course, the point of time when calling this is not relevant. Call it when you need the corresponding feature.
+1. Call `store.addEffect` for each `Effect` needed by your `Signals`
+
+For integration testing, you're also just doing the first and the second step.
+Without the need to mock anything, you can then already test a major part of your application.
+Where needed, you can then (e.g. per test-case) just mock individual `Effect` functions.
+
+That's possible, because all side-effects are isolated as `Effect` functions.
+So to make this work, you should really take care to encapsulate ALL side-effects as `Effect` and not only e.g. remote calls.
+That is, also things like producing random numbers, getting the current date, etc. must be part of a corresponding `Effect`!

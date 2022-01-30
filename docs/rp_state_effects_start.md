@@ -184,10 +184,10 @@ With this rule, we already covered one of the core-features of reactive programm
 If you violate it, you break reactivity!
 Even more important, if you violate it, you are making the life of your co-developers (and future developers maintaining your code) exponentially harder.
 
-> Sometimes programmers tend to write imperative instead of declarative code, because they are concerned about performance.
+> Some people tend to write imperative instead of declarative code, because they are concerned about performance.
 > While declarative code might be slower in some cases, it rarely is a bottleneck.
-> If it is, you can still code the critical part imperatively and properly encapsulate it in a pure function (if you do, please give your fellow devs some more detailed information than the dev of [this famous example](https://en.wikipedia.org/wiki/Fast_inverse_square_root#Overview_of_the_code) did).
-> Using imperative code instead of declarative code is _Premature Optimization_.
+> If it is, you can still code the performance-critical part imperatively and properly encapsulate it in a pure function.
+> Using imperative instead of declarative code often is _Premature Optimization_.
 > The same holds true for using mutable instead of immutable data.
 
 But the differentiation between **Root State** and **Derived State** and thus, the declarative modelling of dependencies is not always as trivial as in the previous example!
@@ -200,11 +200,13 @@ class Example {
   ...
 }
 ```
+
 It's not rare to see something like this in real code (though maybe not localized in a class, but e.g. the `loading` property being provided by a service that is used to perform the query).
 Often you see the loading-state being set imperatively and people think they cannot end up with invalid state, if '_request, error-handling and setting the loaded-state_' is properly encapsulated.
 This however is not true, because the dependency for the loading-property is not even part of the whole state as it is currently designed!
 The dependency is '_loading must be true, if a query-request is in progress, else it must be false_'.
-Whatever logic we implement to set `loading`, a state `loading === true` can only be valid, if the HTTP-call is in progress, but if you snapshot such valid state and then restart your application with that state, it's suddenly invalid!
+Whatever logic we implement to set `loading`, a state `loading === true` can only be valid, if a corresponding HTTP-call is in progress.
+So if you snapshot such valid state and then restart your application with that state, it's suddenly invalid!
 
 :warning: The validity of application state must not depend on properties that are not part of the state!
 
@@ -221,12 +223,12 @@ class Example {
   ...
 }
 ```
+
 In this example, `loading === true` would also be the trigger to automatically perform a new query-request.
-(In case the search should only be performed in response to a certain event, you would have to extend your state by a certain `trigger` property and you would have to further extend your `result` property by a `usedTrigger`.)
+(In case the search should only be performed in response to a certain event, you would have to extend your state by a certain `trigger` property and you would have to further extend your `result` property by a `usedTrigger`. Using _rx-signals_, you don't have to care about such things, because it feature an `EffectSignalsFactory` that has all these details implemented for you.)
 
 So in this case, to declare `loading` declaratively in a way that it's always valid, we had to change the definition of other parts of the state.
-Other designs to achieve the same would be possible.
-However, with respect to _rx-signals_ you should stick with the following:
+Other designs to achieve the same would be possible, but with respect to _rx-signals_ you should stick with the following:
 
 :warning: Whenever state (root or derived) is used as input to an async result, the result must include the input!
 
@@ -256,13 +258,33 @@ That gives you:
 * Decoupled components (and thus, better testability and maintainability)
 * State with dependencies that can be tested separately from the components using the state
 
-Many people have problems to decide which properties to put under global state management and which not.
-Some people even advise that for simple applications, you might not need a state management at all.
+Many people new to MVU have problems to decide which properties to put under global state management and which not.
 In reality, the decision is not that hard:
 
 :warning: Whenever a property needs to be shared between components (e.g. due to declarative dependencies), then you should put it under global state management!
 
 I could be even more strict and just say: 'As soon as you have state, it should be managed!' (The use of global variables is an example of unmanaged state).
+
+#### State-Presentation-Disparity
+
+With respect to UI-components, you're likely used to the difference between dumb-components and smart-components.
+Dumb-components have no knowledge about the application they're used in, depend only on their input-properties and can be composed/re-used as you like.
+Smart-components however have application-knowledge and are used to compose dumb-components and transform application state to properties of those dumb-components.
+
+It' important however, that 'smart' does not mean that these components should have any more logic but state-transformation and dumb-component composition.
+
+So far, our notion of component was related to visual/presentational components.
+But data and data-logic should also be encapsulated as re-usable components.
+If you cut the data-logic of an application into components and you cut the visual representation of an application into components, you likely end up with a completely different partition in both cases.
+Not only the partitioning will differ, also the lifecycle of data- and presentational-component-instances likely differs in many cases.
+
+Proper state-management serves to connect data-components with visual-components without introducing direct dependencies between them.
+
+You're likely familiar with visual components in frontend frameworks/libraries, like e.g. component-classes in Angular, or classes and functions in React.
+A question that might come to your mind now, is '_If I want to separate state and state-logic from the visual representation, what kind of building block should I use as re-usable and composable components?_'.
+_rx-signals_ answers this question with the `SignalsFactory`-class and the `Signals`-type which are the reactive, immutable equivalents to imperative, mutable class-instances and classes.
+You will learn about this in the [_rx-signals_ getting started guide](https://github.com/gneu77/rx-signals/blob/master/docs/rx-signals_start.md).
+But let's not reach ahead and instead keep on reading here for now.
 
 ## Change propagation and Reactive Programming
 
@@ -287,7 +309,7 @@ Properties that depend on `a_plus_b` may be declared similarly.
 All these declaration are lazy, hence they are evaluated at the point of time when they are accessed.
 But how does a component depending on `a_plus_b` know it must re-evaluate the value (equivalent to how does the framework know when to update the view)?
 
-> If you're an Angular developer and you think the answer is "_the framework simply checks everything whenever any property in the whole application changes_", then let me just say **NO**. It is a workaround (a bad one), but it's no solid solution and the fact that OnPush change detection is still not the default in Angular is just a big shame!
+> If you're an Angular developer and you think the answer is "_the framework simply checks everything whenever any property in the whole application changes_", then let me just say **NO**. It is a workaround (a bad one), but it's no solid solution and the fact that OnPush change detection (the proper solution) is still not the default in Angular is just a big shame!
 
 The problem how to do it right boils down to the question '_How to model values that can change over time?_'.
 So far, for values that are constant over time, we used immutables like `readonly a: number` or `const a: number`, while we used mutables like `let a: number` or transitive properties for values that can change over time.
@@ -300,7 +322,7 @@ An `Observable<T>` is a value-stream from the _RxJs_ library that corresponds to
 It's a specific implementation of the more general [Publish-subscribe-pattern](https://en.wikipedia.org/wiki/Publish%E2%80%93subscribe_pattern), hence the `Observable` is a registry that _Observers_ (aka _Subscribers_, aka _whoever is interested in value changes_) can subscribe to (register a callback).
 Mastering _RxJs_ is beyond this introduction, but essential for _rx-signals_.
 You can learn it [from here](https://rxjs.dev/guide/overview), but some important key aspects will also follow within this document.
-Even more aspects and details will be covered as part of the [Using _rx-signals_ guide](https://github.com/gneu77/rx-signals/blob/master/docs/rx-signals_start.md)
+Even more aspects and details will be covered as part of the [Using _rx-signals_ guide](https://github.com/gneu77/rx-signals/blob/master/docs/rx-signals_start.md).
 
 We no longer need mutable variables to model state, but instead we wrap immutable values into `Observables`.
 In contrast to transient properties that we used in one of the initial examples, we can now define all identifiers immutably and declaratively with included change propagation.
@@ -332,11 +354,10 @@ In _rx-signals_ the individual properties (that is all state) are represented by
 [_NgRx_](https://ngrx.io/) mixes the two approaches, by also using a single object for the root-state, but modelling selectors as individual observables.
 An advantage of modelling also **Derived State** as _Observables_ is that it moves the subscription closer to the actual consumer of the properties, because calling _subscribe_ on an _Observable_ marks the border between declarative and imperative code and thus, in principle breaks reactivity.
 However, with respect to _React-Redux_, as long as e.g. your _mapStateToProps_ is pure, that's no real concern.
-The real advantage of _rx-signals_ in not using a single state object is that it enables further abstraction and composition via _Signals_ and _SignalFactories_.
+The real advantage of _rx-signals_ in not using a single state object is that it enables further abstraction and composition via `Signals` and `SignalFactories`.
 
 Observables abstract away the difference between sync and async code.
 They also abstract away things like race conditions.
-
 
 ## Side-effects
 
@@ -380,7 +401,7 @@ This is what "isolated" means in the context of this section.
 In a pure functional language (like e.g. Elm or Haskell), the side-effects are pulled up into the runtime.
 In a multi-paradigm language like JS/TS, we cannot go that far, but we can still separate/isolate side-effects from the rest of our code in a clean way.
 
-In the [**Using _rx-signals_**](https://github.com/gneu77/rx-signals/blob/master/docs/rx-signals_start.md) documentation, you will see how side-effect isolation by event-sources and effect-type works (especially in the testing section).
+In the [**Using _rx-signals_**](https://github.com/gneu77/rx-signals/blob/master/docs/rx-signals_start.md) documentation, you will see how side-effect isolation by event-sources and effect-type works.
 
 ## Big Picture
 

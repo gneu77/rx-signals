@@ -233,7 +233,9 @@ describe('signals factories documentation', () => {
           })
           .connectObservable(
             (store, output) => store.getBehavior(output.conflicts2.counter),
-            input => input.inputB,
+            'inputB',
+            false,
+            true,
           )
           .mapInput(ids => ({
             inputA: ids.conflicts1,
@@ -408,17 +410,17 @@ describe('signals factories documentation', () => {
         .compose(
           getEffectSignalsFactory<[FilterType, SortParameter, PagingParameter], ResultType>(),
         )
-        .extendSetup((store, input, output) => {
-          store.connectObservable(
+        .connectObservable(
+          (store, output) =>
             combineLatest([
               store.getBehavior(output.model),
               store.getBehavior(output.sorting),
               store.getBehavior(output.paging),
             ]),
-            input.input,
-            false,
-          );
-        })
+          'input',
+          false,
+          true,
+        )
         .mapConfig((config: QueryWithResultConfig<FilterType, ResultType>) => ({
           c1: {
             defaultModel: config.defaultFilter,
