@@ -1091,13 +1091,13 @@ it('should be testable with effect-mock', async () => {
 });
 ```
 
-So in addition to individual unit-test for each `Signals` or `SignalsFactory`, we can just write integration-tests for all composed factories and supply `Effect`-mocks only where explicitly needed.
+So in addition to individual unit-tests for each `Signals` or `SignalsFactory`, we can just write integration-tests for all composed factories and supply `Effect`-mocks only where explicitly needed.
 
 If you compose the state and data-logic of your entire application from `Signals` and `SignalFactory`, you will end up with a single `Signals` type, or e.g. multiple `Signals`-types for different features (multiple types, if there are no explicit dependencies between them).
 All you have to do at application startup is:
 1. Create a `Store` instance
 1. Call `setup(store)` for all your independent `Signals`
-  1. Of course, the point of time when calling this is not relevant. Call it when you need the corresponding feature.
+    1. Of course, the point of time when calling this is not relevant. Call it when you need the corresponding feature.
 1. Call `store.addEffect` for each `Effect` needed by your `Signals`
 
 For integration testing, you're also just doing the first and the second step.
