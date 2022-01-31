@@ -166,6 +166,10 @@ export class Store {
     this.getBehaviorControlledSubject(identifier).addSource(
       new SourceObservable<T>(identifier, observable, subscribeLazy, initialValueOrValueGetter),
     );
+    if (this.parentStore) {
+      // to trigger behavior-switch in child-stores (see getBehavior):
+      this.behaviorsSubject.next(this.behaviors);
+    }
   }
 
   /**

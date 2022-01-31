@@ -8,6 +8,7 @@ describe('Parent store', () => {
   const idInChild = getBehaviorId<number>();
   const idInParentAndChild = getBehaviorId<number>();
   const idInParentAndLaterInChild = getBehaviorId<number>();
+  const idLaterInChild = getBehaviorId<number>();
   const eventId = getEventId<number>();
 
   let store: Store;
@@ -39,9 +40,14 @@ describe('Parent store', () => {
 
   it('should access behavior from parent and switch to child, once it becomes available there', async () => {
     await expectSequence(childStore.getBehavior(idInParentAndLaterInChild), [5]);
-    store.addLazyBehavior(idInParentAndLaterInChild, of(5));
     childStore.addLazyBehavior(idInParentAndLaterInChild, of(6));
     await expectSequence(childStore.getBehavior(idInParentAndLaterInChild), [6]);
+  });
+
+  it('should access non-parent behavior from child, once it becomes available there', async () => {
+    const sequence = expectSequence(childStore.getBehavior(idLaterInChild), [7]);
+    childStore.addLazyBehavior(idLaterInChild, of(7));
+    await sequence;
   });
 
   it('should receive events from both, parent and child, in the child', async () => {
