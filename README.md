@@ -3,16 +3,16 @@
 **Reactive state and effects management**
 
 :warning: This documentation is work in progress for the upcoming 3.0.0 version.
-There is however no good reason to use 2.7 over 3.0.0-rc7, so please start with the rc-version.
+There is however no good reason to use 2.7 over 3.0.0-rc8, so please start with the rc-version.
 
-3.0.0-rc7 is better than 2.7 in any aspect and the code is production-ready.
+3.0.0-rc8 is better than 2.7 in any aspect and the code is production-ready.
 It is now more or less documentation that needs improvement (though 2.7 had nearly no documentation at all).
 It is however possible that I will introduce minor breaking changes until 3.0.0 is released.
 3.0.0 will also be the first version I'm going to advertise to other people (so if you're reading this, you likely reached this site by google-accident or something like that).
 
 ## Installation
 
-`npm install --save @rx-signals/store@3.0.0-rc7`
+`npm install --save @rx-signals/store@3.0.0-rc8`
 
 ## Dependencies
 

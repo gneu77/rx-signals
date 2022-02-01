@@ -245,7 +245,7 @@ export class SignalsFactory<
    * This method implements monadic-bind for the SignalsFactory.
    * It takes as argument a pure function that implements SignalsMapToFactory<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>, hence
    * a function taking SignalsBuild<IN, OUT, CONFIG> as argument and returning a SignalsFactory<IN2, OUT2, CONFIG2>.
-   * The result of bind is a new SignalsFactory<IN2, OUT2, CONFIG2> that uses the SignalsBuild<IN2, OUT2, CONFIG>::build
+   * The result of bind is a new SignalsFactory<IN2, OUT2, CONFIG2> that uses the SignalsBuild<IN2, OUT2, CONFIG2>::build
    * of the factory returned from the mapper (hence the result of bind is not the same instance as returned by the mapper).
    *
    * @param {BindMapper<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>} mapper - a pure function mapping from SignalsBuild<IN, OUT, CONFIG> to SignalsFactory<IN2, OUT2, CONFIG2>
@@ -262,7 +262,7 @@ export class SignalsFactory<
    * This method implements the functor-fmap for the SignalsFactory.
    * It takes as argument a pure function that implements BuildMapper<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>, hence
    * a function taking SignalsBuild<IN, OUT, CONFIG> as argument and returning a SignalsBuild<IN2, OUT2, CONFIG2>.
-   * The result of fmap is a new SignalsFactory<IN2, OUT2, CONFIG2> that uses the SignalsBuild<IN2, OUT2, CONFIG> returned
+   * The result of fmap is a new SignalsFactory<IN2, OUT2, CONFIG2> that uses the SignalsBuild<IN2, OUT2, CONFIG2> returned
    * from the mapper.
    *
    * @param {BuildMapper<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>} mapper - a pure function mapping from SignalsBuild<IN, OUT, CONFIG> to SignalsBuild<IN2, OUT2, CONFIG2>
