@@ -10,6 +10,8 @@
 
 Please don't look back at 2.x, but directly head over to 3.x
 
+**EVERYTHING BELOW IS DEPRECATED**
+
 ## 2.7.0 (2022-01-13)
 
 ### Documentation

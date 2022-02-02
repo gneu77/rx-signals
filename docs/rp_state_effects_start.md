@@ -329,7 +329,16 @@ In contrast to transient properties that we used in one of the initial examples,
 Immutability makes comparison and thus, detection of which parts of the state-tree have been changed trivial, hence more performant.
 It also helps a lot in reasoning, debugging, time-travel-logic, etc.
 
-Actually, keeping your state immutable is even mandatory in _rx-signals_, due to the fact that all [_behaviors_ are auto-piped with _distinctUntilChanged()_](https://github.com/gneu77/rx-signals/blob/master/docs/rx-signals_start.md#distinct_pipe).
+> As a side-note, there's much more to immutability.
+> We are no longer living in a world where a program runs isolated on a single machine in a single thread without communicating to any other process.
+> In such systems, using mutable data was trivial.
+> Getting multi-threaded, things already became more complicated (ever struggled with a race condition?), but still manageable (if you like getting distracted from coding logic by pure technical things like locks).
+> But now we're having distributed systems running on data shared over the whole world.
+> There is no more One-And-Only runtime-representation of an object that gets mutated (designing a distributed system like this would require constraints like zero-latency and infinite bandwidth).
+> In summary: **Mutability does not scale, but immutability does!**
+> You might read on [here](http://cidrdb.org/cidr2015/Papers/CIDR15_Paper16.pdf), if you still don't buy it.
+
+Actually, keeping your state immutable is even mandatory in _rx-signals_, due to the fact that all [_behaviors_ are auto-piped with _distinctUntilChanged()_](https://github.com/gneu77/rx-signals/blob/master/docs/rx-signals_start.md#distinct_pipe) (hence, you won't get your changes, if you mutate state).
 
 :warning: Properties defining state must always be immutable!
 
@@ -365,13 +374,14 @@ The previous sections discussed how to properly model state with explicit depend
 A remaining question is how changes are applied to the independent state parts in the first place?
 
 It's done by sending a certain _event_ that initiates the change.
-Sending (dispatching) such an _event_ is a side-effect.
-In MVU, it's a managed side-effect, where "managed" means "explicit and isolated".
+Sending (dispatching) such an _event_ is one form of side-effect.
+In MVU, calling dispatch however should only be a pure transformation of an event coming from the runtime (so an effect that is triggered by some input from outside your own code).
+There are other forms of side-effects, but in all cases they should be managed side-effects, where "managed" means "explicit and isolated".
 
-So next, I like to assert on why it is of utmost importance to have only managed side-effects and with that, why event sources should be the only side-effects you have in your whole application:
+So next, I like to assert on why it is of utmost importance to have only managed side-effects:
 
 In programming, side-effects are the root of all evil.
-Let's have a look at just some of the many advantages that pure functions (no side-effects and referential transparancy) have over impure functions:
+For a start, let's have a look at just some of the many advantages that pure functions (no side-effects and referential transparancy) have over impure functions:
 1. simple to reason about (for programmers **and** compilers)
 2. simple testing (no mockup-hell)
 3. simple composition (tackling complexity)
@@ -387,7 +397,9 @@ The _simple to reason about for programmers_ point is a wide topic, but mostly b
 If you're not able to reason about a function by signature and name only due to impureness, then you have to read and understand its implementation.
 This breaks encapsulation and abstraction, cause it makes no sense to hide implementation details in the first place and then enforce users to understand those details!
 This does not mean that one should not use encapsulation for impure code.
-The opposite is the case, but it must be done in an explicit way that makes clear where and when side-effects happen!
+The opposite is the case, but it must be done in an explicit way that makes clear where and when side-effects happen.
+
+:warning: So encapsulation as a concept only makes sense, if you isolate pure code from impure code, else, it's just wasted effort!
 
 What makes impure functions really annoying, is that they are infectuous.
 Once you have a single impure function in your call-tree, everything above is impure too.
@@ -418,3 +430,5 @@ In the end the things discussed in the previous sections are all just different 
 => _Reactive Programming_ (done right) implies all of it
 
 ![Tied together](./images/tied_together.svg)
+
+All this leads to the [**_rx-signals_ design goals**](https://github.com/gneu77/rx-signals/blob/master/docs/rx-signals_start.md#design).

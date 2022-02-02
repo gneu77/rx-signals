@@ -1,13 +1,34 @@
 # Using rx-signals
 
+1. [Design goals](#design)
 1. [Using the store](#store)
     1. [Signal Identifiers](#type-identifiers)
     1. [Events](#events)
     1. [Behaviors](#behaviors)
+    1. [Reactive-DI](#reactive-di)
 1. [Encapsulation via Signals-type](#signals-type)
-1. [Reusability and Composition via SignalsFactory](#signals-factory-type)
+1. [Reusability via SignalsBuild](#signals-build-type)
+1. [Composition via SignalsFactory](#signals-factory-type)
+1. [Side-effect isolation via Effect](#effect-isolation)
     1. [The EffectSignalsFactory](#effect-signals-factory)
 1. [Testing](#testing)
+
+## Design goals <a name="design"></a>
+
+Coming from my [introduction to MVU, State Management, Reactive Programming and Effects Management](https://github.com/gneu77/rx-signals/blob/master/docs/rp_state_effects_start.md), the major design goals should be pretty clear:
+* Keep all data immutable
+* Make dependencies explicit/declarative
+* Use a reactive architecture
+* Isolate side-effects explicitly
+
+There is more however:
+* Guarantee type-safety everywhere
+  * catch issues at compile time
+  * deliver state-of-the-art IDE experience
+* Embrace _RxJs_
+  * if you master _RxJs_ you've already mastered 80% of _rx-signals_
+* Offer clean abstractions for encapsulation
+* Offer clean abstractions for re-usability
 
 ## Using the store <a name="store"></a>
 
@@ -21,8 +42,8 @@ It can also be used for local state and effects management via child stores.
   * for change propagation
   * for reactive dependency injection
 * With respect to [effects management](https://github.com/gneu77/blob/master/rx-signals/docs/rp_state_effects_start.md), the store
-  * is the _world_ in pure function transformation
-  * is the _runtime_ in effects isolation
+  * is the _world_ as pure function argument
+  * is the _runtime_ for isolated side-effects
 
 The following diagram gives an overview for the _Store_ architecture and API.
 For the full API, please see the [corresponding documentation](https://rawcdn.githack.com/gneu77/rx-signals/master/docs/tsdoc/index.html)
@@ -355,7 +376,7 @@ This is possible, because all the wireing is done based on identifiers and not o
 Hence, decoupling is achieved by defining dependencies based on identifiers instead of concrete sources.
 This is the same approach as in classic dependency injection, just better, because it's reactive...
 
-#### Reactive dependency injection <a name="reactive-di"></a>
+### Reactive dependency injection <a name="reactive-di"></a>
 
 DI as you know it from classic OO-programming, is used to decouple usage and creation of dependencies.
 It thus allows for different concrete types without breaking dependencies, e.g. to allow for simple testability.
@@ -502,7 +523,7 @@ E.g. it's easy to forget calling the setup function of one of the signals being 
 And even if you don't forget it, it's still boilerplate.
 The next section presents a signals factory type that allows for a better, generalized composition.
 
-## Reusability and Composition via SignalsFactory <a name="signals-factory-type"></a>
+## Reusability via SignalsBuild <a name="signals-build-type"></a>
 
 The previous section introduced the `Signals` type as means of encapsulation/isolation of signal-ids and setup of corresponding signals in the `Store`.
 The given example even used factory functions to produce `Signals` and a new factory function was composed from the two initial factory functions.
@@ -521,7 +542,9 @@ type Configuration = Record<string, any>;
 
 :warning: Back to our analogy of the `Signals` type being the reactive counterpart of a class-instance, a `SignalsBuild` is the reactive counterpart of a class/class-constructor.
 
-As mentioned at the end of the previous section, the manual composition of such `SignalsBuild` functions is error-prone and needs a lot of boilerplate code.
+## Composition via SignalsFactory <a name="signals-factory-type"></a>
+
+As mentioned at the end of the `Signals` section, the manual composition of factory-function (hence `SignalsBuild` functions) is error-prone and needs a lot of boilerplate code.
 To generalize factory composition, _rx-signals_ features the `SignalsFactory` class as a wrapper for `SignalsBuild`.
 The following snippet just shows a part of the SignalsFactory methods.
 We will encounter more methods later and you can consult [the corresponding API-documentation](https://rawcdn.githack.com/gneu77/rx-signals/master/docs/tsdoc/classes/SignalsFactory.html) for details of all methods.
@@ -821,7 +844,7 @@ const myFactory = getQueryWithResultFactory<MyFilter, string[]>().build({
 });
 ```
 
-### The EffectSignalsFactory <a name="effect-signals-factory"></a>
+## Side-effect isolation via Effect <a name="effect-isolation"></a>
 
 Unfortunately, there's no way to tell Typescript that a function must be pure.
 With respect to immutability, you could at least wrap all data types `T` with `Readonly<T>`, though I advise against this, because it makes solving type-errors harder, due to current limitations in how Typescript reports type-conflicts.
@@ -871,7 +894,9 @@ This type represents a potentially impure function that can be added to the stor
 The `Effect` function takes an input and the store and must produce a result-observable. 
 The other two additional parameters can be used to access previous input and return values of the effect, but for now we don't care about them.
 
-While you have to implement corresponding `Effect`s yourself, you will not normally not use them directly.
+### The EffectSignalsFactory <a name="effect-signals-factory"></a>
+
+While you have to implement `Effect`s yourself, you will not normally not use them directly.
 Instead, _rx-signals_ features `getEffectSignalsFactory` to create a generic `EffectSignalsFactory` that takes an `EffectId` (to retrieve the corresponding `Effect` from the store) as configuration property (among other configuration):
 ```typescript
 const getEffectSignalsFactory = <InputType, ResultType>(): EffectSignalsFactory<
@@ -914,7 +939,10 @@ The `EffectSignalsFactory` gives you the following guarantees:
 * The `CombinedEffectResult<InputType, ResultType>` is lazy, hence, as long as it's not subscribed, the corresponding `Effect` will not be triggered (subscribed).
   * If you don't specify `withTrigger`, or set it to false, the `Effect` corresponding to the given `effectId` will be executed whenever the `currentInput` does not match the `resultInput` (the `effectInputEquals` defaults to strict equals).
   * If you set `withTrigger` to true, the `Effect` will be triggered only if `currentInput` does not match `resultInput` **AND** `trigger` event is received.
+    * If the `CombinedEffectResult` is NOT subscribed and a `trigger` event is dispatched, then the `Effect` will be triggered as soon as it becomes subscribed (so the event is never missed).
   * While `currentInput` does not match the `resultInput` and the `Effect` is triggered, `resultPending` will be true.
+  * If `currentInput` matches `resultInput`, the `Effect` can still be triggered by dispatching the `invalidate` event.
+    * Also here, the event cannot be missed, hence if `CombinedEffectResult` is NOT subscribed and `invalidate` is dispatched, then the `Effect` will be triggered as soon as it becomes subscribed.
   * If `result` has a value, it will always be the value produced by `resultInput`.
   * `currentInput` will always match the received `input` (so it's possible that `resultInput` differs from `currentInput` and consequently, `resultPending` is true at that time).
 * Unhandled errors in your `Effect` are caught and dispatched as `EffectError<InputType>` event.
@@ -929,6 +957,8 @@ For more details, please consult the [API documentation](https://rawcdn.githack.
 
 _rx-signals_ even features the `ValidatedInputWithResultFactory` wich is a composition of two `EffectSignalsFactory` to cover the common task of validating an input model and performing a subsequent effect only if the validation passes.
 Here, validation is also an `Effect`, because that way we can treat pure-local validation exacly the same as validation that e.g. must access some backend service.
+In addition, also local validation can be impure.
+E.g., if you have to validate a date for not being in the future, it's impure due to accessing the current-date and thus, the corresponding validation must be isolated (making testing piece of cake).
 
 I skip an example and instead show only the corresponding types:
 ```typescript
@@ -998,7 +1028,7 @@ const counterFactory = new SignalsFactory<CounterInput, CounterOutput, {}>(() =>
 });
 ```
 
-There is no `Effect` we have to mock, so a test is simple dispatching input and expecting corresponding output:
+There is no `Effect` we have to mock, so a test is simply dispatching input and expecting corresponding output:
 ```typescript
 it('should test the counter factory for correct state after inc and dec', async () => {
   const store = new Store(); // we need a Store instance
@@ -1093,10 +1123,10 @@ it('should be testable with effect-mock', async () => {
 
 So in addition to individual unit-tests for each `Signals` or `SignalsFactory`, we can just write integration-tests for all composed factories and supply `Effect`-mocks only where explicitly needed.
 
-If you compose the state and data-logic of your entire application from `Signals` and `SignalFactory`, you will end up with a single `Signals` type, or e.g. multiple `Signals`-types for different features (multiple types, if there are no explicit dependencies between them).
+If you compose the state and data-logic of your entire application from `Signals` and `SignalFactory`, you will end up with a `Signals` type for each independent feature (you might even go to the extreme and compose to a single `Signals` type for your whole application).
 All you have to do at application startup is:
 1. Create a `Store` instance
-1. Call `setup(store)` for all your independent `Signals`
+1. Call `setup(store)` for all your `Signals`
     1. Of course, the point of time when calling this is not relevant. Call it when you need the corresponding feature.
 1. Call `store.addEffect` for each `Effect` needed by your `Signals`
 
@@ -1104,6 +1134,10 @@ For integration testing, you're also just doing the first and the second step.
 Without the need to mock anything, you can then already test a major part of your application.
 Where needed, you can then (e.g. per test-case) just mock individual `Effect` functions.
 
-That's possible, because all side-effects are isolated as `Effect` functions.
+The clear isolation of side-effects also means you can take the whole part being wrapped into `Signals` and use it in a different presentation-framework (you're interface to the presentation layer is just observing behaviors and dispatching events).
+Only the `Effect`s might need modification.
+E.g. you could take your whole `Signals` from frontend to backend and replace e.g. your `Effect`s using an HTTP-service by `Effects` using a database-service.
+
+All that is possible, because all side-effects are isolated as `Effect` functions.
 So to make this work, you should really take care to encapsulate ALL side-effects as `Effect` and not only e.g. remote calls.
 That is, also things like producing random numbers, getting the current date, etc. must be part of a corresponding `Effect`!

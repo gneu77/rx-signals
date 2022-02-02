@@ -3,12 +3,11 @@
 **Reactive state and effects management**
 
 :warning: This documentation is work in progress for the upcoming 3.0.0 version.
-There is however no good reason to use 2.7 over 3.0.0-rc8, so please start with the rc-version.
+There is however no good reason to use 2.x over 3.0.0-rc8, so please start with the rc-version (3.0.0 will be the first version I'm going to advertise publicly, so it's more like a 1.0 in reality).
 
-3.0.0-rc8 is better than 2.7 in any aspect and the code is production-ready.
-It is now more or less documentation that needs improvement (though 2.7 had nearly no documentation at all).
+3.0.0-rc8 is better than 2.x in any aspect and the code is production-ready.
+It is now more or less documentation that needs improvement (though 2.x had no documentation at all, apart from doc-strings).
 It is however possible that I will introduce minor breaking changes until 3.0.0 is released.
-3.0.0 will also be the first version I'm going to advertise to other people (so if you're reading this, you likely reached this site by google-accident or something like that).
 
 ## Installation
 
@@ -42,7 +41,7 @@ Though it heavily relies on _RxJs_, this lib is **not** Angular-specific. You ca
 
 (Use it in the backend or with any presentation-framework you like. Decoupling all application-logic from presentation-logic is a strength of this library.)
 
-_rx-signals_ itself is implemented with TypeScript and therefore naturally comes **fully typed** (in case you're using it with TS).
+_rx-signals_ itself is implemented with TypeScript and therefore naturally comes with **full type-safety**.
 
 ### High-level overview
 This lib comes with a
@@ -55,6 +54,8 @@ This lib comes with a
   * Abstraction-layer over the SignalsBuilder-Type for high-level composition and reusability (enabling DRY architecture)
 * EffectSignalsFactory as
   * SignalsFactory that covers all side-effect-scenarios generically, encapsulating and abstracting away all the pitfalls and possibilities to shoot yourself in the foot.
+
+See [**_rx-signals_ design goals**](https://github.com/gneu77/rx-signals/blob/master/docs/rx-signals_start.md#design) for more.
 
 ## Getting started
 
