@@ -113,6 +113,6 @@ You should start with my introduction to [MVU, State Management, Reactive Progra
 Otherwise, you may start with [**Using _rx-signals_**](https://github.com/gneu77/rx-signals/blob/master/docs/rx-signals_start.md). 
 Where necessary, it will still link to the corresponding passages of the formerly mentioned introduction.
 
-The API-documentation (as generated from the doc strings) [can be found here](https://rawcdn.githack.com/gneu77/rx-signals/master/docs/tsdoc/index.html)
+The full API-documentation (as generated from the doc strings) [can be found here](https://rawcdn.githack.com/gneu77/rx-signals/master/docs/tsdoc/index.html)
 
 An introduction for people with _NgRx_ background [can be found here](https://github.com/gneu77/rx-signals/blob/master/docs/ngrx_compare_start.md)

@@ -939,10 +939,9 @@ The `EffectSignalsFactory` gives you the following guarantees:
 * The `CombinedEffectResult<InputType, ResultType>` is lazy, hence, as long as it's not subscribed, the corresponding `Effect` will not be triggered (subscribed).
   * If you don't specify `withTrigger`, or set it to false, the `Effect` corresponding to the given `effectId` will be executed whenever the `currentInput` does not match the `resultInput` (the `effectInputEquals` defaults to strict equals).
   * If you set `withTrigger` to true, the `Effect` will be triggered only if `currentInput` does not match `resultInput` **AND** `trigger` event is received.
-    * If the `CombinedEffectResult` is NOT subscribed and a `trigger` event is dispatched, then the `Effect` will be triggered as soon as it becomes subscribed (so the event is never missed).
   * While `currentInput` does not match the `resultInput` and the `Effect` is triggered, `resultPending` will be true.
   * If `currentInput` matches `resultInput`, the `Effect` can still be triggered by dispatching the `invalidate` event.
-    * Also here, the event cannot be missed, hence if `CombinedEffectResult` is NOT subscribed and `invalidate` is dispatched, then the `Effect` will be triggered as soon as it becomes subscribed.
+    * If the `CombinedEffectResult` is NOT subscribed and `invalidate` is dispatched, then the `Effect` will be triggered as soon as it becomes subscribed (so `invalidate` events are never missed).
   * If `result` has a value, it will always be the value produced by `resultInput`.
   * `currentInput` will always match the received `input` (so it's possible that `resultInput` differs from `currentInput` and consequently, `resultPending` is true at that time).
 * Unhandled errors in your `Effect` are caught and dispatched as `EffectError<InputType>` event.
@@ -1071,6 +1070,8 @@ const randomNumberSignals = counterFactory
     effectId: randomNumberEffectId,
   });
 ```
+
+> As a side-note: though, taking string-arguments, the `renameOutputId` method is fully type-safe (try yourself)!
 
 So now we have an `Effect` that encapsulates the side-effect of calling `Math.random()`.
 But do we have to mock this effect in all cases, when testing our `randomNumberSignals`?

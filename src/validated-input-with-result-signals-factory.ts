@@ -12,6 +12,21 @@ import { Store } from './store';
 import { BehaviorId, EffectId, EventId, getBehaviorId } from './store-utils';
 import { Merged } from './type-utils';
 
+/**
+ * This specifies the type for the lazy combined-behavior provided as output-signal of the ValidatedInputWithResultFactory.
+ *
+ * @typedef {object} ValidatedInputWithResult<InputType, ValidationType, ResultType> - type for the behavior produced by ValidatedInputWithResultFactory
+ * @template InputType - specifies the input type for both, the validation-effect and the result-effect
+ * @template ValidationType - specifies the result-type of the validation-effect
+ * @template ResultType - specifies the result-type of the result-effect
+ * @property {InputType | undefined} currentInput - current input (which might differ from the resultInput)
+ * @property {InputType | undefined} validatedInput - the input that produced the current validationResult (or undefined, if validationResult is undefined)
+ * @property {ValidationType | undefined} validationResult - the current validationResult (or undefined, if no validation-result was received yet)
+ * @property {boolean} validationPending - indicates whether the validation-effect is currently running.
+ * @property {InputType | undefined} resultInput - the input that produced the current result (or undefined, if result is undefined)
+ * @property {ResultType | undefined} result - the current result (or undefined, if no result was received yet)
+ * @property {boolean} resultPending - indicates whether the result-effect is currently running.
+ */
 export type ValidatedInputWithResult<InputType, ValidationType, ResultType> = {
   currentInput?: InputType;
   validationPending: boolean;
@@ -23,6 +38,9 @@ export type ValidatedInputWithResult<InputType, ValidationType, ResultType> = {
   result?: ResultType;
 };
 
+/**
+ * The analog to EffectInputSignals, just for ValidatedInputWithResultFactory.
+ */
 export type ValidatedInputWithResultInput<InputType> = {
   input: BehaviorId<InputType>;
   validationInvalidate: EventId<void>;
@@ -30,6 +48,9 @@ export type ValidatedInputWithResultInput<InputType> = {
   resultTrigger: EventId<void>;
 };
 
+/**
+ * The analog to EffectOutputSignals, just for ValidatedInputWithResultFactory.
+ */
 export type ValidatedInputWithResultOutput<InputType, ValidationType, ResultType> = {
   combined: BehaviorId<ValidatedInputWithResult<InputType, ValidationType, ResultType>>;
   validationErrors: EventId<EffectError<InputType>>;
@@ -38,6 +59,9 @@ export type ValidatedInputWithResultOutput<InputType, ValidationType, ResultType
   resultSuccesses: EventId<EffectSuccess<InputType, ResultType>>;
 };
 
+/**
+ * The analog to EffectConfiguration, just for ValidatedInputWithResultFactory.
+ */
 export type ValidatedInputWithResultConfig<InputType, ValidationType, ResultType> = {
   validationEffectId: EffectId<InputType, ValidationType>;
   isValidationResultValid?: (validationResult: ValidationType) => boolean;
@@ -47,6 +71,11 @@ export type ValidatedInputWithResultConfig<InputType, ValidationType, ResultType
   resultEffectInputEquals?: (a: InputType, b: InputType) => boolean;
 };
 
+/**
+ * The ValidatedInputWithResultFactory is composed of two EffectSignalsFactory, to abstract over all
+ * scenarios where you need to validate a certain input and run a result-effect only if the validation
+ * has passed successfully.
+ */
 export type ValidatedInputWithResultFactory<InputType, ValidationType, ResultType> = SignalsFactory<
   ValidatedInputWithResultInput<InputType>,
   ValidatedInputWithResultOutput<InputType, ValidationType, ResultType>,
@@ -130,6 +159,9 @@ const setupCombinedBehavior = <InputType, ValidationType, ResultType>(
   );
 };
 
+/**
+ * Generic function to create a specific ValidatedInputWithResultFactory.
+ */
 export const getValidatedInputWithResultSignalsFactory = <
   InputType,
   ValidationType,

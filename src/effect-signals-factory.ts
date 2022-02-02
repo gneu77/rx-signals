@@ -54,13 +54,16 @@ export type EffectSuccess<InputType, ResultType> = {
 };
 
 /**
- * Type specifying the input EffectSignals (the corresponding signal sources are
- * not added to the store by the EffectSignals, by whoever uses them, e.g. by extendSetup or fmap or just using dispatch).
+ * Type specifying the input EffectSignals (the corresponding signal-sources are NOT added to the store
+ * by the EffectSignals-setup, but by whoever uses the signals, e.g. by extendSetup or fmap or just using dispatch).
+ * The EffectSignalsFactory gives you the guarantee, that invalidate-events are NOT missed, even while
+ * the combined-behavior is not subscribed.
  *
  * @typedef {object} EffectInputSignals<InputType> - object holding the input signal identifiers for EffectSignals
  * @template InputType - specifies the input type for the effect
  * @property {BehaviorId<InputType>} input - identifier for the behavior being consumed by EffectSignals as input
  * @property {EventId<void>} invalidate - identifier for the invalidation event that can be dispatched to trigger re-evaluation of the current input under the given effect
+ * @property {EventId<void>} trigger - identifier for the trigger event that can be dispatched to trigger the given effect. This event has only meaning, if withTrigger is configured (see EffectConfiguration)
  */
 export type EffectInputSignals<InputType> = {
   input: BehaviorId<InputType>;
