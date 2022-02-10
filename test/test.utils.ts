@@ -19,12 +19,12 @@ export const getSequence = async <T>(
       take(1),
     )
     .toPromise() as Promise<T[]>; // Deprecated and will be removed in rxjs8
-                                  // However, we must still support rxjs 6.x as peer dependency
+  // However, we must still support rxjs 6.x as peer dependency
 };
 
-export const expectSequence = async (
-  observable: Observable<any>,
-  sequence: any[],
+export const expectSequence = async <T>(
+  observable: Observable<T>,
+  sequence: T[],
   timeoutAfter: number = 3000, // Jest can be slow sometimes...
 ): Promise<void> => {
   return getSequence(observable, sequence.length, timeoutAfter).then(result => {
@@ -32,9 +32,9 @@ export const expectSequence = async (
   });
 };
 
-export const awaitStringifyEqualState = async (
-  observable: Observable<any>,
-  expectedState: any,
+export const awaitStringifyEqualState = async <T>(
+  observable: Observable<T>,
+  expectedState: T,
   timeoutAfter: number = 3000,
 ): Promise<void> =>
   new Promise<void>(resolve => {

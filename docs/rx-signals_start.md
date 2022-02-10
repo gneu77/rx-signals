@@ -391,7 +391,7 @@ This will be detailed in the [Testing section](#testing)
 > You might say 'Wait, isn't this more like a reactive service locator?'.
 > Well yes, the store is some kind of service locator.
 > And also no, because you don't get the dependencies itself from the store, but you get them wrapped into an observable.
-> This makes all the difference, because all the arguments against classic service locators do not apply to the _rx-signals-store_!
+> This makes a difference, because some arguments against classic service locators do not apply to the _rx-signals-store_.
 > Thus, I don't like to bring in this somehow biased term and instead keep calling it reactive DI.
 
 ## Encapsulation via Signals-type <a name="signals-type"></a>
@@ -549,7 +549,7 @@ To generalize factory composition, _rx-signals_ features the `SignalsFactory` cl
 The following snippet just shows a part of the SignalsFactory methods.
 We will encounter more methods later and you can consult [the corresponding API-documentation](https://rawcdn.githack.com/gneu77/rx-signals/master/docs/tsdoc/classes/SignalsFactory.html) for details of all methods.
 ```typescript
-// This snippet only show a small part of the full API:
+// This snippet only shows a small part of the full API:
 class SignalsFactory<IN extends NameToSignalId, OUT extends NameToSignalId, CONFIG extends Configuration> {
   constructor(readonly build: SignalsBuild<IN, OUT, CONFIG>) {}
   
