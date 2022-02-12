@@ -32,18 +32,18 @@ There is more however:
 
 ## Using the store <a name="store"></a>
 
-The _rx-signals_ store is a class to reactively manage global state and effects.
-It can also be used for local state and effects management via child stores.
+The _rx-signals_ store is a class to reactively manage state and effects.
+(It can also be used for local state and effects management via child stores.)
 
 * With respect to [state management](https://github.com/gneu77/rx-signals/blob/master/docs/rp_state_effects_start.md), the store is used
-  * to define your explicit dependencies
-  * to access state (including derived state)
+  * to define dependencies explicitly
+  * to hold root-state and sources for derived-state
 * With respect to [reactivity](https://github.com/gneu77/rx-signals/blob/master/docs/rp_state_effects_start.md), the store is used
-  * for change propagation
+  * propagates changes via behaviors and event-streams
   * for reactive dependency injection
 * With respect to [effects management](https://github.com/gneu77/blob/master/rx-signals/docs/rp_state_effects_start.md), the store
   * is the _world_ as pure function argument
-  * is the _runtime_ for isolated side-effects
+  * is used to inject isolated side-effects
 
 The following diagram gives an overview for the _Store_ architecture and API.
 For the full API, please see the [corresponding documentation](https://rawcdn.githack.com/gneu77/rx-signals/master/docs/tsdoc/index.html)
@@ -58,7 +58,7 @@ Signal identifiers
 
 A signal identifier can be either an event- or behavior id: `type SignalId<T> = BehaviorId<T> | EventId<T>`
 
-For a given event- or behavior-type `T`, you can obtain a new id using `getEventId<T>():` or `getBehaviorId<T>():` (these are not store methods, but independent utility functions).
+For a given event- or behavior-type `T`, you can obtain a new, unique id using `getEventId<T>():` or `getBehaviorId<T>():` (these are not store methods, but independent utility functions).
 
 Under the hood, the returned identifier is a `symbol`. Thus, e.g. two calls of `getBehaviorId<number>()` will return two different identifiers!
 
@@ -68,11 +68,12 @@ If you don't know what an event-stream in the sense of RP is, then head back to 
 
 So in _rx-signals_, an event-stream is an _RxJs_-observable that has no current value, but dispatches values to subscribers at dicrete points of time. In addition to this definition, _rx-signals_-event-streams
 1. always behave as hot observables piped with `share()`.
-1. can have multiple sources that are subscribed by the store lazily (so only of the corresponding event-stream is subscribed)
+1. can have multiple sources that are subscribed by the store lazily (so only if the corresponding event-stream is subscribed)
 
 > _Events_ are similar to actions in _Redux_-like libs.
 > However, in contrast to _actions_, they are no objects with type and value, but instead they are the dispatched values itself.
 > The type (event-type, NOT event-values-type) is an extra-argument to dispatch. Subscribers, specifically subscribe to one type of event.
+> Here, type and event-ID is the same thing.
 
 #### Event-streams and basic event-sources
 
@@ -92,7 +93,7 @@ There can be multiple sources for a given _event-type_. One source that all even
 store.dispatch(id: EventId<T>, value: T);
 ```
 
-Calling `dispatch` for an _event-type_ that has no subscribed event-stream is a NO-OP.
+Calling `dispatch` for an _event-type_ that has no subscribed event-stream is a No-Op.
 
 You can add further event-sources as follows:
 ```typescript
@@ -109,11 +110,13 @@ store.addEventSource(
 
 Of course, even if all added event-sources for a given _event-type_ complete, the corresponding event-stream will **not** complete (other sources may be added in the future / manual `dispatch` is always possible).
 
+> Apart from using events to change behaviors (a core principle of reactive programming), you can of course also simply use the store as type-safe event-bus. 
+
 #### Dispatch process
 
 There are some important **guarantees** concerning event-dispatch (whether manually or via event-sources):
 * The store always dispatches events asynchronously
-  * Relying on synchronous dispatch would be bad, cause it would break reactive design (remember that one purpose of RP is to [abstract away the need to think about time](https://github.com/gneu77/rx-signals/blob/master/docs/rp_state_effects_start.md#abstract_away_time))
+  * Relying on synchronous dispatch would break reactive design (remember that one purpose of RP is to [abstract away the need to think about time](https://github.com/gneu77/rx-signals/blob/master/docs/rp_state_effects_start.md#abstract_away_time)). The async dispatch also enables definition of cyclic dependencies.
 * Though async, the order in which events are dispatched will always be preserved
   * So dispatching e.g. two events `A`, `B`, the `B` will be dispatched only after **all** subscribers got the `A`
   * This holds true even for the dispatch-order between parent- and child-stores (cause they're using a shared dispatch-queue)
@@ -220,7 +223,7 @@ so that the store knows which _event-type_ to dispatch.
 You might wonder about this optional parameter with the horrible name `subscribeObservableOnlyIfEventIsSubscribed`. Well, I was just not able to come up with a better name.
 It is however one of the most powerful features of the store!
 Think about the following scenario:
-* You have an effect, hence an event-source that
+* You have an effect that
   * produces the _event-types_ `myEffectSuccess` and `appError`
   * should **only** be executed, if the `myEffectSuccess` event is actually subscribed.
 * You have a generic error-handler that subscribes to an _event-type_ `appError` over the whole lifetime of your application.
@@ -245,15 +248,16 @@ However, with the last parameter, we are telling the store to subscribe the sour
 
 If you don't know what a behavior in the sense of RP is, then head back to [Terminology](https://github.com/gneu77/rx-signals/blob/master/README.md#terminology).
 
-So in _rx-signals_, a behavior is an _RxJs_-observable that always has the current value when subscribed.
+In _rx-signals_, a behavior is an _RxJs_-observable that always has the current value when subscribed.
+Behaviors represent observed state, either being root-state or derived state.
 In addition to this definition, _rx-signals_-behaviors
 1. can be non-lazy or lazy
-    1. Non-lazy behaviors are subscribed by the store itself as soon as you add them to the store. Or in _RxJs_-terminology, non-lazy behaviors are always made hot as soon as they are added to the store.
-    1. Lazy behaviors will **not** be subscribed by the store. However, as soon as there are one or more subscribers, the store turns them into a hot observable.
-1. <a name="distinct_pipe"></a> always behave as if piped with `distinctUntilChanged()` and `shareReplay(1)`. However, internally they do **not** use `shareReplay(1)` and thus, there is **no** risk of the memory-leaks that are possible with `shareReplay`.
+    1. Non-lazy behaviors are subscribed by the store itself as soon as you add a corresponding behavior-source to the store.
+    1. Lazy behaviors will **not** be subscribed by the store itself, as long as there are no subscribers.
+1. <a name="distinct_pipe"></a> always behave as if piped with `distinctUntilChanged()` and `shareReplay(1)`. (However, internally they do **not** use `shareReplay(1)` and thus, there is **no** risk of the memory-leaks that are possible with `shareReplay`.)
 
 Behaviors are used to model application state. Make sure to understand the importance of [modeling dependencies in your state explicitly](https://github.com/gneu77/rx-signals/blob/master/docs/rp_state_effects_start.md).
-As a rule of thumb, those parts of the state that have no dependencies should be non-lazy, while dependent state should be modeled using lazy behaviors. (It is however also possible to make the complete state lazy, as well as it's possible to have non-lazy dependent state.)
+As a rule of thumb, root-state (state that depends on events only) should be non-lazy, while derived-state should be modeled using lazy behaviors. (It is however also possible to make the complete state lazy, as well as it's possible to have non-lazy dependent state.)
 
 #### Basic behaviors
 
@@ -262,25 +266,33 @@ No big surprise that getting a behavior from the store just requires a `Behavior
 store.getBehavior(behaviorId);
 ```
 
-Adding a lazy behavior source is done as follows:
+Adding a lazy behavior source can either be done by:
 ```typescript
-store.addLazyBehavior(
+store.addDerivedState(
   identifier: BehaviorId<T>,
   observable: Observable<T>,
   initialValueOrValueGetter: T | (() => T) | symbol = NO_VALUE,
 );
 ```
 
-Adding a non-lazy behavior source has the same arguments:
+or by using the low-level method `addBehavior` with the corresponding `subscribeLazy` argument set true:
 ```typescript
-store.addNonLazyBehavior(id, observable, initialValueOrValueGetter);
+addBehavior<T>(
+  identifier: BehaviorId<T>,
+  observable: Observable<T>,
+  subscribeLazy: boolean,
+  initialValueOrValueGetter: T | (() => T) | symbol = NO_VALUE,
+);
 ```
 
-* The `observable`, is the source of the behavior
-  * In contrast to event-streams, a behavior can have only one source. So if you call `add(Non)LazyBehavior` two times with the same identifier, you will get an error on the second one (though you can remove a behavior source via `removeBehaviorSources` and then add a new source with the same identifier).
+Consequently, setting `subscribeLazy` to false, the same method can be used to add a non-lazy behavior source.
+In most cases however, you should use the `addState` method described in the next sub-section!
+
+* The `observable` argument to `addBehavior`, is the source of the behavior
+  * In contrast to event-streams, a behavior can have only one source. So if you call `addBehavior` (or `addState` or `addDerivedState`) two times with the same identifier, you will get an error on the second one (though you can remove a behavior source via `removeBehaviorSources` and then add a new source with the same identifier).
   * As for event-streams, if the behavior-source completes, the behavior will **not** complete.
     * In addition, after a behavior-source has completed, new subscribers of the behavior will still get the last value, as long as the behavior-source is not explicitly removed from the store!
-    * However, having completing behavior-sources is often bad design. Prefer child-stores for behaviors that do not share the complete application lifetime. 
+    * (However, having completing behavior-sources is often bad design. Prefer child-stores for behaviors that do not share the complete application lifetime.) 
 * The `initialValueOrValueGetter` is optional. It can be an inital value or a function that yields the initial value (so if the behavior is never subscribed, then the function will never be called).
 
 When you call `getBehavior` you're not just getting a piped observable of whatever you added as behavior-source.
@@ -300,16 +312,17 @@ const pending = getBehaviorId<boolean>();
 const setQuery = getEventId<string>();
 const setResult = getEventId<QueryResult>();
 
-store.addLazyBehavior(query, store.getEventStream(setQuery), '');
-store.addLazyBehavior(result, store.getEventStream(setResult), {
+store.addBehavior(query, store.getEventStream(setQuery), true, ''); // or addDerivedState
+store.addBehavior(result, store.getEventStream(setResult), true, {
   result: [],
   resultQuery: null,
 });
-store.addLazyBehavior(
+store.addBehavior(
   pending,
   combineLatest([store.getBehavior(query), store.getBehavior(result)]).pipe(
     map(([q, r]) => q !== r.resultQuery),
   ),
+  true,
 );
 store.addEventSource(
   Symbol('MockupQueryEffect'),
@@ -337,21 +350,21 @@ In other words, it would be no problem to define the `query` behavior as non-laz
 In general, you should aim for as many lazy behaviors as possible.
 
 However, there are definitely behaviors that must be non-lazy.
-The rule is simple: If it would be a logical error that a behavior misses one of the events it depends on, then it must be non-lazy.
+The rule is simple: If it would be a logical error that a behavior-source misses one of the events it depends on, then it must be non-lazy.
 (See the docstring for store.addBehavior to get some more guidance on when to use lazy vs. non-lazy!)
 
 So far, defining a behavior that depends on multiple different events would be a bit clumsy (you'd have to use `getTypedEventStream` instead of `getEventStream` to differentiate between the merged events).
-For such cases, the state-reducer API from the next section is much more straight forward.
+Instead, you should use the state-reducer API from the next section to setup root-state-behaviors.
 
 #### State-Reducer API
 
-There are additional convenience methods to add and reduce certain root-state.
+In addition to the general `addBehavior` method from the previous section, there are more idiomatic methods to add and reduce certain root-state.
 ```typescript
 store.addState(identifier, initialValueOrValueGetter);
 ```
-adds a non-lazy behavior-source (which so far would be equivalent to `store.addNonLazyBehavior(identifier, NEVER, initialValueOrValueGetter)` or `store.addNonLazyBehavior(identifier, of(initialValue))`).
+adds a non-lazy behavior-source (which so far would be equivalent to `store.addBehavior(identifier, NEVER, false, initialValueOrValueGetter)` or `store.addBehavior(identifier, of(initialValue), false)`).
 
-However, you can add as many reducers for this state as you like, one for each event that should be handled (so trying to add a second reducer with the same stateId and eventId would result in an error):
+However, you can add as many reducers for this state as you like, one for each event that should be handled (trying to add a second reducer with the same stateId **and** eventId would result in an error):
 ```typescript
 store.addReducer(
   stateId: BehaviorId<T>,
@@ -378,7 +391,7 @@ This is the same approach as in classic dependency injection, just better, becau
 
 ### Reactive dependency injection <a name="reactive-di"></a>
 
-DI as you know it from classic OO-programming, is used to decouple usage and creation of dependencies.
+Classic DI is used to decouple usage and creation of dependencies.
 It thus allows for different concrete types without breaking dependencies, e.g. to allow for simple testability.
 But there's a problem with classic DI. All dependencies still need to be available at the time of object creation (class instantiation), because they are used in imperative instead of reactive code.
 Some DI-implementations even have problems with cyclic dependencies (which is no issue at all for our reactive DI).
@@ -393,11 +406,14 @@ This will be detailed in the [Testing section](#testing)
 > And also no, because you don't get the dependencies itself from the store, but you get them wrapped into an observable.
 > This makes a difference, because some arguments against classic service locators do not apply to the _rx-signals-store_.
 > Thus, I don't like to bring in this somehow biased term and instead keep calling it reactive DI.
+> In classic-DI, you e.g. define an injection-point via annotated-interface and the DI-lib takes care to create and inject the concrete dependency at that point.
+> In reactive-DI, your injection-point is a behavior you request from the store via an identifier that corresponds to the interface. The store then injects the concrete dependency as soon as it becomes available.
+> The only drawback compared to classic-DI is that the depending code needs to know the store. However, being some kind of reactive-runtime, the store is practically needed everywhere.
 
 ## Encapsulation via Signals-type <a name="signals-type"></a>
 
 In the previous section, we tallied that in _rx-signals_, decoupling is done by wireing dependencies based on identifiers.
-But of course, we still want to be able to somehow encapsulate certain behaviors and events that belong together, to achieve a high cohesion.
+But of course, we still want to be able to somehow bundle certain behaviors and events that belong together, to achieve encapsulation and high cohesion.
 This leads to the following requirements:
 * The creation of `SignalId`s and the setup of the store (using the `SignalId`s) must be separated somehow.
   * Because all `SignalId`s used in wireing must be available, when the setup starts.
@@ -419,7 +435,7 @@ type SetupWithStore = { readonly setup: (store: Store) => void; };
 The setup function must only add behavior- and/or event-sources to the store for output-signal-ids and signal-ids that are created by the setup function itself.
 In contrast, it must not add any sources to the store using one of the input-ids!
 
-:warning: Similar to `const x: Observable<T>` being the reactive counterpart of `let x: T`, you could see the `Signals` type as reactive counterpart of a class-instance.
+:warning: Similar to `const x: Observable<T>` being the reactive and immutable counterpart of `let x: T`, you could see the `Signals` type as reactive and immutable counterpart of a class-instance.
 Following this analogy, the in/out-`NameToSignalId` is the reactive counterpart of a class-interface.
 
 Let's see an example, where we encapsulate the creation of signals for counters:
@@ -471,7 +487,7 @@ const getSumSignals: () => Signals<SumInput, SumOutput> = () => {
     input: { inputA, inputB },
     output: { counterSum },
     setup: store => {
-      store.addLazyBehavior(
+      store.addDerivedState(
         counterSum,
         combineLatest([store.getBehavior(inputA), store.getBehavior(inputB)]).pipe(
           map(([a, b]) => a + b),
@@ -486,6 +502,7 @@ The two factory functions `getCounterSignals` and `getSumSignals` are two functi
 
 Of course, we can create a function that composes the previous two functions to create counters with sum signals:
 ```typescript
+// we will do better than this in the next section
 type ComposedInput = {
   inputA: CounterInput;
   inputB: CounterInput;
@@ -516,12 +533,13 @@ const getCounterWithSumSignals: () => Signals<ComposedInput, SumOutput> = () => 
 (Again, please note that the order in which the setup functions are called is irrelevant.)
 
 Also we learned about a new store method `connect` which is a shorter convenience method to connect an event or behavior to another event or behavior based on IDs (under the hood a corresponding event-source or behavior for the target id will be added to the store), hence to connect some output-signal to some input-signal.
+Connect can be used to easily transform event-streams to behaviors and vice-versa.
 
 The above way to compose a signals factory from two other factories might be OK in this trivial example.
 But as soon as things get more complex, this kind of 'manual' composition becomes inflexible, verbose and error-prone.
 E.g. it's easy to forget calling the setup function of one of the signals being composed.
 And even if you don't forget it, it's still boilerplate.
-The next section presents a signals factory type that allows for a better, generalized composition.
+The next sections present a signals factory type that allows for a much better, generalized composition.
 
 ## Reusability via SignalsBuild <a name="signals-build-type"></a>
 
@@ -540,7 +558,7 @@ type SignalsBuild<
 type Configuration = Record<string, any>;
 ```
 
-:warning: Back to our analogy of the `Signals` type being the reactive counterpart of a class-instance, a `SignalsBuild` is the reactive counterpart of a class/class-constructor.
+:warning: Back to our analogy of the `Signals` type being the reactive, immutable counterpart of a class-instance, a `SignalsBuild` is the reactive, immutable counterpart of a class/class-constructor.
 
 ## Composition via SignalsFactory <a name="signals-factory-type"></a>
 
@@ -549,7 +567,7 @@ To generalize factory composition, _rx-signals_ features the `SignalsFactory` cl
 The following snippet just shows a part of the SignalsFactory methods.
 We will encounter more methods later and you can consult [the corresponding API-documentation](https://rawcdn.githack.com/gneu77/rx-signals/master/docs/tsdoc/classes/SignalsFactory.html) for details of all methods.
 ```typescript
-// This snippet only shows a small part of the full API:
+// This snippet only shows a small part of the full API!:
 class SignalsFactory<IN extends NameToSignalId, OUT extends NameToSignalId, CONFIG extends Configuration> {
   constructor(readonly build: SignalsBuild<IN, OUT, CONFIG>) {}
   
@@ -866,7 +884,7 @@ Nevertheless, it is of utmost importance, to treat all the major building blocks
   * MapSignalIds
   * MapConfig
 
-There are 3 categories of side-effects:
+There are 3 categories making code impure:
 1. mutating input (in case of a class, `this` is implicit input)
 1. accessing (read or mutate) properties that are not part of the input
 1. missing referential transparancy (not returning the same result for the same input)
@@ -1135,7 +1153,7 @@ For integration testing, you're also just doing the first and the second step.
 Without the need to mock anything, you can then already test a major part of your application.
 Where needed, you can then (e.g. per test-case) just mock individual `Effect` functions.
 
-The clear isolation of side-effects also means you can take the whole part being wrapped into `Signals` and use it in a different presentation-framework (you're interface to the presentation layer is just observing behaviors and dispatching events).
+The clear isolation of side-effects also means you can take the whole part being wrapped into `Signals` and use it in a different presentation-framework (your interface to the presentation layer is just observing behaviors and dispatching events).
 Only the `Effect`s might need modification.
 E.g. you could take your whole `Signals` from frontend to backend and replace e.g. your `Effect`s using an HTTP-service by `Effects` using a database-service.
 
