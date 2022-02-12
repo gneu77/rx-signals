@@ -22,12 +22,13 @@ describe('completeAllSignals', () => {
     store = new Store();
     calculationCalled = 0;
 
-    store.addNonLazyBehavior(
+    store.addBehavior(
       id,
       store.getEventStream(calculateEvent).pipe(
         withLatestFrom(store.getBehavior(id)),
         map(pair => calculator(pair[1])),
       ),
+      false,
       1,
     );
 

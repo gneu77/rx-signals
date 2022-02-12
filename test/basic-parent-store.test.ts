@@ -18,11 +18,11 @@ describe('Parent store', () => {
     store = new Store();
     childStore = store.createChildStore();
 
-    store.addLazyBehavior(idInParent, of(1));
-    childStore.addLazyBehavior(idInChild, of(2));
-    store.addLazyBehavior(idInParentAndChild, of(3));
-    childStore.addLazyBehavior(idInParentAndChild, of(4));
-    store.addLazyBehavior(idInParentAndLaterInChild, of(5));
+    store.addBehavior(idInParent, of(1), true);
+    childStore.addBehavior(idInChild, of(2), true);
+    store.addBehavior(idInParentAndChild, of(3), true);
+    childStore.addBehavior(idInParentAndChild, of(4), true);
+    store.addBehavior(idInParentAndLaterInChild, of(5), true);
   });
 
   it('should access behavior from child, if source is available', async () => {
@@ -40,13 +40,13 @@ describe('Parent store', () => {
 
   it('should access behavior from parent and switch to child, once it becomes available there', async () => {
     await expectSequence(childStore.getBehavior(idInParentAndLaterInChild), [5]);
-    childStore.addLazyBehavior(idInParentAndLaterInChild, of(6));
+    childStore.addBehavior(idInParentAndLaterInChild, of(6), true);
     await expectSequence(childStore.getBehavior(idInParentAndLaterInChild), [6]);
   });
 
   it('should access non-parent behavior from child, once it becomes available there', async () => {
     const sequence = expectSequence(childStore.getBehavior(idLaterInChild), [7]);
-    childStore.addLazyBehavior(idLaterInChild, of(7));
+    childStore.addBehavior(idLaterInChild, of(7), true);
     await sequence;
   });
 

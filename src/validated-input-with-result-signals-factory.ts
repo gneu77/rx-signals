@@ -123,7 +123,7 @@ const setupCombinedBehavior = <InputType, ValidationType, ResultType>(
   isValidationResultValid: (validationResult: ValidationType) => boolean,
   initialResultGetter?: () => ResultType,
 ) => {
-  store.addLazyBehavior(
+  store.addDerivedState(
     id,
     combineLatest([
       store.getBehavior(outIds.conflicts1.combined),

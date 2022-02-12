@@ -178,11 +178,12 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
   const outIds = getOutputSignalIds<IT, RT>();
   const setup = (store: Store) => {
     const invalidateTokenBehavior = getBehaviorId<object | null>();
-    store.addNonLazyBehavior(
+    store.addBehavior(
       invalidateTokenBehavior,
       store.getEventStream(inIds.invalidate).pipe(
         map(() => ({})), // does not work with mapTo, because mapTo would always assign the same object
       ),
+      false,
       null,
     );
 
@@ -197,14 +198,14 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
       resultToken: object | null;
     }>();
     const initialResult = config.initialResultGetter ? config.initialResultGetter() : undefined;
-    store.addLazyBehavior(resultBehavior, store.getEventStream(resultEvent), {
+    store.addDerivedState(resultBehavior, store.getEventStream(resultEvent), {
       result: initialResult,
       resultToken: null,
     });
 
     const triggeredInputEvent = getEventId<IT>();
     const triggeredInputBehavior = getBehaviorId<IT | null>();
-    store.addLazyBehavior(triggeredInputBehavior, store.getEventStream(triggeredInputEvent), null);
+    store.addDerivedState(triggeredInputBehavior, store.getEventStream(triggeredInputEvent), null);
 
     // It is important to setup the combined observable as behavior,
     // because a simple shareReplay (even with refCount) would create a memory leak!!!
@@ -220,7 +221,7 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
         IT,
       ]
     >();
-    store.addLazyBehavior(
+    store.addDerivedState(
       combinedId,
       combineLatest([
         store.getBehavior(inIds.input),
@@ -303,7 +304,7 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
       resultEvent,
     );
 
-    store.addLazyBehavior(
+    store.addDerivedState(
       outIds.combined,
       combined.pipe(
         map(([input, resultState, token, triggeredInput]) => ({

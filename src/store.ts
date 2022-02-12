@@ -144,11 +144,11 @@ export class Store {
    * miss events while you do not actively subscribe the behavior.
    * If the observable only depends on other behaviors, but not on any events, subscribeLazy should be true of course (there
    * is no need to run the observable until it becomes actively subscribed).
-   * Also, if it depends on any lazy behavior, subscribeLazy should be true (because otherwise the lazy behavior it depends
-   * on would become non-lazy).
-   * Analogously, if it depends on an event-source that should be lazy, subscribeLazy should be true. If your behavior needs
-   * to be non-lazy, but at the same time an event-source you depend on should be lazy, this situation can be solved using
-   * one of the addXTypedEventSource methods (see corresponding documentation).
+   * Also, if it depends on any other lazy behavior (derived state), subscribeLazy should be true (because otherwise the lazy
+   * behavior it depends on would become non-lazy).
+   * Analogously, if it depends on an event-source that should be lazy subscribed, subscribeLazy should be true.
+   * If your behavior needs to be non-lazy, but at the same time an event-source you depend on should be lazy,
+   * this situation can be solved using one of the addXTypedEventSource methods (see corresponding documentation).
    *
    * @param {BehaviorId<T>} identifier - the unique identifier for the behavior
    * @param {Observable<T>} observable - the source for the behavior
@@ -173,15 +173,17 @@ export class Store {
   }
 
   /**
-   * The same as calling addBehavior with parameter subscribeLazy = true
-   * (See addBehavior documentation on how to decide between lazy and non-lazy)
+   * This adds an observable representing derived state, hence only depending on other
+   * behaviors, to the store.
+   * It is equivalent to calling addBehavior with parameter subscribeLazy = true.
+   * (See addBehavior documentation for more detailed information on lazy vs. non-lazy behaviors.)
    *
    * @param {BehaviorId<T>} identifier - the unique identifier for the behavior
    * @param {Observable<T>} observable - the source for the behavior
    * @param {T | (() => T) | symbol} initialValueOrValueGetter - the initial value or value getter (for lazy initialization) or symbol NO_VALUE, if there is no initial value (default)
    * @returns {void}
    */
-  addLazyBehavior<T>(
+  addDerivedState<T>(
     identifier: BehaviorId<T>,
     observable: Observable<T>,
     initialValueOrValueGetter: T | (() => T) | symbol = NO_VALUE,
@@ -190,27 +192,13 @@ export class Store {
   }
 
   /**
-   * The same as calling addBehavior with parameter subscribeLazy = false
-   * (See addBehavior documentation on how to decide between lazy and non-lazy)
-   *
-   * @param {BehaviorId<T>} identifier - the unique identifier for the behavior
-   * @param {Observable<T>} observable - the source for the behavior
-   * @param {T | (() => T) | symbol} initialValueOrValueGetter - the initial value or value getter (for lazy initialization) or symbol NO_VALUE, if there is no initial value (default)
-   * @returns {void}
-   */
-  addNonLazyBehavior<T>(
-    identifier: BehaviorId<T>,
-    observable: Observable<T>,
-    initialValueOrValueGetter: T | (() => T) | symbol = NO_VALUE,
-  ): void {
-    this.addBehavior(identifier, observable, false, initialValueOrValueGetter);
-  }
-
-  /**
    * This method adds a source for the non-lazy behavior specified by the given identifier, that provides the
    * given value as initial value for the behavior. It will be the only value, as long as no reducer is added.
-   * (Calling addState(id, value) has the same result as calling addNonLazyBehavior(id, NEVER, value) , however,
-   * the latter would not be idiomatic.)
+   * Calling addState(id, value) has the same result as calling addBehavior(id, NEVER, false, value) , however,
+   * the latter would not be idiomatic.
+   * You can however use addBehavior instead of addState plus reducers, e.g. if there's only a single event
+   * myEvent, you could use something like addBehavior(id, store.getEventStream(myEvent), false, initialValue).
+   * (See addBehavior documentation on how to decide between lazy and non-lazy)
    *
    * @param {BehaviorId<T>} identifier - the unique identifier for the behavior
    * @param {T | (() => T)} initialValueOrValueGetter - the initial value or value getter (for lazy initialization)
@@ -225,7 +213,7 @@ export class Store {
 
   /**
    * This adds a reducer to a behavior. This is meant to be used together with the addState method.
-   * Technically, you can also add reducers to behaviors that were added with one of the addBevavior methods.
+   * Technically, you can also add reducers to behaviors that were added with the addBevavior method.
    * However, this is strongly discouraged and might result in unexpected behavior (literally)!
    *
    * @param {BehaviorId<T>} stateIdentifier - the unique identifier for the behavior
@@ -259,17 +247,20 @@ export class Store {
   }
 
   /**
-   * This connects the source event or behavior with the target event or behavior.
-   * If the targetId is a BehaviorId, a corresponding behavior will be added to the store,
-   * considering the optional lazy-parameter.
-   * In case the sourceId is an EventId, the optional lazy-parameter defaults to false, else to true.
+   * The connect method takes a source- and a target-ID and add a corresponding source for the targetId
+   * to the store, connecting the source event or behavior with the target event or behavior.
+   *
+   * If the targetId is a BehaviorId, the optional lazy-parameter is considered:
+   * In case the sourceId is an EventId, it defaults to false, else to true.
+   *
    * If the targetId is an EventId, a corresponding EventSource will be added to the store and the optional
    * lazy-parameter has no meaning.
+   *
    * Hence, if targetId is a BehaviorId, it must not yet exist in the store, else this method will throw a corresponding error!
    *
    * @param {SignalId<T>} sourceId - the unique identifier for the source event or behavior
    * @param {SignalId<T>} targetId - the unique identifier for the target event or behavior
-   * @param {boolean} lazy - optional parameter that defaults to false, if the source is an event, else to true. If the target is a behavior, lazy defines whether its lazy or not, else the parameter is meaningless.
+   * @param {boolean | undefined} lazy - optional parameter that defaults to false, if the source is an event, else to true. If the target is a behavior, lazy defines whether its lazy or not, else the parameter is meaningless.
    * @returns {void}
    */
   connect<T>(sourceId: SignalId<T>, targetId: SignalId<T>, lazy?: boolean): void {
@@ -282,16 +273,15 @@ export class Store {
 
   /**
    * This connects the source observable with the target event or behavior.
-   * If the targetId is a BehaviorId, a corresponding behavior will be added to the store,
-   * considering the optional lazy-parameter.
-   * In case the sourceId is an EventId, the optional lazy-parameter defaults to false, else to true.
-   * If the targetId is an EventId, a corresponding EventSource will be added to the store and the optional
+   * If the targetId is a BehaviorId, a corresponding behavior source will be added
+   * to the store, considering the lazy-parameter (see addBehavior).
+   * If the targetId is an EventId, a corresponding EventSource will be added to the store and the
    * lazy-parameter has no meaning.
    * Hence, if targetId is a BehaviorId, it must not yet exist in the store, else this method will throw a corresponding error!
    *
    * @param {Observable<T>} source - the source observable
    * @param {SignalId<T>} targetId - the unique identifier for the target event or behavior
-   * @param {boolean} lazy - optional parameter that defaults to false, if the source is an event, else to true. If the target is a behavior, lazy defines whether its lazy or not, else the parameter is meaningless.
+   * @param {boolean} lazy - If the target is a behavior, lazy defines whether its lazy or not, else the parameter is meaningless.
    * @returns {void}
    */
   connectObservable<T>(source: Observable<T>, targetId: SignalId<T>, lazy: boolean): void {

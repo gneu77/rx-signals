@@ -22,12 +22,13 @@ describe('shared behavior state', () => {
     store = new Store();
     calculationCalled = 0;
 
-    store.addLazyBehavior(
+    store.addBehavior(
       id,
       store.getEventStream(calculateEvent).pipe(
         withLatestFrom(store.getBehavior(id)),
         map(pair => calculator(pair[1])),
       ),
+      true,
       1,
     );
 

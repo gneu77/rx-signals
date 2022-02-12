@@ -14,18 +14,20 @@ describe('Cyclic dependencies', () => {
 
     // derivedBehavior depends on cyclicBehavior && cyclicBehavior depends on derivedBehavior
 
-    store.addLazyBehavior(
+    store.addBehavior(
       cyclicBehavior,
       store
         .getEventStream(inputEvent)
         .pipe(withLatestFrom(store.getBehavior(derivedBehavior).pipe(map(val => val * 10))))
         .pipe(map(pair => pair[0] * pair[1])),
+      true,
       1,
     );
 
-    store.addLazyBehavior(
+    store.addBehavior(
       derivedBehavior,
       store.getBehavior(cyclicBehavior).pipe(map(val => val * 10)),
+      true,
     );
   });
 

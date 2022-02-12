@@ -63,7 +63,7 @@ describe('signals factories documentation', () => {
         input: {},
         output: { counterSum },
         setup: store => {
-          store.addLazyBehavior(
+          store.addDerivedState(
             counterSum,
             combineLatest([store.getBehavior(inputA), store.getBehavior(inputB)]).pipe(
               map(([a, b]) => a + b),
@@ -81,7 +81,7 @@ describe('signals factories documentation', () => {
         input: { inputA, inputB },
         output: { counterSum },
         setup: store => {
-          store.addLazyBehavior(
+          store.addDerivedState(
             counterSum,
             combineLatest([store.getBehavior(inputA), store.getBehavior(inputB)]).pipe(
               map(([a, b]) => a + b),
@@ -197,11 +197,11 @@ describe('signals factories documentation', () => {
             counter1Signals.setup(store);
             counter2Signals.setup(store);
             counterSumSignals.setup(store);
-            store.addLazyBehavior(
+            store.addDerivedState(
               counterSumSignals.input.inputA,
               store.getBehavior(counter1Signals.output.counter),
             );
-            store.addLazyBehavior(
+            store.addDerivedState(
               counterSumSignals.input.inputB,
               store.getBehavior(counter2Signals.output.counter),
             );

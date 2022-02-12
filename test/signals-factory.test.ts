@@ -36,7 +36,7 @@ describe('SignalsFactory', () => {
           result,
         },
         setup: store => {
-          store.addLazyBehavior(
+          store.addDerivedState(
             result,
             combineLatest([store.getBehavior(inputA), store.getBehavior(inputB)]).pipe(
               map(([a, b]) => (operation === operationAdd ? a + b : a * b)),
@@ -58,8 +58,8 @@ describe('SignalsFactory', () => {
       const signals = baseFactory.build({});
       signals.setup(store);
       const sequence = expectSequence(store.getBehavior(signals.output.result), [5, 7, 3]);
-      store.addLazyBehavior(signals.input.inputA, of(4));
-      store.addLazyBehavior(signals.input.inputB, of(1, 3, -1));
+      store.addDerivedState(signals.input.inputA, of(4));
+      store.addDerivedState(signals.input.inputB, of(1, 3, -1));
       await sequence;
     });
 
@@ -69,8 +69,8 @@ describe('SignalsFactory', () => {
       });
       signals.setup(store);
       const sequence = expectSequence(store.getBehavior(signals.output.result), [4, 12, -4]);
-      store.addLazyBehavior(signals.input.inputA, of(4));
-      store.addLazyBehavior(signals.input.inputB, of(1, 3, -1));
+      store.addDerivedState(signals.input.inputA, of(4));
+      store.addDerivedState(signals.input.inputB, of(1, 3, -1));
       await sequence;
     });
   });
@@ -169,7 +169,7 @@ describe('SignalsFactory', () => {
             },
           },
           setup: store => {
-            store.addLazyBehavior(
+            store.addDerivedState(
               tripledResult,
               store.getBehavior(tripleInput).pipe(map(n => 3 * n)),
             );
@@ -187,8 +187,8 @@ describe('SignalsFactory', () => {
         .build({});
       signals.setup(store);
       const sequence = expectSequence(store.getBehavior(signals.output.tripledResult), [15, 21, 9]);
-      store.addLazyBehavior(signals.input.inputA, of(4));
-      store.addLazyBehavior(signals.input.inputB, of(1, 3, -1));
+      store.addDerivedState(signals.input.inputA, of(4));
+      store.addDerivedState(signals.input.inputB, of(1, 3, -1));
       await sequence;
     });
   });

@@ -59,7 +59,7 @@ describe('validated input with result signals factory', () => {
     store = new Store();
     store.addEffect(validationEffectId, validationEffect);
     store.addEffect(resultEffectId, resultEffect);
-    store.addNonLazyBehavior(inputStateId, inputSubject.asObservable());
+    store.addBehavior(inputStateId, inputSubject.asObservable(), false);
   });
 
   describe('default options', () => {

@@ -19,7 +19,7 @@ describe('Effect loops', () => {
   });
 
   it('should perform an effect on a certain condition and result in correct behavior', async () => {
-    store.addNonLazyBehavior(
+    store.addBehavior(
       counterState,
       merge(store.getTypedEventStream(addEvent), store.getTypedEventStream(multiplyEvent)).pipe(
         withLatestFrom(store.getBehavior(counterState)),
@@ -33,6 +33,7 @@ describe('Effect loops', () => {
           return state;
         }),
       ),
+      false,
       0, // => 0
     );
 

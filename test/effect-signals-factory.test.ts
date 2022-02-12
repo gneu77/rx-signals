@@ -60,7 +60,7 @@ describe('effect signals factory', () => {
     effectCalled = 0;
     store = new Store();
     store.addEffect(resultEffectId, resultEffect);
-    store.addNonLazyBehavior(inputStateId, inputSubject.asObservable());
+    store.addBehavior(inputStateId, inputSubject.asObservable(), false);
   });
 
   describe('getEffectSignalsFactory', () => {

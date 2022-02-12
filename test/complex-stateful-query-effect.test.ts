@@ -26,7 +26,7 @@ describe('Stateful query pattern', () => {
   beforeEach((): void => {
     store = new Store();
 
-    store.addNonLazyBehavior(
+    store.addBehavior(
       queryBehavior,
       store.getEventStream(queryEvent).pipe(
         withLatestFrom(store.getBehavior(queryBehavior)),
@@ -35,22 +35,24 @@ describe('Stateful query pattern', () => {
           ...queryEvent,
         })),
       ),
+      false,
       {
         firstName: null,
         lastName: null,
       },
     );
 
-    store.addLazyBehavior(resultBehavior, store.getEventStream(resultEvent), {
+    store.addBehavior(resultBehavior, store.getEventStream(resultEvent), true, {
       result: [],
       resultQuery: null,
     });
 
-    store.addLazyBehavior(
+    store.addBehavior(
       loadingBehavior,
       combineLatest([store.getBehavior(queryBehavior), store.getBehavior(resultBehavior)]).pipe(
         map(([query, result]) => query !== result.resultQuery),
       ),
+      true,
     );
 
     const eventSource = combineLatest([

@@ -21,18 +21,19 @@ describe('Lazy query pattern', () => {
   beforeEach((): void => {
     store = new Store();
 
-    store.addLazyBehavior(queryBehavior, store.getEventStream(queryEvent), null);
+    store.addBehavior(queryBehavior, store.getEventStream(queryEvent), true, null);
 
-    store.addLazyBehavior(resultBehavior, store.getEventStream(resultEvent), {
+    store.addBehavior(resultBehavior, store.getEventStream(resultEvent), true, {
       result: [],
       resultQuery: null,
     });
 
-    store.addLazyBehavior(
+    store.addBehavior(
       loadingBehavior,
       combineLatest([store.getBehavior(queryBehavior), store.getBehavior(resultBehavior)]).pipe(
         map(([query, result]) => query !== result.resultQuery),
       ),
+      true,
     );
 
     const eventSource = combineLatest([
@@ -185,16 +186,17 @@ describe('Lazy query pattern', () => {
       const setQuery = getEventId<string>();
       const setResult = getEventId<QueryResult>();
 
-      store.addLazyBehavior(query, store.getEventStream(setQuery), '');
-      store.addLazyBehavior(result, store.getEventStream(setResult), {
+      store.addBehavior(query, store.getEventStream(setQuery), true, '');
+      store.addBehavior(result, store.getEventStream(setResult), true, {
         result: [],
         resultQuery: null,
       });
-      store.addLazyBehavior(
+      store.addBehavior(
         pending,
         combineLatest([store.getBehavior(query), store.getBehavior(result)]).pipe(
           map(([q, r]) => q !== r.resultQuery),
         ),
+        true,
       );
       store.addEventSource(
         Symbol('MockupQueryEffect'),

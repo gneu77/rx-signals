@@ -19,15 +19,16 @@ describe('Behaviors share and reset logic', () => {
       doubledCalculated = 0;
       tripledCalculated = 0;
 
-      store.addLazyBehavior(
+      store.addBehavior(
         rootBehavior,
         store.getEventStream(addToRootEvent).pipe(
           withLatestFrom(store.getBehavior(rootBehavior)),
           map(([add, state]) => state + add),
         ),
+        true,
         5,
       );
-      store.addLazyBehavior(
+      store.addBehavior(
         doubledBehavior,
         store.getBehavior(rootBehavior).pipe(
           map(root => root * 2),
@@ -35,8 +36,9 @@ describe('Behaviors share and reset logic', () => {
             doubledCalculated = doubledCalculated + 1;
           }),
         ),
+        true,
       );
-      store.addLazyBehavior(
+      store.addBehavior(
         tripledBehavior,
         store.getBehavior(rootBehavior).pipe(
           map(root => root * 3),
@@ -44,6 +46,7 @@ describe('Behaviors share and reset logic', () => {
             tripledCalculated = tripledCalculated + 1;
           }),
         ),
+        true,
       );
     });
 
@@ -162,15 +165,16 @@ describe('Behaviors share and reset logic', () => {
       doubledCalculated = 0;
       tripledCalculated = 0;
 
-      store.addNonLazyBehavior(
+      store.addBehavior(
         rootBehavior,
         store.getEventStream(addToRootEvent).pipe(
           withLatestFrom(store.getBehavior(rootBehavior)),
           map(([add, state]) => state + add),
         ),
+        false,
         5,
       );
-      store.addLazyBehavior(
+      store.addBehavior(
         doubledBehavior,
         store.getBehavior(rootBehavior).pipe(
           map(root => root * 2),
@@ -178,8 +182,9 @@ describe('Behaviors share and reset logic', () => {
             doubledCalculated = doubledCalculated + 1;
           }),
         ),
+        true,
       );
-      store.addLazyBehavior(
+      store.addBehavior(
         tripledBehavior,
         store.getBehavior(rootBehavior).pipe(
           map(root => root * 3),
@@ -187,6 +192,7 @@ describe('Behaviors share and reset logic', () => {
             tripledCalculated = tripledCalculated + 1;
           }),
         ),
+        true,
       );
     });
 
