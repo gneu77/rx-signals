@@ -7,11 +7,11 @@ There is however no good reason to use 2.x over 3.0.0-rc9, so please start with 
 
 3.0.0-rc9 is better than 2.x in any aspect and the code is production-ready.
 It is now more or less documentation that needs improvement (though 2.x had no documentation at all, apart from doc-strings).
-It is however possible that I will introduce minor breaking changes until 3.0.0 is released.
+It is however possible that I will introduce minor breaking changes until 3.0.0 is finally released.
 
 ## Installation
 
-`npm install --save @rx-signals/store@3.0.0-rc9`
+**`npm install --save @rx-signals/store@3.0.0-rc9`**
 
 ## Dependencies
 
@@ -39,9 +39,9 @@ It is however not limited to MVU, but can be used in all architectures that woul
 
 Though it heavily relies on _RxJs_, this lib is **not** Angular-specific. You can (and should) also use it in any other context where you have _RxJs_ at your disposal!
 
-(Use it in the backend or with any presentation-framework you like. Decoupling all application-logic from presentation-logic is a strength of this library.)
+(Use it in the backend or with any presentation-framework you like. Decoupling application-logic from presentation-logic is a strength of this library.)
 
-_rx-signals_ itself is implemented with TypeScript and therefore naturally comes with **full type-safety**.
+_rx-signals_ itself is implemented with TypeScript and therefore naturally comes with **first-class type-safety**.
 
 ### High-level overview
 This lib comes with a
@@ -51,43 +51,23 @@ This lib comes with a
 * Signals- and SignalsBuilder Types as
   * Encapsulation/Abstraction-layer over low-level signal-composition
 * SignalsFactory as
-  * Abstraction-layer over the SignalsBuilder-Type for high-level composition and reusability (enabling DRY architecture)
+  * Abstraction-layer over the SignalsBuilder-type for high-level composition and reusability (enabling DRY architecture)
 * EffectSignalsFactory as
-  * SignalsFactory that covers all side-effect-scenarios generically, encapsulating and abstracting away all the pitfalls and possibilities to shoot yourself in the foot.
+  * SignalsFactory that covers side-effect-scenarios generically, encapsulating and abstracting away all the pitfalls and possibilities to shoot yourself in the foot.
 
 See [**_rx-signals_ design goals**](https://github.com/gneu77/rx-signals/blob/master/docs/rx-signals_start.md#design) for more.
 
 ## Getting started
 
-The impatient reader may skip the terminology part and head on to [Directions](#directions).
-
 ### Terminology <a name="terminology"></a>
 
 What does _rx-signals_ mean anyway?
 Well the _rx_ stands for reactive extensions, so it's the same _rx_ as in _RxJs_.
-The term _signals_ is lent from the world of functional reactive programming (FRP), though _rx-signals_ features reactive programming (RP).
-You can [skip to the definition of _signals_ in RP](#rp-signals-definition), if you're not really interested in the actual difference between FRP and RP:
+The term _signals_ is lent from the world of functional reactive programming (FRP), that knows two types of signals.
+The first type are _Events_ being a signal a values occurring at discrete points of time.
+The second type of _signals_ are _Behaviors_ that represent values that vary over time in response to _Events_.
 
-In **FRP**, there are two kinds of signals:
-* Events:
-  * Signals of values that occur at discrete points in time
-  * So functions of time that **may or may not** yield a value
-  * An event can depend on several conditions (e.g. other signals)
-* Behaviors:
-  * Signals of dynamic values over continuous time
-  * So functions of time that alwayas yield a value
-  * A behavior can depend on other behaviors and/or events
-
-The FRP-guys may pardon me for having over-simplified a bit. 
-If you're interested in an exact definition, [here you can start](http://conal.net/papers/icfp97/) (though the above definition better resembles RT-FRP, so the original paper is really just a start).
-
-We're however not interested in the continuous world of FRP, but instead we're working with programs that change in discrete steps, which brings us to RP (in RP the signals are not functions of time, but only of ordered signals they depend on).
-This is really confusing, because actually in RP, we're making use of functional programming **a lot**! 
-It's just that the term FRP is reserved for the thing where behaviors are real functions of continous time.
-Don't worry, if this is confusing or even if you still have no idea what I'm talking about. 
-At least if you're already familiar with _RxJs_ (which is a RP-library), it's going to become much more clear next.
-
-The FRP-definitions of events and behaviors translate to the following definitions for **RP**:<a name="rp-signals-definition"></a>
+In RP (Reactive Programming), we can defined _Events_ and _Behaviors_ as follows:<a name="rp-signals-definition"></a>
 * Event-streams:
   * Value-streams that have no current value
   * Publish values (events) to subscribers at discrete points of time
@@ -97,8 +77,8 @@ The FRP-definitions of events and behaviors translate to the following definitio
   * Current value can change at discrete points in time (published to subscribers)
   * Can depend on other behaviors and/or event-streams
 
-So an _RxJs_ example for behaviors would be a _BehaviorSubject_, while an example for event-streams would be _Subjects_.
-Thus, in _RxJs_-world you can translate _signal_ as _observable_. (Now that we arrived at _RxJs_ terminology: another difference between FRP and RP is that in RP, a signal can simply end, hence observables can complete.)
+So an _RxJs_ example for behaviors would be a _BehaviorSubject_, while an example for event-streams would be _Subject_.
+Thus, in _RxJs_-world you can translate _signal_ as _observable_.
 
 ### Directions <a name="directions"></a>
 

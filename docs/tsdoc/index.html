@@ -4,15 +4,15 @@
 </a>
 <p><strong>Reactive state and effects management</strong></p>
 <p>:warning: This documentation is work in progress for the upcoming 3.0.0 version.
-There is however no good reason to use 2.x over 3.0.0-rc8, so please start with the rc-version (3.0.0 will be the first version I&#39;m going to advertise publicly, so it&#39;s more like a 1.0 in reality).</p>
-<p>3.0.0-rc8 is better than 2.x in any aspect and the code is production-ready.
+There is however no good reason to use 2.x over 3.0.0-rc9, so please start with the rc-version (3.0.0 will be the first version I&#39;m going to advertise publicly, so it&#39;s more like a 1.0 in reality).</p>
+<p>3.0.0-rc9 is better than 2.x in any aspect and the code is production-ready.
 It is now more or less documentation that needs improvement (though 2.x had no documentation at all, apart from doc-strings).
-It is however possible that I will introduce minor breaking changes until 3.0.0 is released.</p>
+It is however possible that I will introduce minor breaking changes until 3.0.0 is finally released.</p>
 
 <a href="#installation" id="installation" style="color: inherit; text-decoration: none;">
   <h2>Installation</h2>
 </a>
-<p><code>npm install --save @rx-signals/store@3.0.0-rc8</code></p>
+<p><strong><code>npm install --save @rx-signals/store@3.0.0-rc9</code></strong></p>
 
 <a href="#dependencies" id="dependencies" style="color: inherit; text-decoration: none;">
   <h2>Dependencies</h2>
@@ -50,8 +50,8 @@ It is however possible that I will introduce minor breaking changes until 3.0.0 
 </li>
 </ul>
 <p>Though it heavily relies on <em>RxJs</em>, this lib is <strong>not</strong> Angular-specific. You can (and should) also use it in any other context where you have <em>RxJs</em> at your disposal!</p>
-<p>(Use it in the backend or with any presentation-framework you like. Decoupling all application-logic from presentation-logic is a strength of this library.)</p>
-<p><em>rx-signals</em> itself is implemented with TypeScript and therefore naturally comes with <strong>full type-safety</strong>.</p>
+<p>(Use it in the backend or with any presentation-framework you like. Decoupling application-logic from presentation-logic is a strength of this library.)</p>
+<p><em>rx-signals</em> itself is implemented with TypeScript and therefore naturally comes with <strong>first-class type-safety</strong>.</p>
 
 <a href="#high-level-overview" id="high-level-overview" style="color: inherit; text-decoration: none;">
   <h3>High-level overview</h3>
@@ -68,11 +68,11 @@ It is however possible that I will introduce minor breaking changes until 3.0.0 
 </ul>
 </li>
 <li>SignalsFactory as<ul>
-<li>Abstraction-layer over the SignalsBuilder-Type for high-level composition and reusability (enabling DRY architecture)</li>
+<li>Abstraction-layer over the SignalsBuilder-type for high-level composition and reusability (enabling DRY architecture)</li>
 </ul>
 </li>
 <li>EffectSignalsFactory as<ul>
-<li>SignalsFactory that covers all side-effect-scenarios generically, encapsulating and abstracting away all the pitfalls and possibilities to shoot yourself in the foot.</li>
+<li>SignalsFactory that covers side-effect-scenarios generically, encapsulating and abstracting away all the pitfalls and possibilities to shoot yourself in the foot.</li>
 </ul>
 </li>
 </ul>
@@ -81,38 +81,16 @@ It is however possible that I will introduce minor breaking changes until 3.0.0 
 <a href="#getting-started" id="getting-started" style="color: inherit; text-decoration: none;">
   <h2>Getting started</h2>
 </a>
-<p>The impatient reader may skip the terminology part and head on to <a href="#directions">Directions</a>.</p>
 
 <a href="#terminology-" id="terminology-" style="color: inherit; text-decoration: none;">
   <h3>Terminology <a name="terminology"></a></h3>
 </a>
 <p>What does <em>rx-signals</em> mean anyway?
 Well the <em>rx</em> stands for reactive extensions, so it&#39;s the same <em>rx</em> as in <em>RxJs</em>.
-The term <em>signals</em> is lent from the world of functional reactive programming (FRP), though <em>rx-signals</em> features reactive programming (RP).
-You can <a href="#rp-signals-definition">skip to the definition of <em>signals</em> in RP</a>, if you&#39;re not really interested in the actual difference between FRP and RP:</p>
-<p>In <strong>FRP</strong>, there are two kinds of signals:</p>
-<ul>
-<li>Events:<ul>
-<li>Signals of values that occur at discrete points in time</li>
-<li>So functions of time that <strong>may or may not</strong> yield a value</li>
-<li>An event can depend on several conditions (e.g. other signals)</li>
-</ul>
-</li>
-<li>Behaviors:<ul>
-<li>Signals of dynamic values over continuous time</li>
-<li>So functions of time that alwayas yield a value</li>
-<li>A behavior can depend on other behaviors and/or events</li>
-</ul>
-</li>
-</ul>
-<p>The FRP-guys may pardon me for having over-simplified a bit. 
-If you&#39;re interested in an exact definition, <a href="http://conal.net/papers/icfp97/">here you can start</a> (though the above definition better resembles RT-FRP, so the original paper is really just a start).</p>
-<p>We&#39;re however not interested in the continuous world of FRP, but instead we&#39;re working with programs that change in discrete steps, which brings us to RP (in RP the signals are not functions of time, but only of ordered signals they depend on).
-This is really confusing, because actually in RP, we&#39;re making use of functional programming <strong>a lot</strong>! 
-It&#39;s just that the term FRP is reserved for the thing where behaviors are real functions of continous time.
-Don&#39;t worry, if this is confusing or even if you still have no idea what I&#39;m talking about. 
-At least if you&#39;re already familiar with <em>RxJs</em> (which is a RP-library), it&#39;s going to become much more clear next.</p>
-<p>The FRP-definitions of events and behaviors translate to the following definitions for <strong>RP</strong>:<a name="rp-signals-definition"></a></p>
+The term <em>signals</em> is lent from the world of functional reactive programming (FRP), that knows two types of signals.
+The first type are <em>Events</em> being a signal a values occurring at discrete points of time.
+The second type of <em>signals</em> are <em>Behaviors</em> that represent values that vary over time in response to <em>Events</em>.</p>
+<p>In RP (Reactive Programming), we can defined <em>Events</em> and <em>Behaviors</em> as follows:<a name="rp-signals-definition"></a></p>
 <ul>
 <li>Event-streams:<ul>
 <li>Value-streams that have no current value</li>
@@ -127,8 +105,8 @@ At least if you&#39;re already familiar with <em>RxJs</em> (which is a RP-librar
 </ul>
 </li>
 </ul>
-<p>So an <em>RxJs</em> example for behaviors would be a <em>BehaviorSubject</em>, while an example for event-streams would be <em>Subjects</em>.
-Thus, in <em>RxJs</em>-world you can translate <em>signal</em> as <em>observable</em>. (Now that we arrived at <em>RxJs</em> terminology: another difference between FRP and RP is that in RP, a signal can simply end, hence observables can complete.)</p>
+<p>So an <em>RxJs</em> example for behaviors would be a <em>BehaviorSubject</em>, while an example for event-streams would be <em>Subject</em>.
+Thus, in <em>RxJs</em>-world you can translate <em>signal</em> as <em>observable</em>.</p>
 
 <a href="#directions-" id="directions-" style="color: inherit; text-decoration: none;">
   <h3>Directions <a name="directions"></a></h3>
