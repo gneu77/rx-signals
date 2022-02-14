@@ -64,7 +64,7 @@ See [**_rx-signals_ design goals**](https://github.com/gneu77/rx-signals/blob/ma
 What does _rx-signals_ mean anyway?
 Well the _rx_ stands for reactive extensions, so it's the same _rx_ as in _RxJs_.
 The term _signals_ is lent from the world of functional reactive programming (FRP), that knows two types of signals.
-The first type are _Events_ being a signal a values occurring at discrete points of time.
+The first type are _Events_ being a signal of values occurring at discrete points of time.
 The second type of _signals_ are _Behaviors_ that represent values that vary over time in response to _Events_.
 
 In RP (Reactive Programming), we can defined _Events_ and _Behaviors_ as follows:<a name="rp-signals-definition"></a>
@@ -77,7 +77,7 @@ In RP (Reactive Programming), we can defined _Events_ and _Behaviors_ as follows
   * Current value can change at discrete points in time (published to subscribers)
   * Can depend on other behaviors and/or event-streams
 
-So an _RxJs_ example for behaviors would be a _BehaviorSubject_, while an example for event-streams would be _Subject_.
+So an _RxJs_ example for behaviors would be a _BehaviorSubject_, while an example for event-streams would be a _Subject_.
 Thus, in _RxJs_-world you can translate _signal_ as _observable_.
 
 ### Directions <a name="directions"></a>
