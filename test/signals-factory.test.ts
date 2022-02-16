@@ -192,4 +192,21 @@ describe('SignalsFactory', () => {
       await sequence;
     });
   });
+
+  describe('mapOutputBehavior', () => {
+    it('should map output behaviors', async () => {
+      const signals = baseFactory
+        .mapOutputBehavior('result', old => old.pipe(map(n => n % 2 === 0)))
+        .build({});
+      signals.setup(store);
+      const sequence = expectSequence(store.getBehavior(signals.output.result), [
+        true, // 4
+        false, // 5, 7 (only one false due to distinctUntilChanged)
+        true, // 2
+      ]);
+      store.addDerivedState(signals.input.inputA, of(4));
+      store.addDerivedState(signals.input.inputB, of(0, 1, 3, -2));
+      await sequence;
+    });
+  });
 });

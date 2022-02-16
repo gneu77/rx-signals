@@ -38,7 +38,7 @@ export type EventId<T> = symbol & {
 export type SignalId<T> = BehaviorId<T> | EventId<T>;
 
 /**
- * ToSignalId<S> is a utility type that equals Signal<T>, if S extends Signal<T>, else never.
+ * ToSignalId<S> is a utility type that equals Signal<T>, if S extends SignalId<T>, else never.
  * Examples:
  *    ToSignalId<BehaviorId<number>> would be SignalId<number>
  *    ToSignalId<EventId<string>> would be SignalId<string>
@@ -46,9 +46,21 @@ export type SignalId<T> = BehaviorId<T> | EventId<T>;
  *
  * @typedef {object} SignalId<T> | never - the resulting type
  * @template S - the generic argument to ToSignalId
- * @template T - the inferred generic parameter of S, if T extends SignalId<T>
+ * @template T - the inferred generic parameter of S, if S extends SignalId<T>
  */
 export type ToSignalId<S> = S extends SignalId<infer T> ? SignalId<T> : never;
+
+/**
+ * ToBehaviorIdValueType<B> is a utility type that equals T, if B extends BehaviorId<T>, else never.
+ * Examples:
+ *    ToSignalId<BehaviorId<number>> would be number
+ *    ToSignalId<EventId<string>> would be never
+ *
+ * @typedef {object} BehaviorId<T> | never - the resulting type
+ * @template B - the generic argument to ToBehaviorIdValueType
+ * @template T - the inferred generic parameter of B, if B extends BehaviorId<T>
+ */
+export type ToBehaviorIdValueType<B> = B extends BehaviorId<infer T> ? T : never;
 
 /**
  * The rx-signals Store uses this type to uniquely identify all of its result effects.
