@@ -78,7 +78,7 @@ describe('SignalsFactory', () => {
   describe('modify input/output ids', () => {
     it('should add a single input signal id', async () => {
       const myEvent = getEventId<number>();
-      const signals = baseFactory.addOrReplaceInputId('newKey', myEvent).build({});
+      const signals = baseFactory.addOrReplaceInputId('newKey', () => myEvent).build({});
       const sequence = expectSequence(store.getEventStream(signals.input.newKey), [5, 7]);
       store.dispatch(myEvent, 5);
       store.dispatch(myEvent, 7);
@@ -87,7 +87,7 @@ describe('SignalsFactory', () => {
 
     it('should add a single output signal id', async () => {
       const myEvent = getEventId<number>();
-      const signals = baseFactory.addOrReplaceOutputId('newKey', myEvent).build({});
+      const signals = baseFactory.addOrReplaceOutputId('newKey', () => myEvent).build({});
       const sequence = expectSequence(store.getEventStream(signals.output.newKey), [5, 7]);
       store.dispatch(myEvent, 5);
       store.dispatch(myEvent, 7);
@@ -96,7 +96,7 @@ describe('SignalsFactory', () => {
 
     it('should replace a single input signal id', async () => {
       const myEvent = getEventId<number>();
-      const signals = baseFactory.addOrReplaceInputId('inputA', myEvent).build({});
+      const signals = baseFactory.addOrReplaceInputId('inputA', () => myEvent).build({});
       const sequence = expectSequence(store.getEventStream(signals.input.inputA), [5, 7]);
       store.dispatch(myEvent, 5);
       store.dispatch(myEvent, 7);
@@ -105,7 +105,7 @@ describe('SignalsFactory', () => {
 
     it('should replace a single output signal id', async () => {
       const myEvent = getEventId<number>();
-      const signals = baseFactory.addOrReplaceOutputId('result', myEvent).build({});
+      const signals = baseFactory.addOrReplaceOutputId('result', () => myEvent).build({});
       const sequence = expectSequence(store.getEventStream(signals.output.result), [5, 7]);
       store.dispatch(myEvent, 5);
       store.dispatch(myEvent, 7);

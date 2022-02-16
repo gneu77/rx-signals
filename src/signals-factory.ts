@@ -437,16 +437,16 @@ export class SignalsFactory<
    * @template K - a concrete string to be used as key for the new SignalId
    * @template ID - a concrete SignalId type
    * @param {K} name - the name of the new SignalId
-   * @param {ID} id - the new SignalId
+   * @param {() => ID} idGetter - a function returning the new SignalId
    * @returns {SignalsFactory<AddOrReplaceId<IN, K, ID>, OUT, CONFIG>} - a new SignalsFactory with modified input signals
    */
   addOrReplaceInputId<K extends string, ID extends SignalId<any>>(
     name: K,
-    id: ID,
+    idGetter: () => ID,
   ): SignalsFactory<AddOrReplaceId<IN, K, ID>, OUT, CONFIG> {
     return this.mapInput<AddOrReplaceId<IN, K, ID>>(input => ({
       ...input,
-      [name]: id,
+      [name]: idGetter(),
     }));
   }
 
@@ -516,16 +516,16 @@ export class SignalsFactory<
    * @template K - a concrete string to be used as key for the new SignalId
    * @template ID - a concrete SignalId type
    * @param {K} name - the name of the new SignalId
-   * @param {ID} id - the new SignalId
+   * @param {() => ID} idGetter - a function returning the new SignalId
    * @returns {SignalsFactory<IN, AddOrReplaceId<OUT, K, ID>, CONFIG>} - a new SignalsFactory with modified output signals
    */
   addOrReplaceOutputId<K extends string, ID extends SignalId<any>>(
     name: K,
-    id: ID,
+    idGetter: () => ID,
   ): SignalsFactory<IN, AddOrReplaceId<OUT, K, ID>, CONFIG> {
     return this.mapOutput<AddOrReplaceId<OUT, K, ID>>(output => ({
       ...output,
-      [name]: id,
+      [name]: idGetter(),
     }));
   }
 

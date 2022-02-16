@@ -191,8 +191,7 @@ export const getValidatedInputWithResultSignalsFactory = <
         true,
       );
     })
-    .addOrReplaceOutputId(
-      'combined',
+    .addOrReplaceOutputId('combined', () =>
       getBehaviorId<ValidatedInputWithResult<InputType, ValidationType, ResultType>>(),
     )
     .extendSetup((store, _, output, config) => {
