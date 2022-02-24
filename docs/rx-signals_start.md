@@ -944,6 +944,7 @@ type EffectConfiguration<InputType, ResultType> = {
   withTrigger?: boolean;
   initialResultGetter?: () => ResultType;
   effectDebounceTime?: number;
+  wrappedEffectGetter?: (effect: Effect<InputType, ResultType>) => Effect<InputType, ResultType>;
 };
 type CombinedEffectResult<InputType, ResultType> = {
   currentInput?: InputType;
