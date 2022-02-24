@@ -1,7 +1,7 @@
 import { combineLatest, of, throwError } from 'rxjs';
 import { catchError, debounceTime, filter, map, mapTo, switchMap, take } from 'rxjs/operators';
 import { Signals, SignalsFactory } from './signals-factory';
-import { Store } from './store';
+import { Effect, Store } from './store';
 import { BehaviorId, EffectId, EventId, getBehaviorId, getEventId, NO_VALUE } from './store-utils';
 
 /**
@@ -121,6 +121,7 @@ export type EffectSignals<InputType, ResultType> = Signals<
  * @property {boolean | undefined} withTrigger - optional bool that defaults to false. If true, the effect will only be performed in case a trigger event is received (else, whenever the input changes).
  * @property {function | undefined} initialResultGetter - optional function that defaults to undefined. If not undefined, it will be used to determine an initial result for the result behavior.
  * @property {number | undefined} effectDebounceTime - optional number that defaults to undefined. If a number > 0 is specified, then it will be used as milliseconds to debounce new input to the effect (please DON't debounce the input signal yourself, because that would debounce before trigger and/or input equals).
+ * @property {function | undefined} wrapperEffectGetter - optional function to wrap the effect defined by effectId with a custom Effect
  */
 export type EffectConfiguration<InputType, ResultType> = {
   effectId: EffectId<InputType, ResultType>;
@@ -128,6 +129,7 @@ export type EffectConfiguration<InputType, ResultType> = {
   withTrigger?: boolean;
   initialResultGetter?: () => ResultType;
   effectDebounceTime?: number;
+  wrappedEffectGetter?: (effect: Effect<InputType, ResultType>) => Effect<InputType, ResultType>;
 };
 
 /**
@@ -165,7 +167,10 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
       take(1),
       switchMap(effect => {
         try {
-          return effect(input, store, previousInput, previousResult).pipe(take(1));
+          const wrappedEffect = config.wrappedEffectGetter
+            ? config.wrappedEffectGetter(effect)
+            : effect;
+          return wrappedEffect(input, store, previousInput, previousResult).pipe(take(1));
         } catch (error) {
           return throwError(() => error);
         }

@@ -1,4 +1,4 @@
-import { Observable, of, Subject } from 'rxjs';
+import { map, Observable, of, Subject } from 'rxjs';
 import { delay, filter, take } from 'rxjs/operators';
 import {
   CombinedEffectResult,
@@ -830,6 +830,84 @@ describe('effect signals factory', () => {
           page: 4,
         });
         await sequence2;
+      });
+    });
+
+    describe('with custom effect wrapper', () => {
+      let outIds: EffectOutputSignals<InputModel, ResultModel>;
+      let observable: Observable<CombinedEffectResult<InputModel, ResultModel>>;
+
+      beforeEach(() => {
+        const factoryResult = factory
+          .extendSetup((store, inIds) => store.connect(inputStateId, inIds.input))
+          .build({
+            effectId: resultEffectId,
+            wrappedEffectGetter: effect => (input, store, prevInput, prevOutput) =>
+              effect(input, store, prevInput, prevOutput).pipe(
+                map(r => ({
+                  results: r.results.map(e => e + '_extended'),
+                  totalResults: r.totalResults,
+                })),
+              ),
+          });
+        outIds = factoryResult.output;
+        factoryResult.setup(store);
+        observable = store.getBehavior(outIds.combined);
+      });
+
+      it('should use the custom effect wrapper', async () => {
+        const sequence = expectSequence(store.getEventStream(outIds.successes), [
+          {
+            result: {
+              results: ['test_result_extended'],
+              totalResults: 1,
+            },
+            resultInput: {
+              searchString: 'test',
+              page: 0,
+            },
+          },
+          {
+            result: {
+              results: [],
+              totalResults: 1,
+            },
+            resultInput: {
+              searchString: 'test',
+              page: 1,
+            },
+            previousInput: {
+              searchString: 'test',
+              page: 0,
+            },
+            previousResult: {
+              results: ['test_result_extended'],
+              totalResults: 1,
+            },
+          },
+        ]);
+        observable
+          .pipe(
+            filter(c => c.resultInput?.page === 0 && !c.resultPending),
+            take(1),
+          )
+          .subscribe(() => {
+            observable
+              .pipe(
+                filter(c => c.resultInput?.page === 1 && !c.resultPending),
+                take(1),
+              )
+              .subscribe();
+            inputSubject.next({
+              searchString: 'test',
+              page: 1,
+            });
+          });
+        inputSubject.next({
+          searchString: 'test',
+          page: 0,
+        });
+        await sequence;
       });
     });
   });
