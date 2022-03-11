@@ -261,14 +261,18 @@ export class Store {
    * @param {SignalId<T>} sourceId - the unique identifier for the source event or behavior
    * @param {SignalId<T>} targetId - the unique identifier for the target event or behavior
    * @param {boolean | undefined} lazy - optional parameter that defaults to false, if the source is an event, else to true. If the target is a behavior, lazy defines whether its lazy or not, else the parameter is meaningless.
-   * @returns {void}
+   * @returns {void | symbol} - symbol of the added event source in case the targetId is an EventId, else void
    */
-  connect<T>(sourceId: SignalId<T>, targetId: SignalId<T>, lazy?: boolean): void {
+  connect<T, S extends SignalId<T>>(
+    sourceId: SignalId<T>,
+    targetId: S,
+    lazy?: boolean,
+  ): S extends BehaviorId<T> ? void : symbol {
     const source = isBehaviorId(sourceId)
       ? this.getBehavior(sourceId as BehaviorId<T>)
       : this.getEventStream(sourceId as EventId<T>);
     const lazyParam = (lazy ?? null) === null ? isBehaviorId(sourceId) : (lazy as boolean);
-    this.connectObservable(source, targetId, lazyParam);
+    return this.connectObservable(source, targetId, lazyParam);
   }
 
   /**
@@ -282,13 +286,24 @@ export class Store {
    * @param {Observable<T>} source - the source observable
    * @param {SignalId<T>} targetId - the unique identifier for the target event or behavior
    * @param {boolean} lazy - If the target is a behavior, lazy defines whether its lazy or not, else the parameter is meaningless.
-   * @returns {void}
+   * @returns {void | symbol} - symbol of the added event source in case the targetId is an EventId, else void
    */
-  connectObservable<T>(source: Observable<T>, targetId: SignalId<T>, lazy: boolean): void {
+  connectObservable<T, S extends SignalId<T>>(
+    source: Observable<T>,
+    targetId: S,
+    lazy: boolean,
+  ): S extends BehaviorId<T> ? void : symbol {
     if (isBehaviorId(targetId)) {
-      this.addBehavior(targetId as BehaviorId<T>, source, lazy, NO_VALUE);
+      return this.addBehavior(
+        targetId as BehaviorId<T>,
+        source,
+        lazy,
+        NO_VALUE,
+      ) as S extends BehaviorId<T> ? void : symbol;
     } else {
-      this.addEventSource(Symbol(''), targetId as EventId<T>, source);
+      return this.addEventSource(targetId as EventId<T>, source) as S extends BehaviorId<T>
+        ? void
+        : symbol;
     }
   }
 
@@ -428,20 +443,16 @@ export class Store {
    * symbol and adding two sources with the same symbol would result in an error.
    * Event sources are effects!
    *
-   * @param {symbol} sourceIdentifier - each source must be uniquely identified by a symbol (that can be used to remove the source)
    * @param {EventId<T>} eventIdentifier - the unique identifier for the event
    * @param {Observable<T>} observable - the event source
-   * @returns {void}
+   * @returns {smybol} - a symbol that can be used to remove the event-source from the store
    */
-  addEventSource<T>(
-    sourceIdentifier: symbol,
-    eventIdentifier: EventId<T>,
-    observable: Observable<T>,
-  ): void {
-    this.assertSourceExists(sourceIdentifier, sourceIdentifier);
+  addEventSource<T>(eventIdentifier: EventId<T>, observable: Observable<T>): symbol {
+    const sourceId = Symbol('');
     this.getEventStreamControlledSubject(eventIdentifier).addSource(
-      new SourceObservable<T>(sourceIdentifier, observable, true),
+      new SourceObservable<T>(sourceId, observable, true),
     );
+    return sourceId;
   }
 
   /**
@@ -455,130 +466,90 @@ export class Store {
    * hence it would make lazy subscription of A impossible. But if you set subscribeObservableOnlyIfEventIsSubscribed
    * to eventIdentifierA, then the whole source will only be subscribed as long as A is subscribed.
    *
-   * @param {symbol} sourceIdentifier - each source must be uniquely identified by a symbol
    * @param {EventId<A>} eventIdentifierA - the unique identifier for event type A
    * @param {EventId<B>} eventIdentifierB - the unique identifier for event type B
    * @param {Observable<TypedEvent<A> | TypedEvent<B>>} observable - the event source
    * @param {EventId<any> | null} subscribeObservableOnlyIfEventIsSubscribed - defaults to null
-   * @returns {void}
+   * @returns {smybol} - a symbol that can be used to remove the event-source from the store
    */
   add2TypedEventSource<A, B>(
-    sourceIdentifier: symbol,
     eventIdentifierA: EventId<A>,
     eventIdentifierB: EventId<B>,
     observable: Observable<TypedEvent<A> | TypedEvent<B>>,
     subscribeObservableOnlyIfEventIsSubscribed: EventId<any> | null = null,
-  ): void {
-    this.assertSourceExists(sourceIdentifier, sourceIdentifier);
+  ): symbol {
+    const sourceId = Symbol('');
     const sharedSource = this.getDependentObservable(
       observable.pipe(delay(1, asyncScheduler), share()),
       subscribeObservableOnlyIfEventIsSubscribed,
     );
-    this.addTypedEventSource(
-      sourceIdentifier,
-      eventIdentifierA,
-      sharedSource as Observable<TypedEvent<A>>,
-    );
-    this.addTypedEventSource(
-      sourceIdentifier,
-      eventIdentifierB,
-      sharedSource as Observable<TypedEvent<B>>,
-    );
+    this.addTypedEventSource(sourceId, eventIdentifierA, sharedSource as Observable<TypedEvent<A>>);
+    this.addTypedEventSource(sourceId, eventIdentifierB, sharedSource as Observable<TypedEvent<B>>);
+    return sourceId;
   }
 
   /**
    * See add2TypedEventSource
    *
-   * @param {symbol} sourceIdentifier - each source must be uniquely identified by a symbol
    * @param {TypeIdentifier<A>} eventIdentifierA - the unique identifier for event type A
    * @param {TypeIdentifier<B>} eventIdentifierB - the unique identifier for event type B
    * @param {TypeIdentifier<C>} eventIdentifierC - the unique identifier for event type C
    * @param {Observable<TypedEvent<A> | TypedEvent<B> | TypedEvent<C>>} observable - the event source
    * @param {TypeIdentifier<any> | null} subscribeObservableOnlyIfEventIsSubscribed - defaults to null
-   * @returns {void}
+   * @returns {smybol} - a symbol that can be used to remove the event-source from the store
    */
   add3TypedEventSource<A, B, C>(
-    sourceIdentifier: symbol,
     eventIdentifierA: EventId<A>,
     eventIdentifierB: EventId<B>,
     eventIdentifierC: EventId<C>,
     observable: Observable<TypedEvent<A> | TypedEvent<B> | TypedEvent<C>>,
     subscribeObservableOnlyIfEventIsSubscribed: EventId<any> | null = null,
-  ): void {
-    this.assertSourceExists(sourceIdentifier, sourceIdentifier);
+  ): symbol {
+    const sourceId = Symbol('');
     const sharedSource = this.getDependentObservable(
       observable.pipe(delay(1, asyncScheduler), share()),
       subscribeObservableOnlyIfEventIsSubscribed,
     );
-    this.addTypedEventSource(
-      sourceIdentifier,
-      eventIdentifierA,
-      sharedSource as Observable<TypedEvent<A>>,
-    );
-    this.addTypedEventSource(
-      sourceIdentifier,
-      eventIdentifierB,
-      sharedSource as Observable<TypedEvent<B>>,
-    );
-    this.addTypedEventSource(
-      sourceIdentifier,
-      eventIdentifierC,
-      sharedSource as Observable<TypedEvent<C>>,
-    );
+    this.addTypedEventSource(sourceId, eventIdentifierA, sharedSource as Observable<TypedEvent<A>>);
+    this.addTypedEventSource(sourceId, eventIdentifierB, sharedSource as Observable<TypedEvent<B>>);
+    this.addTypedEventSource(sourceId, eventIdentifierC, sharedSource as Observable<TypedEvent<C>>);
+    return sourceId;
   }
 
   /**
    * See add2TypedEventSource
    *
-   * @param {symbol} sourceIdentifier - each source must be uniquely identified by a symbol
    * @param {TypeIdentifier<A>} eventIdentifierA - the unique identifier for event type A
    * @param {TypeIdentifier<B>} eventIdentifierB - the unique identifier for event type B
    * @param {TypeIdentifier<C>} eventIdentifierC - the unique identifier for event type C
    * @param {TypeIdentifier<D>} eventIdentifierD - the unique identifier for event type D
    * @param {Observable<TypedEvent<A> | TypedEvent<B> | TypedEvent<C> | TypedEvent<D>>} observable - the event source
    * @param {TypeIdentifier<any> | null} subscribeObservableOnlyIfEventIsSubscribed - defaults to null
-   * @returns {void}
+   * @returns {smybol} - a symbol that can be used to remove the event-source from the store
    */
   add4TypedEventSource<A, B, C, D>(
-    sourceIdentifier: symbol,
     eventIdentifierA: EventId<A>,
     eventIdentifierB: EventId<B>,
     eventIdentifierC: EventId<C>,
     eventIdentifierD: EventId<D>,
     observable: Observable<TypedEvent<A> | TypedEvent<B> | TypedEvent<C> | TypedEvent<D>>,
     subscribeObservableOnlyIfEventIsSubscribed: EventId<any> | null = null,
-  ): void {
-    this.assertSourceExists(sourceIdentifier, sourceIdentifier);
+  ): symbol {
+    const sourceId = Symbol('');
     const sharedSource = this.getDependentObservable(
       observable.pipe(delay(1, asyncScheduler), share()),
       subscribeObservableOnlyIfEventIsSubscribed,
     );
-    this.addTypedEventSource(
-      sourceIdentifier,
-      eventIdentifierA,
-      sharedSource as Observable<TypedEvent<A>>,
-    );
-    this.addTypedEventSource(
-      sourceIdentifier,
-      eventIdentifierB,
-      sharedSource as Observable<TypedEvent<B>>,
-    );
-    this.addTypedEventSource(
-      sourceIdentifier,
-      eventIdentifierC,
-      sharedSource as Observable<TypedEvent<C>>,
-    );
-    this.addTypedEventSource(
-      sourceIdentifier,
-      eventIdentifierD,
-      sharedSource as Observable<TypedEvent<D>>,
-    );
+    this.addTypedEventSource(sourceId, eventIdentifierA, sharedSource as Observable<TypedEvent<A>>);
+    this.addTypedEventSource(sourceId, eventIdentifierB, sharedSource as Observable<TypedEvent<B>>);
+    this.addTypedEventSource(sourceId, eventIdentifierC, sharedSource as Observable<TypedEvent<C>>);
+    this.addTypedEventSource(sourceId, eventIdentifierD, sharedSource as Observable<TypedEvent<D>>);
+    return sourceId;
   }
 
   /**
    * See add2TypedEventSource
    *
-   * @param {symbol} sourceIdentifier - each source must be uniquely identified by a symbol
    * @param {TypeIdentifier<A>} eventIdentifierA - the unique identifier for event type A
    * @param {TypeIdentifier<B>} eventIdentifierB - the unique identifier for event type B
    * @param {TypeIdentifier<C>} eventIdentifierC - the unique identifier for event type C
@@ -586,10 +557,9 @@ export class Store {
    * @param {TypeIdentifier<E>} eventIdentifierE - the unique identifier for event type E
    * @param {Observable<TypedEvent<A> | TypedEvent<B> | TypedEvent<C> | TypedEvent<D> | TypedEvent<E>>} observable - the event source
    * @param {TypeIdentifier<any> | null} subscribeObservableOnlyIfEventIsSubscribed - defaults to null
-   * @returns {void}
+   * @returns {smybol} - a symbol that can be used to remove the event-source from the store
    */
   add5TypedEventSource<A, B, C, D, E>(
-    sourceIdentifier: symbol,
     eventIdentifierA: EventId<A>,
     eventIdentifierB: EventId<B>,
     eventIdentifierC: EventId<C>,
@@ -599,43 +569,23 @@ export class Store {
       TypedEvent<A> | TypedEvent<B> | TypedEvent<C> | TypedEvent<D> | TypedEvent<E>
     >,
     subscribeObservableOnlyIfEventIsSubscribed: EventId<any> | null = null,
-  ): void {
-    this.assertSourceExists(sourceIdentifier, sourceIdentifier);
+  ): symbol {
+    const sourceId = Symbol('');
     const sharedSource = this.getDependentObservable(
       observable.pipe(delay(1, asyncScheduler), share()),
       subscribeObservableOnlyIfEventIsSubscribed,
     );
-    this.addTypedEventSource(
-      sourceIdentifier,
-      eventIdentifierA,
-      sharedSource as Observable<TypedEvent<A>>,
-    );
-    this.addTypedEventSource(
-      sourceIdentifier,
-      eventIdentifierB,
-      sharedSource as Observable<TypedEvent<B>>,
-    );
-    this.addTypedEventSource(
-      sourceIdentifier,
-      eventIdentifierC,
-      sharedSource as Observable<TypedEvent<C>>,
-    );
-    this.addTypedEventSource(
-      sourceIdentifier,
-      eventIdentifierD,
-      sharedSource as Observable<TypedEvent<D>>,
-    );
-    this.addTypedEventSource(
-      sourceIdentifier,
-      eventIdentifierE,
-      sharedSource as Observable<TypedEvent<E>>,
-    );
+    this.addTypedEventSource(sourceId, eventIdentifierA, sharedSource as Observable<TypedEvent<A>>);
+    this.addTypedEventSource(sourceId, eventIdentifierB, sharedSource as Observable<TypedEvent<B>>);
+    this.addTypedEventSource(sourceId, eventIdentifierC, sharedSource as Observable<TypedEvent<C>>);
+    this.addTypedEventSource(sourceId, eventIdentifierD, sharedSource as Observable<TypedEvent<D>>);
+    this.addTypedEventSource(sourceId, eventIdentifierE, sharedSource as Observable<TypedEvent<E>>);
+    return sourceId;
   }
 
   /**
    * See add2TypedEventSource
    *
-   * @param {symbol} sourceIdentifier - each source must be uniquely identified by a symbol
    * @param {TypeIdentifier<A>} eventIdentifierA - the unique identifier for event type A
    * @param {TypeIdentifier<B>} eventIdentifierB - the unique identifier for event type B
    * @param {TypeIdentifier<C>} eventIdentifierC - the unique identifier for event type C
@@ -644,10 +594,9 @@ export class Store {
    * @param {TypeIdentifier<F>} eventIdentifierF - the unique identifier for event type F
    * @param {Observable<TypedEvent<A> | TypedEvent<B> | TypedEvent<C> | TypedEvent<D> | TypedEvent<E> | TypedEvent<F>>} observable - the event source
    * @param {TypeIdentifier<any> | null} subscribeObservableOnlyIfEventIsSubscribed - defaults to null
-   * @returns {void}
+   * @returns {smybol} - a symbol that can be used to remove the event-source from the store
    */
   add6TypedEventSource<A, B, C, D, E, F>(
-    sourceIdentifier: symbol,
     eventIdentifierA: EventId<A>,
     eventIdentifierB: EventId<B>,
     eventIdentifierC: EventId<C>,
@@ -658,42 +607,19 @@ export class Store {
       TypedEvent<A> | TypedEvent<B> | TypedEvent<C> | TypedEvent<D> | TypedEvent<E> | TypedEvent<F>
     >,
     subscribeObservableOnlyIfEventIsSubscribed: EventId<any> | null = null,
-  ): void {
-    this.assertSourceExists(sourceIdentifier, sourceIdentifier);
+  ): symbol {
+    const sourceId = Symbol('');
     const sharedSource = this.getDependentObservable(
       observable.pipe(delay(1, asyncScheduler), share()),
       subscribeObservableOnlyIfEventIsSubscribed,
     );
-    this.addTypedEventSource(
-      sourceIdentifier,
-      eventIdentifierA,
-      sharedSource as Observable<TypedEvent<A>>,
-    );
-    this.addTypedEventSource(
-      sourceIdentifier,
-      eventIdentifierB,
-      sharedSource as Observable<TypedEvent<B>>,
-    );
-    this.addTypedEventSource(
-      sourceIdentifier,
-      eventIdentifierC,
-      sharedSource as Observable<TypedEvent<C>>,
-    );
-    this.addTypedEventSource(
-      sourceIdentifier,
-      eventIdentifierD,
-      sharedSource as Observable<TypedEvent<D>>,
-    );
-    this.addTypedEventSource(
-      sourceIdentifier,
-      eventIdentifierE,
-      sharedSource as Observable<TypedEvent<E>>,
-    );
-    this.addTypedEventSource(
-      sourceIdentifier,
-      eventIdentifierF,
-      sharedSource as Observable<TypedEvent<F>>,
-    );
+    this.addTypedEventSource(sourceId, eventIdentifierA, sharedSource as Observable<TypedEvent<A>>);
+    this.addTypedEventSource(sourceId, eventIdentifierB, sharedSource as Observable<TypedEvent<B>>);
+    this.addTypedEventSource(sourceId, eventIdentifierC, sharedSource as Observable<TypedEvent<C>>);
+    this.addTypedEventSource(sourceId, eventIdentifierD, sharedSource as Observable<TypedEvent<D>>);
+    this.addTypedEventSource(sourceId, eventIdentifierE, sharedSource as Observable<TypedEvent<E>>);
+    this.addTypedEventSource(sourceId, eventIdentifierF, sharedSource as Observable<TypedEvent<F>>);
+    return sourceId;
   }
 
   /**

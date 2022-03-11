@@ -9,9 +9,6 @@ describe('Effect loops', () => {
   const addEvent = getEventId<number>();
   const multiplyEvent = getEventId<number>();
 
-  const addEffect = Symbol('ADD_EFFECT');
-  const multiplyEffect = Symbol('MULTIPLY_EFFECT');
-
   let store: Store;
 
   beforeEach(() => {
@@ -40,7 +37,6 @@ describe('Effect loops', () => {
     const counterSequence = expectSequence(store.getBehavior(counterState), [0, 5, 10, 23, 25, 50]);
 
     store.addEventSource(
-      addEffect,
       addEvent,
       store.getBehavior(counterState).pipe(
         filter(counter => counter === 10),
@@ -49,7 +45,6 @@ describe('Effect loops', () => {
     );
 
     store.addEventSource(
-      multiplyEffect,
       multiplyEvent,
       store.getBehavior(counterState).pipe(
         filter(counter => counter === 25),
@@ -72,7 +67,6 @@ describe('Effect loops', () => {
     const counterSequence = expectSequence(store.getBehavior(counterState), [0, 5, 10, 23, 25, 50]);
 
     store.addEventSource(
-      addEffect,
       addEvent,
       store.getBehavior(counterState).pipe(
         filter(counter => counter === 10),
@@ -81,7 +75,6 @@ describe('Effect loops', () => {
     );
 
     store.addEventSource(
-      multiplyEffect,
       multiplyEvent,
       store.getBehavior(counterState).pipe(
         filter(counter => counter === 25),

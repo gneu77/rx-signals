@@ -8,7 +8,6 @@ describe('Event order', () => {
   const counterState = getBehaviorId<number>();
   const addEvent = getEventId<number>();
   const multiplyEvent = getEventId<number>();
-  const addEffect = Symbol('ADD_EFFECT');
 
   let store: Store;
 
@@ -22,7 +21,6 @@ describe('Event order', () => {
     store.addReducer(counterState, multiplyEvent, (state, event) => state * event);
 
     store.addEventSource(
-      addEffect,
       addEvent,
       store.getBehavior(counterState).pipe(
         filter(counter => counter === 24),

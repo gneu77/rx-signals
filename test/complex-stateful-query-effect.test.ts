@@ -19,7 +19,6 @@ describe('Stateful query pattern', () => {
   const loadingBehavior = getBehaviorId<boolean>();
   const queryEvent = getEventId<Partial<QueryType>>();
   const resultEvent = getEventId<ResultType>();
-  const resultEffect = Symbol('ResultEffect');
 
   let store: Store;
 
@@ -67,7 +66,7 @@ describe('Stateful query pattern', () => {
         return of({ result: [1, 2, 3, query], resultQuery: query });
       }),
     );
-    store.addEventSource(resultEffect, resultEvent, eventSource);
+    store.addEventSource(resultEvent, eventSource);
   });
 
   it('should automatically subscribe query and result', async () => {

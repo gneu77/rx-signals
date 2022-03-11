@@ -57,33 +57,23 @@ describe('Event streams', () => {
   });
 
   describe('with sources', () => {
-    const sourceId1 = Symbol('SourceId1');
-    const sourceId2 = Symbol('SourceId2');
-
     it('should add and remove event sources', () => {
-      store.addEventSource(sourceId1, testEvent, of('event1', 'event2'));
-      store.addEventSource(sourceId2, testEvent, of('event3', 'event4'));
+      const sourceId1 = store.addEventSource(testEvent, of('event1', 'event2'));
+      store.addEventSource(testEvent, of('event3', 'event4'));
       expect(store.getNumberOfEventSources(testEvent)).toBe(2);
       store.removeEventSource(sourceId1);
       expect(store.getNumberOfEventSources(testEvent)).toBe(1);
     });
 
-    it('should throw, if event source with given identifier already exists', () => {
-      store.addEventSource(sourceId1, testEvent, of('event1', 'event2'));
-      expect(() => {
-        store.addEventSource(sourceId1, testEvent, of('event3', 'event4'));
-      }).toThrowError('A source with the given ID has already been added.: Symbol(SourceId1)');
-    });
-
     it('should not be subscribed', () => {
-      store.addEventSource(sourceId1, testEvent, of('event1', 'event2'));
+      store.addEventSource(testEvent, of('event1', 'event2'));
       store.getEventStream(testEvent);
       expect(store.isSubscribed(testEvent)).toBe(false);
     });
 
     it('should subscribe sources and dispatch events, if subscribed', async () => {
-      store.addEventSource(sourceId1, testEvent, of('event1', 'event2'));
-      store.addEventSource(sourceId2, testEvent, of('event3', 'event4'));
+      store.addEventSource(testEvent, of('event1', 'event2'));
+      store.addEventSource(testEvent, of('event3', 'event4'));
       const eventStream = store.getEventStream(testEvent);
       expect(store.isSubscribed(testEvent)).toBe(false);
 
@@ -94,8 +84,8 @@ describe('Event streams', () => {
     });
 
     it('should remove completed sources', async () => {
-      store.addEventSource(sourceId1, testEvent, of('event1', 'event2'));
-      store.addEventSource(sourceId2, testEvent, of('event3', 'event4'));
+      store.addEventSource(testEvent, of('event1', 'event2'));
+      store.addEventSource(testEvent, of('event3', 'event4'));
       const eventStream = store.getEventStream(testEvent);
       expect(store.isSubscribed(testEvent)).toBe(false);
       expect(store.getNumberOfEventSources(testEvent)).toBe(2);
@@ -109,7 +99,6 @@ describe('Event streams', () => {
 
     it('should propagate source errors', async () => {
       store.addEventSource(
-        sourceId1,
         testEvent,
         interval(10).pipe(
           map(val => {
@@ -134,7 +123,6 @@ describe('Event streams', () => {
   });
 
   describe('with typed sources', () => {
-    const sourceId = Symbol('SourceId');
     const testEvent2 = getEventId<string>();
     const testEvent3 = getEventId<string>();
     const testEvent4 = getEventId<string>();
@@ -143,7 +131,6 @@ describe('Event streams', () => {
 
     it('should work with event sources that emit 2 different event types', async () => {
       store.add2TypedEventSource(
-        sourceId,
         testEvent,
         testEvent2,
         of(
@@ -172,7 +159,6 @@ describe('Event streams', () => {
 
     it('should work with event sources that emit 3 different event types', async () => {
       store.add3TypedEventSource(
-        sourceId,
         testEvent,
         testEvent2,
         testEvent3,
@@ -210,7 +196,6 @@ describe('Event streams', () => {
 
     it('should work with event sources that emit 4 different event types', async () => {
       store.add4TypedEventSource(
-        sourceId,
         testEvent,
         testEvent2,
         testEvent3,
@@ -232,7 +217,6 @@ describe('Event streams', () => {
 
     it('should work with event sources that emit 5 different event types', async () => {
       store.add5TypedEventSource(
-        sourceId,
         testEvent,
         testEvent2,
         testEvent3,
@@ -256,7 +240,6 @@ describe('Event streams', () => {
 
     it('should work with event sources that emit 6 different event types', async () => {
       store.add6TypedEventSource(
-        sourceId,
         testEvent,
         testEvent2,
         testEvent3,
@@ -282,13 +265,11 @@ describe('Event streams', () => {
   });
 
   describe('with typed sources that are switched depending on subscription of an event', () => {
-    const sourceId = Symbol('SourceId');
     const testEvent2 = getEventId<string>();
     const testEvent3 = getEventId<string>();
     const testEvent4 = getEventId<string>();
     it('should NEVER dispatch testEvent2, if testEvent1 is not subscribed', async () => {
       store.add2TypedEventSource(
-        sourceId,
         testEvent,
         testEvent2,
         of(
@@ -312,7 +293,6 @@ describe('Event streams', () => {
 
     it('should dispatch testEvent2, if testEvent1 is subscribed', async () => {
       store.add2TypedEventSource(
-        sourceId,
         testEvent,
         testEvent2,
         of(
@@ -345,7 +325,6 @@ describe('Event streams', () => {
     it('should dispatch testEvent1/2/4, only while testEvent3 is subscribed', async () => {
       const source = new Subject<TypedEvent<string>>();
       store.add4TypedEventSource(
-        sourceId,
         testEvent,
         testEvent2,
         testEvent3,

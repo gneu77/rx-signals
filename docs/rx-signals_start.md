@@ -98,7 +98,6 @@ Calling `dispatch` for an _event-type_ that has no subscribed event-stream is a 
 You can add further event-sources as follows:
 ```typescript
 store.addEventSource(
-  sourceIdentifier: symbol,
   eventId: EventId<T>,
   observable: Observable<T>,
 );
@@ -129,16 +128,14 @@ store.getEventStream(myEvent)
   .pipe(take(7))
   .subscribe(console.log);
 
-store.addEventSource(
-  Symbol('source1'), 
+store.addEventSource( // source1
   myEvent,
   store.getEventStream(myEvent).pipe(
     filter(v => v === 3),
     mapTo(7)
   )
 );
-store.addEventSource(
-  Symbol('source2'),
+store.addEventSource( // source2
   myEvent,
   of(3, 4, 5)
 );
@@ -175,15 +172,13 @@ store.getEventStream(myEvent)
   .pipe(take(14))
   .subscribe(console.log); // 1, 2 -> 6, 21, 7, 22 -> 11, 26, 26, 41, 12, 27, 27, 42
 
-store.addEventSource(
-  Symbol('source1'),
+store.addEventSource( // source1
   myEvent,
   store.getEventStream(myEvent).pipe(
     map(e => e + 5), // 6, 7 -> 11, 26, 12, 27
   ),
 );
-store.addEventSource(
-  Symbol('source2'),
+store.addEventSource( // source2
   myEvent,
   store.getEventStream(myEvent).pipe(
     map(e => e + 20), // 21, 22 -> 26, 41, 27, 42
@@ -203,7 +198,6 @@ You can also add event sources that dispatch multiple _event-types_.
 E.g. a source that can dispatch 2 different _event-types_ with corresponding _event-values-types_ `A` and `B`:
 ```typescript
 store.add2TypedEventSource(
-  sourceIdentifier: symbol,
   eventIdA: EventId<A>,
   eventIdB: EventId<B>,
   observable: Observable<TypedEvent<A> | TypedEvent<B>>,
@@ -230,7 +224,6 @@ Think about the following scenario:
 
 ```typescript
 store.add2TypedEventSource(
-  Symbol(),
   myEffectSuccess,
   appError,
   of(
@@ -238,7 +231,7 @@ store.add2TypedEventSource(
     { type: appError, event: mockError },
   ),
   myEffectSuccess // subscribeObservableOnlyIfEventIsSubscribed
-)
+);
 ```
 
 Without the last parameter, the `store.getEventStream(appError)` that you have somewhere in your global error-handler would automatically subscribe your 2-typed-event-source. Thus, the requirement that the effect should only be executed, if `myEffectSuccess` is subscribed would not be fulfilled.
@@ -324,8 +317,7 @@ store.addBehavior(
   ),
   true,
 );
-store.addEventSource(
-  Symbol('MockupQueryEffect'),
+store.addEventSource( // MockupQueryEffect
   setResult,
   combineLatest([store.getBehavior(query), store.getBehavior(result)]).pipe(
     filter(([q, r]) => q !== r.resultQuery),
@@ -790,8 +782,7 @@ const getFilteredSortedPagedQuerySignalsFactory = <FilterType>(): SignalsFactory
     .compose(sortingSignalsFactory)
     .compose(pagingSignalsFactory)
     .extendSetup((store, input) => {
-      store.addEventSource(
-        Symbol('resetPagingEffect'),
+      store.addEventSource( // resetPagingEffect
         input.setPage,
         merge(
           store.getEventStream(input.resetModel),

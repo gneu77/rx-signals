@@ -388,7 +388,6 @@ describe('signals factories documentation', () => {
         .compose(pagingSignalsFactory)
         .extendSetup((store, input) => {
           store.addEventSource(
-            Symbol('resetPagingEffect'),
             input.setPage,
             merge(
               store.getEventStream(input.resetModel),

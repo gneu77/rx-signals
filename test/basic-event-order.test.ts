@@ -8,7 +8,6 @@ describe('Event order', () => {
   const counterState = getBehaviorId<number>();
   const addEvent = getEventId<number>();
   const multiplyEvent = getEventId<number>();
-  const addEffect = Symbol('ADD_EFFECT');
 
   let store: Store;
 
@@ -34,7 +33,6 @@ describe('Event order', () => {
     );
 
     store.addEventSource(
-      addEffect,
       addEvent,
       store.getBehavior(counterState).pipe(
         filter(counter => counter === 9),
@@ -75,14 +73,13 @@ describe('Event order', () => {
       );
 
       store.addEventSource(
-        Symbol(),
         myEvent,
         store.getEventStream(myEvent).pipe(
           filter(v => v === 3),
           mapTo(7),
         ),
       );
-      store.addEventSource(Symbol(), myEvent, of(3, 4, 5));
+      store.addEventSource(myEvent, of(3, 4, 5));
       values.push(1);
       store.dispatch(myEvent, 6);
       values.push(2);
@@ -99,14 +96,12 @@ describe('Event order', () => {
       );
 
       store.addEventSource(
-        Symbol('source1'),
         myEvent,
         store.getEventStream(myEvent).pipe(
           map(e => e + 5), // 6, 7 -> 11, 26, 12, 27
         ),
       );
       store.addEventSource(
-        Symbol('source2'),
         myEvent,
         store.getEventStream(myEvent).pipe(
           map(e => e + 20), // 21, 22 -> 26, 41, 27, 42

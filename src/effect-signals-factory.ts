@@ -243,7 +243,6 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
         : combined.pipe(debounceTime(config.effectDebounceTime));
 
     store.add4TypedEventSource(
-      Symbol(''),
       resultEvent,
       triggeredInputEvent,
       outIds.errors,

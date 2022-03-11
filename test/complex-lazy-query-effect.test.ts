@@ -14,7 +14,6 @@ describe('Lazy query pattern', () => {
   const loadingBehavior = getBehaviorId<boolean>();
   const queryEvent = getEventId<string | null>();
   const resultEvent = getEventId<ResultType>();
-  const resultEffect = Symbol('ResultEffect');
 
   let store: Store;
 
@@ -44,7 +43,7 @@ describe('Lazy query pattern', () => {
       debounceTime(100),
       switchMap(([query]) => of({ result: [1, 2, 3, query], resultQuery: query })),
     );
-    store.addEventSource(resultEffect, resultEvent, eventSource);
+    store.addEventSource(resultEvent, eventSource);
   });
 
   it('should not subscribe the effect, if the result is not subscribed', async () => {
@@ -199,7 +198,6 @@ describe('Lazy query pattern', () => {
         true,
       );
       store.addEventSource(
-        Symbol('MockupQueryEffect'),
         setResult,
         combineLatest([store.getBehavior(query), store.getBehavior(result)]).pipe(
           filter(([q, r]) => q !== r.resultQuery),
