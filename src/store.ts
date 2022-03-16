@@ -45,6 +45,18 @@ export type TypedEvent<T> = Readonly<{
 export type StateReducer<T, E> = (state: T, event: E) => T;
 
 /**
+ * A LifecycleHandle can be used to control signals and signal-sources that
+ * are added to the store by store.getLifecycleHandle
+ *
+ * @property {function} reset - reset all behaviors corresponding to this lifecycle
+ * @property {function} end - remove all sources of this lifecycle and complete all corresponding behaviors (event-subscribers will NOT get a complete!)
+ */
+export type LifecycleHandle = {
+  reset: () => void;
+  end: () => void;
+};
+
+/**
  * The Effect type specifies a potentially impure function that takes an input and the store as arguments
  * and returns an effectful result as Observable.
  * It is the low-level abstraction used by rx-signals for side-effect isolation.
@@ -95,6 +107,8 @@ export class Store {
   private readonly names = new Map<symbol, string>();
 
   private parentStore: Store | null = null;
+
+  private currentLifecycleObjects: null | { behaviors: symbol[]; events: symbol[] } = null;
 
   /**
    * Get the parent store of this store, or null in case it has no parent store.
@@ -154,6 +168,7 @@ export class Store {
    * @param {Observable<T>} observable - the source for the behavior
    * @param {boolean} subscribeLazy - set this to false, if the behavior should always be subscribed (the Store will subscribe it in that case, immediately turning it into a hot observable)
    * @param {T | (() => T) | symbol} initialValueOrValueGetter - the initial value or value getter (for lazy initialization) or symbol NO_VALUE, if there is no initial value (default)
+   * @throws if a behavior for the given identifier has already been added to this Store
    * @returns {void}
    */
   addBehavior<T>(
@@ -169,6 +184,9 @@ export class Store {
     if (this.parentStore) {
       // to trigger behavior-switch in child-stores (see getBehavior):
       this.behaviorsSubject.next(this.behaviors);
+    }
+    if (this.currentLifecycleObjects !== null) {
+      this.currentLifecycleObjects.behaviors.push(identifier);
     }
   }
 
@@ -202,6 +220,7 @@ export class Store {
    *
    * @param {BehaviorId<T>} identifier - the unique identifier for the behavior
    * @param {T | (() => T)} initialValueOrValueGetter - the initial value or value getter (for lazy initialization)
+   * @throws if a state for the given identifier has already been added to this Store
    * @returns {void}
    */
   addState<T>(identifier: BehaviorId<T>, initialValueOrValueGetter: T | (() => T)): void {
@@ -209,6 +228,9 @@ export class Store {
     this.getBehaviorControlledSubject(identifier).addSource(
       new SourceObservable<T>(identifier, NEVER, false, initialValueOrValueGetter),
     );
+    if (this.currentLifecycleObjects !== null) {
+      this.currentLifecycleObjects.behaviors.push(identifier);
+    }
   }
 
   /**
@@ -261,6 +283,7 @@ export class Store {
    * @param {SignalId<T>} sourceId - the unique identifier for the source event or behavior
    * @param {SignalId<T>} targetId - the unique identifier for the target event or behavior
    * @param {boolean | undefined} lazy - optional parameter that defaults to false, if the source is an event, else to true. If the target is a behavior, lazy defines whether its lazy or not, else the parameter is meaningless.
+   * @throws if targetId is a BehaviorId and already exists in this Store
    * @returns {void | symbol} - symbol of the added event source in case the targetId is an EventId, else void
    */
   connect<T, S extends SignalId<T>>(
@@ -286,6 +309,7 @@ export class Store {
    * @param {Observable<T>} source - the source observable
    * @param {SignalId<T>} targetId - the unique identifier for the target event or behavior
    * @param {boolean} lazy - If the target is a behavior, lazy defines whether its lazy or not, else the parameter is meaningless.
+   * @throws if targetId is a BehaviorId and already exists in this Store
    * @returns {void | symbol} - symbol of the added event source in case the targetId is an EventId, else void
    */
   connectObservable<T, S extends SignalId<T>>(
@@ -362,6 +386,60 @@ export class Store {
     });
     this.behaviorsSubject.next(this.behaviors);
     this.eventStreamsSubject.next(this.eventStreams);
+  }
+
+  /**
+   * This method takes a callback that performs Store operations.
+   * It returns a LifecycleHandle can be used to reset or end the lifecycle of signals
+   * and signal-sources that are added to the store during the callback execution.
+   *
+   * @param {function} lifecycleRegistrationCallback - behaviors and event-sources added within this callback will be part of the lifecycle
+   * @throws if this method is called while already inside another lifecycleRegistrationCallback for this Store
+   * @returns {LifecycleHandle}
+   */
+  getLifecycleHandle(lifecycleRegistrationCallback: (store: Store) => void): LifecycleHandle {
+    if (this.currentLifecycleObjects !== null) {
+      throw new Error(
+        'getLifecycleHandle cannot be called while already within a lifecycleRegistrationCallback',
+      );
+    }
+    this.currentLifecycleObjects = {
+      behaviors: [],
+      events: [],
+    };
+    try {
+      lifecycleRegistrationCallback(this);
+    } catch (error) {
+      this.currentLifecycleObjects = null;
+      throw error;
+    }
+    let { behaviors, events } = this.currentLifecycleObjects;
+    this.currentLifecycleObjects = null;
+    return {
+      reset: () => {
+        const resetHandles = behaviors.map(behavior =>
+          this.behaviors.get(behavior)?.getResetHandle(),
+        );
+        resetHandles.forEach(handle => handle?.removeSources());
+        resetHandles.forEach(handle => handle?.readdSources());
+        behaviors = [];
+      },
+      end: () => {
+        behaviors.forEach(key => {
+          const behavior = this.behaviors.get(key);
+          behavior?.removeAllSources();
+          behavior?.complete();
+          this.behaviors.delete(key);
+          this.names.delete(key);
+        });
+        behaviors = [];
+        events.forEach(key => {
+          this.removeEventSource(key);
+        });
+        events = [];
+        this.behaviorsSubject.next(this.behaviors);
+      },
+    };
   }
 
   /**
@@ -452,6 +530,9 @@ export class Store {
     this.getEventStreamControlledSubject(eventIdentifier).addSource(
       new SourceObservable<T>(sourceId, observable, true),
     );
+    if (this.currentLifecycleObjects !== null) {
+      this.currentLifecycleObjects.events.push(sourceId);
+    }
     return sourceId;
   }
 
@@ -485,6 +566,9 @@ export class Store {
     );
     this.addTypedEventSource(sourceId, eventIdentifierA, sharedSource as Observable<TypedEvent<A>>);
     this.addTypedEventSource(sourceId, eventIdentifierB, sharedSource as Observable<TypedEvent<B>>);
+    if (this.currentLifecycleObjects !== null) {
+      this.currentLifecycleObjects.events.push(sourceId);
+    }
     return sourceId;
   }
 
@@ -513,6 +597,9 @@ export class Store {
     this.addTypedEventSource(sourceId, eventIdentifierA, sharedSource as Observable<TypedEvent<A>>);
     this.addTypedEventSource(sourceId, eventIdentifierB, sharedSource as Observable<TypedEvent<B>>);
     this.addTypedEventSource(sourceId, eventIdentifierC, sharedSource as Observable<TypedEvent<C>>);
+    if (this.currentLifecycleObjects !== null) {
+      this.currentLifecycleObjects.events.push(sourceId);
+    }
     return sourceId;
   }
 
@@ -544,6 +631,9 @@ export class Store {
     this.addTypedEventSource(sourceId, eventIdentifierB, sharedSource as Observable<TypedEvent<B>>);
     this.addTypedEventSource(sourceId, eventIdentifierC, sharedSource as Observable<TypedEvent<C>>);
     this.addTypedEventSource(sourceId, eventIdentifierD, sharedSource as Observable<TypedEvent<D>>);
+    if (this.currentLifecycleObjects !== null) {
+      this.currentLifecycleObjects.events.push(sourceId);
+    }
     return sourceId;
   }
 
@@ -580,6 +670,9 @@ export class Store {
     this.addTypedEventSource(sourceId, eventIdentifierC, sharedSource as Observable<TypedEvent<C>>);
     this.addTypedEventSource(sourceId, eventIdentifierD, sharedSource as Observable<TypedEvent<D>>);
     this.addTypedEventSource(sourceId, eventIdentifierE, sharedSource as Observable<TypedEvent<E>>);
+    if (this.currentLifecycleObjects !== null) {
+      this.currentLifecycleObjects.events.push(sourceId);
+    }
     return sourceId;
   }
 
@@ -619,6 +712,9 @@ export class Store {
     this.addTypedEventSource(sourceId, eventIdentifierD, sharedSource as Observable<TypedEvent<D>>);
     this.addTypedEventSource(sourceId, eventIdentifierE, sharedSource as Observable<TypedEvent<E>>);
     this.addTypedEventSource(sourceId, eventIdentifierF, sharedSource as Observable<TypedEvent<F>>);
+    if (this.currentLifecycleObjects !== null) {
+      this.currentLifecycleObjects.events.push(sourceId);
+    }
     return sourceId;
   }
 

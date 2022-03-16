@@ -195,10 +195,10 @@ export type RenameId<T extends NameToSignalId, N1 extends keyof T, N2 extends st
  * The SignalsFactory wraps a SignalsBuild<IN, OUT, CONFIG> function, allowing for simple Signals composition
  * and manipulation.
  * Via the compose method, two SignalsFactories can be easily composed to a new one.
- * Several convenience methods to simplify re-mapping of IN, OUT and CONFIG.
+ * Several convenience methods simplify re-mapping of IN, OUT and CONFIG.
  * Monadic bind and fmap methods can be used for more complex cases (though 90% of use-cases should be covered by
  * compose, extendSetup, mapInput, mapOutput and mapConfig).
- * SignalFactory instances are immutable, hence all methods return a new SignalsFactory instance.
+ * SignalsFactory instances are immutable, hence all methods return a new SignalsFactory instance.
  * (The whole purpose of this class is to provide SignalsBuild composition)
  *
  * @class SignalsFactory<IN extends NameToSignalId, OUT extends NameToSignalId, CONFIG extends Configuration = {}>
