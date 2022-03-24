@@ -30,7 +30,7 @@ In its basic form, the MVU pattern is often visualized as a cycle:
 However, a key-property of MVU implementations is that all data flowing through this cycle is immutable (in following sections, we will see some reasons why this is of utmost importance).
 Thus, the diagram should **not** suggest a mutation of the model, but instead a new, immutable model is created for each update.
 
-That is, _Update_ can be described as a function: **_Update(Model<sub>n</sub> , Event) -> Model<sub>n+1</sub>_**
+So _Update_ can be described as a function: **_Update(Model<sub>n</sub> , Event) -> Model<sub>n+1</sub>_**
 
 _View_ can be decribed as a function: **_View(Model<sub>n</sub>) -> UI<sub>n</sub>_**
 
@@ -40,8 +40,8 @@ In _rx-signals_, we call the _Events_, well, _Events_.
 > The diagram shows the UI as event source, but later on we will see that other event sources are possible too.
 
 Comparing MVU with MVC (Model-View-Controller), MVU having an unidirectional data flow and MVC having a bidirectional data flow, is often mentioned as a major difference (the controller updates the view on model changes and updates the model on events).
-However, in modern MVC implementation, this is not true. 
-Using the observer-pattern, also in MVC, the data is flowing unidirectional.
+However, in modern MVC implementation, this is not true!
+By also using the observer-pattern in MVC, the data is flowing unidirectional.
 
 ![MVC](./images/mvc_unidir.svg)
 
@@ -50,32 +50,32 @@ The problems with MVC start as soon as more controllers are being added:
 ![MVC](./images/mvc_problem.svg)
 
 As multiple controllers are observing the view and modifying the model (state), it is suddenly no longer possible to make simple cause-effect-reasoning.
-The reason is not the direction of data-flow, but the mutable state.
+The reason is not the direction of data-flow, but the mutable state!
 
 In MVU _UI<sub>n</sub> = View(Model<sub>n</sub>)_ always holds true, because Model<sub>n</sub> is immutable.
-It's true also in MVC, but there, it's not easy to reliably 'grab'/'snapshot' the _n_ that belong together.
+This is true also in MVC, but there, it's not easy to reliably 'grab'/'snapshot' the _n_ that belong together.
 
-So the real difference between MVU and MVC is immutable vs. mutable state!
+:warning: So the real difference between MVU and MVC is immutable vs. mutable state!
 
 The term "immutable state" sounds like a contradiction.
-That's because it's just a short form for "immutable observed state".
+It's just a short form for "immutable observed state".
 In the real-world, an object that can change (in response to certain events) has a state that changes over time.
 If you take a photo of such an object, that photo represents observed state (at the point of time the photo was taken).
 This observed state is immutable.
-Neither does it change, when the object changes, nor does the object change, if you take out a pen and paint on the photo.
+Neither does it change, when the object changes, nor does the object change, if you take out a pen and start painting on the photo.
 
-Actually, making the assumption that an observed state of an object matches its current state is always a mistake and avoiding such mistakes is another goal of immutable architecures!
+:warning: Actually, making the assumption that an observed state of an object matches its current state is always a mistake and avoiding such mistakes is another goal of immutable architecures!
 
-We are no longer living in a world where a program runs isolated on a single machine in a single thread without communicating to any other process.
-In such systems, using mutable data was trivial.
-Getting multi-threaded, things already became more complicated (ever struggled with a race condition?), but still manageable (if you like getting distracted from coding logic by pure technical things like locks).
-But now we're having distributed systems running on data shared over the whole world.
-In essence, **Mutability does not scale, but immutability does!**
-You might read on [here](http://cidrdb.org/cidr2015/Papers/CIDR15_Paper16.pdf), if you still don't buy it.
+> We are no longer living in a world where a program runs isolated on a single machine in a single thread without communicating to any other process.
+> In such systems, using mutable data was trivial.
+> Getting multi-threaded, things already became more complicated (ever struggled with a race condition?), but still manageable (if you like getting distracted from coding logic by pure technical things like locks).
+> But now we're having distributed systems running on data that is shared over the whole world.
+> In essence, **Mutability does not scale, but immutability does!**
+> You might read on [here](http://cidrdb.org/cidr2015/Papers/CIDR15_Paper16.pdf)...
 
 You might already be used to the rule "If you use MVU, state must be kept immutable".
-While true, this somehow confuses requirement and solution.
-More correct would be "If you want to work with immutable, observed state, the MVU pattern is a possible solution".
+While perfectly true, this somehow confuses requirement and solution.
+More correct would be "If you want to work with immutable, observed state, the MVU pattern is a possible solution"!
 
 ## State Modelling
 
@@ -253,6 +253,10 @@ Other designs to achieve the same would be possible, but with respect to _rx-sig
 
 :warning: Whenever state (root or derived) is used as input to an async result, the result must include the input!
 
+Remember the analogy of _immutable observed state_ being a recorded fact like a photo.
+If your job is to count the number of certain objects visible on photos arriving in your in-box, it's probably a good idea not to put only post-its with the result number into your out-box, but instead to write the result on the back of the corresponding photo and put it into the out-box.
+Back to MVU, the knowledge which input lead to a certain result, enables result-consumers to aggregate/derive-from different results with the same input-source.
+
 ### The need for global State Management
 
 So far, we considered local state.
@@ -280,12 +284,15 @@ It separates the state (and it's inherent dependencies) from the components and 
 That gives you:
 * Decoupled components (and thus, better testability and maintainability)
 * State with dependencies that can be tested separately from the components using the state
-* State with lifecycle that is decoupled from component lifecycles
+* State with a lifecycle that is decoupled from component lifecycles
 
 Many people new to MVU have problems to decide which properties to put under global state management and which not.
 In reality, the decision is not that hard:
 
 :warning: Whenever a property needs to be shared between components (e.g. due to declarative dependencies), then you should put it under global state management! Also, if some state has a different lifecycle than a component using it, you should put it under global state management!
+
+In UI-development, differing lifecycles of state and components are just a natural consequence of separation of concerns.
+A certain view most often has a lifecycle that is shorter compared to the lifecycle of the whole application.
 
 #### State-Presentation-Disparity
 
@@ -293,7 +300,7 @@ With respect to UI-components, you're likely used to the difference between dumb
 Dumb-components have no knowledge about the application they're used in, depend only on their input-properties and can be composed/re-used as you like.
 Smart-components however have application-knowledge and are used to compose dumb-components and transform application state to properties of those dumb-components.
 
-It's important however, that 'smart' does not mean that these components should have any more logic but state-transformation and dumb-component composition.
+It's important however, that 'smart' does not mean that these components should have any more logic but state-transformation and dumb-component-composition.
 
 So far, our notion of component was related to visual/presentational components.
 But data and data-logic should also be encapsulated as re-usable components.
