@@ -1,3 +1,5 @@
+import { Observable } from 'rxjs';
+
 /**
  * The rx-signals Store uses this type to uniquely identify all of its behaviors.
  * A BehaviorId<T> does not make any use of the generic T itself, but is given this
@@ -86,6 +88,19 @@ export type ToEventIdValueType<E> = E extends EventId<infer T> ? T : never;
  * @template T - the inferred generic parameter of S, if S extends SignalId<T>
  */
 export type ToSignalIdValueType<S> = S extends SignalId<infer T> ? T : never;
+
+/**
+ * ToObservableValueType<O> is a utility type that equals T, if O extends Observable<T>, else never.
+ * Examples:
+ *    ToObservableValueType<Observable<number>> would be number
+ *    ToObservableValueType<Observable<string>> would be string
+ *    ToObservableValueType<number> would be never
+ *
+ * @typedef {T | never} T | never - the resulting type
+ * @template O - the generic argument to ToObservableValueType
+ * @template T - the inferred generic parameter of O, if O extends Observable<T>
+ */
+export type ToObservableValueType<O> = O extends Observable<infer T> ? T : never;
 
 /**
  * The rx-signals Store uses this type to uniquely identify all of its result effects.

@@ -6,7 +6,7 @@ import {
   getBehaviorId,
   SignalId,
   ToBehaviorIdValueType,
-  ToSignalId,
+  ToSignalIdValueType,
 } from './store-utils';
 import { Configuration, merge, Merged, MergedConfiguration, WithValueType } from './type-utils';
 
@@ -304,29 +304,29 @@ export class SignalsFactory<
 
   /**
    * The connect method offers an easy way to connect an output signal to an input signal.
-   * It takes the name of an output-id (a key of OUT) as first argument and the name of an input-id (a key of IN).
+   * It takes the name of an output-id (a key of OUT) as first argument and the name of an input-id (a key of IN) as second argument.
    * If keepInputId is set to true, it returns a new SignalsFactory of the same type as this SignalsFactory,
-   * but with an extended setup logic, that conncets the Signal<T> that corresponds to the named output-id to a
+   * but with an extended setup logic, that connects the Signal<S extends T> that corresponds to the named output-id to a
    * new Signal<T> corresponding to the named input-id.
-   * If keepInputId is set to false, it also extends the setup logic to conncet the corresponding signal-ids, but in addition
+   * If keepInputId is set to false, it also extends the setup logic to connect the corresponding signal-ids, but in addition
    * the specified input-id will be excluded from the IN-type of the resulting factory.
    * If the input-id is a BehaviorId, the source being added to the store will be lazily subscribed in the following cases:
    *  - lazy is set to false
    *  - lazy is not set (defaulting to undefined) and the output-id is a BehaviorId
    * (also see store.connect for a more detailed description)
-   * Typescript will enforce that both names (keys) map to a SignalId<T> with the same T (though one might be
-   * an EventId<T> and the other a BehaviorId<T>). That is, even though you only use strings as arguments, this
-   * method is still type-safe and will not compile if you try to specify names of non-existing or incompatible ids.
+   * Typescript will enforce that both names (keys) map to compatible signal ids, hence if KIN corresponds to SignalId<T>,
+   * then KOUT must correspond to SignalId<S extends T> (though one might be an EventId and the other a BehaviorId).
+   * That is, even though you only use strings as arguments, this method is still type-safe and will not compile if you try to specify names of non-existing or incompatible ids.
    *
-   * @param {KOUT} outputName - a key of OUT, where OUT[fromName] must be of type Signal<T>
    * @param {KIN} inputName - a key of IN, where IN[toName] must be of type Signal<T>
+   * @param {KOUT} outputName - a key of OUT, where OUT[fromName] must be of type Signal<S extends T>
    * @param {boolean} keepInputId - if set to false, the input-id corresponding to toName will be removed from the resulting factories' IN
    * @param {boolean | undefined} lazy - defaults to undefined and is used as lazy-argument to store.connect
    * @returns {SignalsFactory} - a new SignalsFactory with the concrete type depending on the keepInputId argument
    */
   connect<
-    KOUT extends keyof WithValueType<OUT, SignalId<any>>,
-    KIN extends keyof WithValueType<IN, ToSignalId<OUT[KOUT]>>,
+    KIN extends keyof IN,
+    KOUT extends keyof WithValueType<OUT, SignalId<ToSignalIdValueType<IN[KIN]>>>,
     B extends boolean,
   >(
     outputName: KOUT,
@@ -347,20 +347,16 @@ export class SignalsFactory<
 
   /**
    * The connectId method is a more general version of the connect method. In contrast to connect, it does not take the name
-   * of an IN signal-id, but instead directly a signal-id (thus, some arbitrary signal-id can be used).
+   * of an OUT signal-id, but instead directly a signal-id (thus, some arbitrary signal-id can be used).
    * Everything else works like connect, so please see the corresponding documentation there.
    *
-   * @param {ID} fromId - a Signal<T>
    * @param {KIN} inputName - a key of IN, where IN[toName] must be of type Signal<T>
+   * @param {ID} fromId - a Signal<S extends T>
    * @param {boolean} keepInputId - if set to false, the input-id corresponding to toName will be removed from the resulting factories' IN
    * @param {boolean | undefined} lazy - defaults to undefined and is used as lazy-argument to store.connect
    * @returns {SignalsFactory} - a new SignalsFactory with the concrete type depending on the keepInputId argument
    */
-  connectId<
-    ID extends SignalId<any>,
-    K extends keyof WithValueType<IN, ToSignalId<ID>>,
-    B extends boolean,
-  >(
+  connectId<K extends keyof IN, ID extends SignalId<ToSignalIdValueType<IN[K]>>, B extends boolean>(
     fromId: ID,
     inputName: K,
     keepInputId: B,
@@ -377,18 +373,23 @@ export class SignalsFactory<
   }
 
   /**
-   * The connectId method is even more general compared to the connect and connectId methods. In contrast to the previous two,
+   * The connectObservable method is even more general compared to the connect and connectId methods. In contrast to the previous two,
    * its first argument is a function that takes store, output and config as arguments and returns an observable.
    * For the other arguments, please see the documentation of the connect method.
    *
-   * @param {function} sourceGetter - a function returning an Observable<T>
    * @param {KIN} inputName - a key of IN, where IN[toName] must be of type Signal<T>
+   * @param {function} sourceGetter - a function returning an Observable<S extends T>
    * @param {boolean} keepInputId - if set to false, the input-id corresponding to toName will be removed from the resulting factories' IN
    * @param {boolean | undefined} lazy - defaults to undefined and is used as lazy-argument to store.connect
    * @returns {SignalsFactory} - a new SignalsFactory with the concrete type depending on the keepInputId argument
    */
-  connectObservable<T, K extends keyof WithValueType<IN, SignalId<T>>, B extends boolean>(
-    sourceGetter: (store: Store, output: OUT, config: CONFIG) => Observable<T>,
+  connectObservable<
+    K extends keyof IN,
+    S extends ToSignalIdValueType<IN[K]>,
+    O extends Observable<S>,
+    B extends boolean,
+  >(
+    sourceGetter: (store: Store, output: OUT, config: CONFIG) => O,
     inputName: K,
     keepInputId: B,
     lazy: boolean,
