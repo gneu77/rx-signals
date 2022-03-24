@@ -13,7 +13,15 @@ import {
 import { ControlledSubject } from './controlled-subject';
 import { DelayedEventQueue } from './delayed-event-queue';
 import { SourceObservable } from './source-observable';
-import { BehaviorId, EffectId, EventId, isBehaviorId, NO_VALUE, SignalId } from './store-utils';
+import {
+  BehaviorId,
+  EffectId,
+  EventId,
+  isBehaviorId,
+  NO_VALUE,
+  SignalId,
+  ToSignalIdValueType,
+} from './store-utils';
 
 /**
  * The rx-signals Store uses the TypedEvent<T> to bundle certain events and their
@@ -280,20 +288,23 @@ export class Store {
    *
    * Hence, if targetId is a BehaviorId, it must not yet exist in the store, else this method will throw a corresponding error!
    *
-   * @param {SignalId<T>} sourceId - the unique identifier for the source event or behavior
+   * @param {SignalId<S extends T>} sourceId - the unique identifier for the source event or behavior
    * @param {SignalId<T>} targetId - the unique identifier for the target event or behavior
    * @param {boolean | undefined} lazy - optional parameter that defaults to false, if the source is an event, else to true. If the target is a behavior, lazy defines whether its lazy or not, else the parameter is meaningless.
    * @throws if targetId is a BehaviorId and already exists in this Store
    * @returns {void | symbol} - symbol of the added event source in case the targetId is an EventId, else void
    */
-  connect<T, S extends SignalId<T>>(
-    sourceId: SignalId<T>,
-    targetId: S,
+  connect<TID extends SignalId<any>, S extends ToSignalIdValueType<TID>>(
+    sourceId: SignalId<S>,
+    targetId: TID,
     lazy?: boolean,
-  ): S extends BehaviorId<T> ? void : symbol {
+  ): TID extends BehaviorId<ToSignalIdValueType<TID>> ? void : symbol {
+    // We must use <TID extends SignalId<any>, S extends ToSignalIdValueType<TID>>,
+    // because for some reason, TS does not enforce S extends T, if we
+    // use <T, S extends T, TID extends SignalId<T>> (which it should in my opinion)
     const source = isBehaviorId(sourceId)
-      ? this.getBehavior(sourceId as BehaviorId<T>)
-      : this.getEventStream(sourceId as EventId<T>);
+      ? this.getBehavior(sourceId as BehaviorId<S>)
+      : this.getEventStream(sourceId as EventId<S>);
     const lazyParam = (lazy ?? null) === null ? isBehaviorId(sourceId) : (lazy as boolean);
     return this.connectObservable(source, targetId, lazyParam);
   }
@@ -306,28 +317,29 @@ export class Store {
    * lazy-parameter has no meaning.
    * Hence, if targetId is a BehaviorId, it must not yet exist in the store, else this method will throw a corresponding error!
    *
-   * @param {Observable<T>} source - the source observable
+   * @param {Observable<S extends T>} source - the source observable
    * @param {SignalId<T>} targetId - the unique identifier for the target event or behavior
    * @param {boolean} lazy - If the target is a behavior, lazy defines whether its lazy or not, else the parameter is meaningless.
    * @throws if targetId is a BehaviorId and already exists in this Store
    * @returns {void | symbol} - symbol of the added event source in case the targetId is an EventId, else void
    */
-  connectObservable<T, S extends SignalId<T>>(
-    source: Observable<T>,
-    targetId: S,
+  connectObservable<TID extends SignalId<any>, S extends ToSignalIdValueType<TID>>(
+    source: Observable<S>,
+    targetId: TID,
     lazy: boolean,
-  ): S extends BehaviorId<T> ? void : symbol {
+  ): TID extends BehaviorId<ToSignalIdValueType<TID>> ? void : symbol {
     if (isBehaviorId(targetId)) {
       return this.addBehavior(
-        targetId as BehaviorId<T>,
+        targetId as BehaviorId<ToSignalIdValueType<TID>>,
         source,
         lazy,
         NO_VALUE,
-      ) as S extends BehaviorId<T> ? void : symbol;
+      ) as TID extends BehaviorId<ToSignalIdValueType<TID>> ? void : symbol;
     } else {
-      return this.addEventSource(targetId as EventId<T>, source) as S extends BehaviorId<T>
-        ? void
-        : symbol;
+      return this.addEventSource(
+        targetId as EventId<ToSignalIdValueType<TID>>,
+        source,
+      ) as TID extends BehaviorId<ToSignalIdValueType<TID>> ? void : symbol;
     }
   }
 
