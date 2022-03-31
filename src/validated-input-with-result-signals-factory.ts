@@ -65,7 +65,9 @@ export type ValidatedInputWithResultOutput<InputType, ValidationType, ResultType
 export type ValidatedInputWithResultConfig<InputType, ValidationType, ResultType> = {
   validationEffectId: EffectId<InputType, ValidationType>;
   isValidationResultValid?: (validationResult: ValidationType) => boolean;
+  validationEffectDebounceTime?: number;
   resultEffectId: EffectId<InputType, ResultType>;
+  resultEffectDebounceTime?: number;
   initialResultGetter?: () => ResultType;
   withResultTrigger?: boolean;
   resultEffectInputEquals?: (a: InputType, b: InputType) => boolean;
@@ -172,12 +174,14 @@ export const getValidatedInputWithResultSignalsFactory = <
     .mapConfig((config: ValidatedInputWithResultConfig<InputType, ValidationType, ResultType>) => ({
       c1: {
         effectId: config.validationEffectId,
+        effectDebounceTime: config.validationEffectDebounceTime,
       },
       c2: {
         effectId: config.resultEffectId,
         initialResultGetter: config.initialResultGetter,
         withTrigger: config.withResultTrigger,
         effectInputEquals: config.resultEffectInputEquals,
+        effectDebounceTime: config.resultEffectDebounceTime,
       },
     }))
     .extendSetup((store, inIds, outIds, config) => {
