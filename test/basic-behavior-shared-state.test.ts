@@ -2,7 +2,7 @@ import { Observable } from 'rxjs';
 import { map, withLatestFrom } from 'rxjs/operators';
 import { Store } from '../src/store';
 import { getBehaviorId, getEventId } from '../src/store-utils';
-import { expectSequence } from './test.utils';
+import { expectSequence } from '../src/test-utils/test-utils';
 
 describe('shared behavior state', () => {
   let store: Store;

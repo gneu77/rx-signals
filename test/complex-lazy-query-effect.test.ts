@@ -1,8 +1,8 @@
 import { combineLatest, of } from 'rxjs';
 import { debounceTime, filter, map, switchMap } from 'rxjs/operators';
 import { getBehaviorId, getEventId } from '../src/store-utils';
+import { awaitStringifyEqualState, expectSequence } from '../src/test-utils/test-utils';
 import { Store } from './../src/store';
-import { awaitStringifyEqualState, expectSequence } from './test.utils';
 describe('Lazy query pattern', () => {
   interface ResultType {
     result: Array<number | string>;

@@ -1,8 +1,8 @@
 import { merge, of } from 'rxjs';
 import { filter, map, switchMap, withLatestFrom } from 'rxjs/operators';
 import { Store } from '../src/store';
+import { expectSequence } from '../src/test-utils/test-utils';
 import { getBehaviorId, getEventId } from './../src/store-utils';
-import { expectSequence } from './test.utils';
 
 describe('Effect loops', () => {
   const counterState = getBehaviorId<number>();

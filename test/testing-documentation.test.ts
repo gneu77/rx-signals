@@ -3,9 +3,9 @@ import { distinctUntilChanged } from 'rxjs/operators';
 import { getEffectSignalsFactory } from '../src/effect-signals-factory';
 import { Store } from '../src/store';
 import { BehaviorId, EventId, getBehaviorId, getEventId } from '../src/store-utils';
+import { expectSequence } from '../src/test-utils/test-utils';
 import { SignalsFactory } from './../src/signals-factory';
 import { getEffectId } from './../src/store-utils';
-import { expectSequence } from './test.utils';
 
 describe('testing documentation', () => {
   let store: Store;

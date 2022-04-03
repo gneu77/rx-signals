@@ -9,8 +9,8 @@ import {
 } from '../src/effect-signals-factory';
 import { Effect, Store } from '../src/store';
 import { getBehaviorId } from '../src/store-utils';
+import { expectSequence, withSubscription } from '../src/test-utils/test-utils';
 import { getEffectId } from './../src/store-utils';
-import { expectSequence, withSubscription } from './test.utils';
 
 describe('effect signals factory', () => {
   type InputModel = {

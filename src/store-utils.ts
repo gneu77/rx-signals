@@ -118,31 +118,42 @@ export type EffectId<InputType, ResultType> = symbol & {
   _resultTypeTemplate: ResultType;
 };
 
+let behaviorExtension = 1;
+let eventExtension = 1;
+let effectExtension = 1;
+
 /**
  * Function to get a new, unique BehaviorId.
  *
  * @template T - specifies the type for the corresponding behavior
+ * @param {string} nameExtension - an optional extension to the symbol name (so the string representation). Usually, you don't need this, cause even for debugging purposes, you should use store.setIdName/getIdName.
  * @returns {BehaviorId<T>}
  */
-export const getBehaviorId = <T>(): BehaviorId<T> => Symbol('B') as BehaviorId<T>;
+export const getBehaviorId = <T>(nameExtension?: string): BehaviorId<T> =>
+  Symbol(`B_${(nameExtension ?? '') + behaviorExtension++}`) as BehaviorId<T>;
 
 /**
  * Function to get a new, unique EventId.
  *
  * @template T - specifies the type for the corresponding event
+ * @param {string} nameExtension - an optional extension to the symbol name (so the string representation). Usually, you don't need this, cause even for debugging purposes, you should use store.setIdName/getIdName.
  * @returns {EventId<T>}
  */
-export const getEventId = <T>(): EventId<T> => Symbol('E') as EventId<T>;
+export const getEventId = <T>(nameExtension?: string): EventId<T> =>
+  Symbol(`E_${(nameExtension ?? '') + eventExtension++}`) as EventId<T>;
 
 /**
  * Function to get a new, unique EffectId.
  *
  * @template InputType - specifies the type for the corresponding effects input
  * @template ResultType - specifies the type for the corresponding effects result
+ * @param {string} nameExtension - an optional extension to the symbol name (so the string representation). Usually you should not need this.
  * @returns {EventId<T>}
  */
-export const getEffectId = <InputType, ResultType>(): EffectId<InputType, ResultType> =>
-  Symbol('Effect') as EffectId<InputType, ResultType>;
+export const getEffectId = <InputType, ResultType>(
+  nameExtension?: string,
+): EffectId<InputType, ResultType> =>
+  Symbol(`Effect_${(nameExtension ?? '') + effectExtension++}`) as EffectId<InputType, ResultType>;
 
 /**
  * Function to check whether a given SignalId is a BehaviorId.
@@ -151,7 +162,7 @@ export const getEffectId = <InputType, ResultType>(): EffectId<InputType, Result
  * @param {Signal<T>} id - a signal identifier.
  * @returns {boolean}
  */
-export const isBehaviorId = <T>(id: SignalId<T>): boolean => id.toString() === 'Symbol(B)';
+export const isBehaviorId = <T>(id: SignalId<T>): boolean => id.toString().startsWith('Symbol(B');
 
 /**
  * Function to check whether a given SignalId is an EventId.
@@ -160,7 +171,7 @@ export const isBehaviorId = <T>(id: SignalId<T>): boolean => id.toString() === '
  * @param {Signal<T>} id - a signal identifier.
  * @returns {boolean}
  */
-export const isEventId = <T>(id: SignalId<T>): boolean => id.toString() === 'Symbol(E)';
+export const isEventId = <T>(id: SignalId<T>): boolean => id.toString().startsWith('Symbol(E');
 
 /**
  * A constant symbol representing the intentional absence of a value.

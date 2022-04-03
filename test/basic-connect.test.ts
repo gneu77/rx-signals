@@ -1,6 +1,6 @@
 import { Store } from '../src/store';
 import { getBehaviorId, getEventId } from '../src/store-utils';
-import { expectSequence } from './test.utils';
+import { expectSequence } from '../src/test-utils/test-utils';
 
 describe('Connect basics', () => {
   const sourceEventId = getEventId<number>();

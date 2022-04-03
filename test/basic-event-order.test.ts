@@ -2,7 +2,7 @@ import { merge, of } from 'rxjs';
 import { filter, map, mapTo, switchMap, take, tap, withLatestFrom } from 'rxjs/operators';
 import { Store } from '../src/store';
 import { getBehaviorId, getEventId } from '../src/store-utils';
-import { expectSequence } from './test.utils';
+import { expectSequence } from '../src/test-utils/test-utils';
 
 describe('Event order', () => {
   const counterState = getBehaviorId<number>();

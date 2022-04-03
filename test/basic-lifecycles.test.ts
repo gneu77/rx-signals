@@ -1,8 +1,8 @@
 import { map } from 'rxjs';
 import { Store } from '../src/store';
 import { getBehaviorId } from '../src/store-utils';
+import { expectSequence } from '../src/test-utils/test-utils';
 import { getEventId } from './../src/store-utils';
-import { expectSequence } from './test.utils';
 
 describe('Lifecycle basics', () => {
   const numberBehavior = getBehaviorId<number>();

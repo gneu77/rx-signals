@@ -71,6 +71,7 @@ export type ValidatedInputWithResultConfig<InputType, ValidationType, ResultType
   initialResultGetter?: () => ResultType;
   withResultTrigger?: boolean;
   resultEffectInputEquals?: (a: InputType, b: InputType) => boolean;
+  nameExtension?: string;
 };
 
 /**
@@ -175,6 +176,7 @@ export const getValidatedInputWithResultSignalsFactory = <
       c1: {
         effectId: config.validationEffectId,
         effectDebounceTime: config.validationEffectDebounceTime,
+        nameExtension: `${config.nameExtension ?? ''}_validation`,
       },
       c2: {
         effectId: config.resultEffectId,
@@ -182,6 +184,7 @@ export const getValidatedInputWithResultSignalsFactory = <
         withTrigger: config.withResultTrigger,
         effectInputEquals: config.resultEffectInputEquals,
         effectDebounceTime: config.resultEffectDebounceTime,
+        nameExtension: `${config.nameExtension ?? ''}_result`,
       },
     }))
     .extendSetup((store, inIds, outIds, config) => {
@@ -195,8 +198,10 @@ export const getValidatedInputWithResultSignalsFactory = <
         true,
       );
     })
-    .addOrReplaceOutputId('combined', () =>
-      getBehaviorId<ValidatedInputWithResult<InputType, ValidationType, ResultType>>(),
+    .addOrReplaceOutputId('combined', config =>
+      getBehaviorId<ValidatedInputWithResult<InputType, ValidationType, ResultType>>(
+        `${config.nameExtension ?? ''}_combined`,
+      ),
     )
     .extendSetup((store, _, output, config) => {
       setupCombinedBehavior(

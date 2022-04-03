@@ -1,6 +1,7 @@
 import { combineLatest, merge, of } from 'rxjs';
 import { map, mapTo } from 'rxjs/operators';
 import { Effect, Store } from '../src/store';
+import { expectSequence } from '../src/test-utils/test-utils';
 import { getEffectSignalsFactory } from './../src/effect-signals-factory';
 import { Signals, SignalsFactory } from './../src/signals-factory';
 import {
@@ -11,7 +12,6 @@ import {
   getEffectId,
   getEventId,
 } from './../src/store-utils';
-import { expectSequence } from './test.utils';
 
 describe('signals factories documentation', () => {
   let store: Store;
@@ -443,7 +443,7 @@ describe('signals factories documentation', () => {
         resultEffectId,
       });
 
-      expect(myFactory.output.model.toString()).toEqual('Symbol(B)');
+      expect(myFactory.output.model.toString().startsWith('Symbol(B')).toBe(true);
     });
   });
 });

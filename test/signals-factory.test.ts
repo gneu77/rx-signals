@@ -1,9 +1,9 @@
 import { combineLatest, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Store } from '../src/store';
+import { expectSequence } from '../src/test-utils/test-utils';
 import { SignalsFactory } from './../src/signals-factory';
 import { BehaviorId, EventId, getBehaviorId, getEventId } from './../src/store-utils';
-import { expectSequence } from './test.utils';
 
 describe('SignalsFactory', () => {
   const operationAdd = 'add';

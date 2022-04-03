@@ -1,8 +1,8 @@
 import { interval, of, Subject } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { getEventId } from '../src/store-utils';
+import { awaitError, expectSequence, getSequence } from '../src/test-utils/test-utils';
 import { Store, TypedEvent } from './../src/store';
-import { awaitError, expectSequence, getSequence } from './test.utils';
 describe('Event streams', () => {
   const testEvent = getEventId<string>();
 

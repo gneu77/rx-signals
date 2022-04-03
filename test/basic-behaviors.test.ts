@@ -2,7 +2,7 @@ import { interval, NEVER, of } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { Store } from '../src/store';
 import { getBehaviorId } from '../src/store-utils';
-import { awaitCompletion, awaitError, expectSequence } from './test.utils';
+import { awaitCompletion, awaitError, expectSequence } from '../src/test-utils/test-utils';
 
 describe('Behavior basics', () => {
   const testId = getBehaviorId<number>();
@@ -19,7 +19,7 @@ describe('Behavior basics', () => {
       expect(() => {
         store.addBehavior(testId, NEVER, true);
       }).toThrowError(
-        'A behavior or event source with the given identifier has already been added: Symbol(B)',
+        'A behavior or event source with the given identifier has already been added: Symbol(B_1)',
       );
     });
     it('should be possible to add behavior sources again, after initial source has completed', async () => {
@@ -58,7 +58,7 @@ describe('Behavior basics', () => {
       expect(() => {
         store.addBehavior(testId, NEVER, false);
       }).toThrowError(
-        'A behavior or event source with the given identifier has already been added: Symbol(B)',
+        'A behavior or event source with the given identifier has already been added: Symbol(B_1)',
       );
     });
 

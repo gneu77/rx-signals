@@ -14,7 +14,7 @@ export const getSequence = async <T>(
   const combined: Observable<[T[], boolean]> = combineLatest([accObservable, timeoutObservable]);
   return combined
     .pipe(
-      filter(([result, timeout]) => timeout || result.length === length),
+      filter(([result, hasTimedOut]) => hasTimedOut || result.length === length),
       map(([result]) => result),
       take(1),
     )

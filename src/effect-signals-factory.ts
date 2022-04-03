@@ -122,6 +122,7 @@ export type EffectSignals<InputType, ResultType> = Signals<
  * @property {function | undefined} initialResultGetter - optional function that defaults to undefined. If not undefined, it will be used to determine an initial result for the result behavior.
  * @property {number | undefined} effectDebounceTime - optional number that defaults to undefined. If a number > 0 is specified, then it will be used as milliseconds to debounce new input to the effect (please DON't debounce the input signal yourself, because that would debounce before trigger and/or input equals).
  * @property {function | undefined} wrapperEffectGetter - optional function to wrap the effect defined by effectId with a custom Effect
+ * @property {string | undefined} nameExtension - optional string to be used as argument to all calls of getBehaviorId and getEventId
  */
 export type EffectConfiguration<InputType, ResultType> = {
   effectId: EffectId<InputType, ResultType>;
@@ -130,6 +131,7 @@ export type EffectConfiguration<InputType, ResultType> = {
   initialResultGetter?: () => ResultType;
   effectDebounceTime?: number;
   wrappedEffectGetter?: (effect: Effect<InputType, ResultType>) => Effect<InputType, ResultType>;
+  nameExtension?: string;
 };
 
 /**
@@ -144,19 +146,20 @@ export type EffectSignalsBuild = <InputType, ResultType>(
   config: EffectConfiguration<InputType, ResultType>,
 ) => EffectSignals<InputType, ResultType>;
 
-const getInputSignalIds = <InputType>(): EffectInputSignals<InputType> => ({
-  input: getBehaviorId<InputType>(),
-  invalidate: getEventId<void>(),
-  trigger: getEventId<void>(),
+const getInputSignalIds = <InputType>(nameExtension?: string): EffectInputSignals<InputType> => ({
+  input: getBehaviorId<InputType>(`${nameExtension ?? ''}_input`),
+  invalidate: getEventId<void>(`${nameExtension ?? ''}_invalidate`),
+  trigger: getEventId<void>(`${nameExtension ?? ''}_trigger`),
 });
 
-const getOutputSignalIds = <InputType, ResultType>(): EffectOutputSignals<
-  InputType,
-  ResultType
-> => ({
-  combined: getBehaviorId<CombinedEffectResult<InputType, ResultType>>(),
-  errors: getEventId<EffectError<InputType>>(),
-  successes: getEventId<EffectSuccess<InputType, ResultType>>(),
+const getOutputSignalIds = <InputType, ResultType>(
+  nameExtension?: string,
+): EffectOutputSignals<InputType, ResultType> => ({
+  combined: getBehaviorId<CombinedEffectResult<InputType, ResultType>>(
+    `${nameExtension ?? ''}_combined`,
+  ),
+  errors: getEventId<EffectError<InputType>>(`${nameExtension ?? ''}_errors`),
+  successes: getEventId<EffectSuccess<InputType, ResultType>>(`${nameExtension ?? ''}_successes`),
 });
 
 const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
@@ -179,8 +182,8 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
 
   const effectInputEquals = config.effectInputEquals ?? ((a, b) => a === b);
 
-  const inIds = getInputSignalIds<IT>();
-  const outIds = getOutputSignalIds<IT, RT>();
+  const inIds = getInputSignalIds<IT>(config.nameExtension);
+  const outIds = getOutputSignalIds<IT, RT>(config.nameExtension);
   const setup = (store: Store) => {
     const invalidateTokenBehavior = getBehaviorId<object | null>();
     store.addBehavior(

@@ -2,6 +2,7 @@ import { Observable, of, Subject } from 'rxjs';
 import { delay } from 'rxjs/operators';
 import { Signals } from '../src/signals-factory';
 import { Effect, Store } from '../src/store';
+import { expectSequence, withSubscription } from '../src/test-utils/test-utils';
 import { getBehaviorId, getEffectId } from './../src/store-utils';
 import {
   getValidatedInputWithResultSignalsFactory,
@@ -10,7 +11,6 @@ import {
   ValidatedInputWithResultInput,
   ValidatedInputWithResultOutput,
 } from './../src/validated-input-with-result-signals-factory';
-import { expectSequence, withSubscription } from './test.utils';
 
 describe('validated input with result signals factory', () => {
   type InputModel = {
@@ -77,6 +77,7 @@ describe('validated input with result signals factory', () => {
       const signals = factory.build({
         resultEffectId,
         validationEffectId,
+        nameExtension: 'test',
       });
       signals.setup(store);
       observable = store.getBehavior(signals.output.combined);

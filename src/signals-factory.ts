@@ -158,7 +158,10 @@ export type MapConfig<CONFIG1 extends Configuration, CONFIG2 extends Configurati
 /**
  * Function mapping from one concrete NameToSignalId to another NameToSignalId
  */
-export type MapSignalIds<T1 extends NameToSignalId, T2 extends NameToSignalId> = (ids: T1) => T2;
+export type MapSignalIds<T1 extends NameToSignalId, T2 extends NameToSignalId, CONFIG> = (
+  ids: T1,
+  config: CONFIG,
+) => T2;
 
 /**
  * AddOrReplaceId is the result type of adding or replacing a key in a NameToSignalId.
@@ -426,13 +429,13 @@ export class SignalsFactory<
    * @returns {SignalsFactory<IN2, OUT, CONFIG>} - a new SignalsFactory with different input signals
    */
   mapInput<IN2 extends NameToSignalId>(
-    mapper: MapSignalIds<IN, IN2>,
+    mapper: MapSignalIds<IN, IN2, CONFIG>,
   ): SignalsFactory<IN2, OUT, CONFIG> {
     return this.fmap<IN2, OUT, CONFIG>(sb => config => {
       const s = sb(config);
       return {
         ...s,
-        input: mapper(s.input),
+        input: mapper(s.input, config),
       };
     });
   }
@@ -449,11 +452,11 @@ export class SignalsFactory<
    */
   addOrReplaceInputId<K extends string, ID extends SignalId<any>>(
     name: K,
-    idGetter: () => ID,
+    idGetter: (config: CONFIG) => ID,
   ): SignalsFactory<AddOrReplaceId<IN, K, ID>, OUT, CONFIG> {
-    return this.mapInput<AddOrReplaceId<IN, K, ID>>(input => ({
+    return this.mapInput<AddOrReplaceId<IN, K, ID>>((input, config) => ({
       ...input,
-      [name]: idGetter(),
+      [name]: idGetter(config),
     }));
   }
 
@@ -505,13 +508,13 @@ export class SignalsFactory<
    * @returns {SignalsFactory<IN, OUT2, CONFIG>} - a new SignalsFactory with different output signals
    */
   mapOutput<OUT2 extends NameToSignalId>(
-    mapper: MapSignalIds<OUT, OUT2>,
+    mapper: MapSignalIds<OUT, OUT2, CONFIG>,
   ): SignalsFactory<IN, OUT2, CONFIG> {
     return this.fmap<IN, OUT2, CONFIG>(sb => config => {
       const s = sb(config);
       return {
         ...s,
-        output: mapper(s.output),
+        output: mapper(s.output, config),
       };
     });
   }
@@ -528,11 +531,11 @@ export class SignalsFactory<
    */
   addOrReplaceOutputId<K extends string, ID extends SignalId<any>>(
     name: K,
-    idGetter: () => ID,
+    idGetter: (config: CONFIG) => ID,
   ): SignalsFactory<IN, AddOrReplaceId<OUT, K, ID>, CONFIG> {
-    return this.mapOutput<AddOrReplaceId<OUT, K, ID>>(output => ({
+    return this.mapOutput<AddOrReplaceId<OUT, K, ID>>((output, config) => ({
       ...output,
-      [name]: idGetter(),
+      [name]: idGetter(config),
     }));
   }
 
