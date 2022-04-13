@@ -1,12 +1,20 @@
 {
   "name": "@rx-signals/store",
-  "version": "3.0.0-rc16",
+  "version": "3.0.0-rc17",
   "description": "Reactive state- and effects-management with behaviors and event streams",
   "author": "Gerd Neudert",
   "license": "MIT",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",
+  "exports": {
+    "./test-utils": "./src/test-utils/index.js"
+  },
+  "typesVersions": {
+    "*": {
+      "test-utils": ["dist/esm/test-utils/index.d.ts"]
+    }
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/gneu77/rx-signals"

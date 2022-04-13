@@ -402,7 +402,7 @@ export class Store {
 
   /**
    * This method takes a callback that performs Store operations.
-   * It returns a LifecycleHandle can be used to reset or end the lifecycle of signals
+   * It returns a LifecycleHandle that can be used to reset or end the lifecycle of signals
    * and signal-sources that are added to the store during the callback execution.
    *
    * @param {function} lifecycleRegistrationCallback - behaviors and event-sources added within this callback will be part of the lifecycle
