@@ -95,4 +95,6 @@ Where necessary, it will still link to the corresponding passages of the formerl
 
 The full API-documentation (as generated from the doc strings) [can be found here](https://rawcdn.githack.com/gneu77/rx-signals/master/docs/tsdoc/index.html)
 
+If you want to use this library in an Angular project, I suggest using the [@rx-signals/angular-provider](https://github.com/gneu77/rx-signals-angular-provider/tree/master/projects/rx-signals/angular-provider) in addition.
+
 An introduction for people with _NgRx_ background [can be found here](https://github.com/gneu77/rx-signals/blob/master/docs/ngrx_compare_start.md)
