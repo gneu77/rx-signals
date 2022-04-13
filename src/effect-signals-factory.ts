@@ -122,7 +122,7 @@ export type EffectSignals<InputType, ResultType> = Signals<
  * @property {function | undefined} initialResultGetter - optional function that defaults to undefined. If not undefined, it will be used to determine an initial result for the result behavior.
  * @property {number | undefined} effectDebounceTime - optional number that defaults to undefined. If a number > 0 is specified, then it will be used as milliseconds to debounce new input to the effect (please DON't debounce the input signal yourself, because that would debounce before trigger and/or input equals).
  * @property {function | undefined} wrapperEffectGetter - optional function to wrap the effect defined by effectId with a custom Effect
- * @property {string | undefined} nameExtension - optional string to be used as argument to all calls of getBehaviorId and getEventId
+ * @property {string | undefined} nameExtension - optional string to be used as argument to calls of getBehaviorId and getEventId
  */
 export type EffectConfiguration<InputType, ResultType> = {
   effectId: EffectId<InputType, ResultType>;
