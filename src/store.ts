@@ -4,7 +4,6 @@ import {
   distinctUntilChanged,
   filter,
   map,
-  mapTo,
   share,
   switchMap,
   take,
@@ -517,7 +516,7 @@ export class Store {
         .pipe(
           filter(val => val === event),
           take(1),
-          mapTo(true),
+          map(() => true),
           delay(1, asyncScheduler),
         )
         .toPromise() as Promise<boolean>;

@@ -1,11 +1,11 @@
 import { Observable, Subject } from 'rxjs';
-import { mapTo, mergeMap } from 'rxjs/operators';
+import { map, mergeMap } from 'rxjs/operators';
 
 export class DelayedEventQueue {
   private queueArray: Subject<void>[] = [];
 
   getQueueDelayedObservable<T>(observable: Observable<T>): Observable<T> {
-    return observable.pipe(mergeMap(value => this.fromDelayedQueue().pipe(mapTo(value))));
+    return observable.pipe(mergeMap(value => this.fromDelayedQueue().pipe(map(() => value))));
   }
 
   private fromDelayedQueue(): Observable<void> {
