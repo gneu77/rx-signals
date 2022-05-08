@@ -62,9 +62,10 @@ export type Signals<IN extends NameToSignalId, OUT extends NameToSignalId> = Set
  * for the output-ids. For the input-ids, corresponding signals must be setup somewhere else (e.g. via store.connect).
  * If you have a scenario, where setup needs a SignalId that is NOT created by SignalsBuild, then you can pass it via CONFIG.
  *
- * @typedef {function} SignalsBuild<IN, OUT> - constructor argument of SignalsFactories
+ * @typedef {function} SignalsBuild<IN, OUT, CONFIG> - constructor argument of SignalsFactories
  * @template IN - concrete NameToSignalIds defining input signal-ids of the resulting Signals object
  * @template OUT - concrete NameToSignalIds defining output signal-ids of the resulting Signals object
+ * @template CONFIG - concrete Configuration for the given SignalsBuild
  */
 export type SignalsBuild<
   IN extends NameToSignalId,
