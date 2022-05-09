@@ -346,7 +346,7 @@ The rule is simple: If it would be a logical error that a behavior-source misses
 (See the docstring for store.addBehavior to get some more guidance on when to use lazy vs. non-lazy!)
 
 So far, defining a behavior that depends on multiple different events would be a bit clumsy (you'd have to use `getTypedEventStream` instead of `getEventStream` to differentiate between the merged events).
-Instead, you should use the state-reducer API from the next section to setup root-state-behaviors.
+Instead, you should use the state-reducer API from the next section to setup root-state-behaviors (non-derived behaviors).
 
 #### State-Reducer API
 
@@ -406,14 +406,21 @@ This will be detailed in the [Testing section](#testing)
 
 In the previous section, we tallied that in _rx-signals_, decoupling is done by wireing dependencies based on identifiers.
 But of course, we still want to be able to somehow bundle certain behaviors and events that belong together, to achieve encapsulation and high cohesion.
+We also might want to hide certain signals from being used directly.
+We need something that can serve as a blackbox component with defined input and output.
 This leads to the following requirements:
 * The creation of `SignalId`s and the setup of the store (using the `SignalId`s) must be separated somehow.
   * Because all `SignalId`s used in wireing must be available, when the setup starts.
-* It must be possible to 'bundle' the setup of certain behaviors and event-sources with the corresponding `SignalId`s
+* It must be possible to 'bundle' the setup of certain behaviors and event-sources with the corresponding `SignalId`s.
+* It must be possible to 'bundle' `SignalId`s specifying input- and output-signals as interface.
 
 Therefore, _rx-signals_ defines the `Signals` type as follows:
 ```typescript
-type Signals<IN extends NameToSignalId, OUT extends NameToSignalId> = SetupWithStore & SignalIds<IN, OUT>;
+type Signals<
+  IN extends NameToSignalId,
+  OUT extends NameToSignalId,
+  EFF extends NameToEffectId = {}, // ignore this for now
+> = SetupWithStore & SignalIds<IN, OUT> & EffectIds<EFF>;
 
 // with:
 type NameToSignalId = { [key: string]: SignalId<any> | NameToSignalId };
@@ -428,7 +435,7 @@ The setup function must only add behavior- and/or event-sources to the store for
 In contrast, it must not add any sources to the store using one of the input-ids!
 
 :warning: Similar to `const x: Observable<T>` being the reactive and immutable counterpart of `let x: T`, you could see the `Signals` type as reactive and immutable counterpart of a class-instance.
-Following this analogy, the in/out-`NameToSignalId` is the reactive counterpart of a class-interface.
+Following this analogy, the input/output-`NameToSignalId` is the reactive counterpart of a class-interface.
 
 Let's see an example, where we encapsulate the creation of signals for counters:
 ```typescript
@@ -451,6 +458,7 @@ const getCounterSignals: () => Signals<CounterInput, CounterOutput> = () => {
     output: {
       counter,
     },
+    effects: {},
     setup: store => {
       store.addReducer(counter, increaseBy, (state, event) => state + event);
       store.addReducer(counter, decreaseBy, (state, event) => state - event);
@@ -460,6 +468,7 @@ const getCounterSignals: () => Signals<CounterInput, CounterOutput> = () => {
 };
 ```
 
+In more complex scenarios, we could have added many more signals to the store that we might use internally, but still just expose the counter signal as output.
 We can use `getCounterSignals` to create as many counters as we like.
 
 Next, we encapsulate the creation of a signal that depends on two number-streams (calculating the sum of those numbers):
@@ -478,6 +487,7 @@ const getSumSignals: () => Signals<SumInput, SumOutput> = () => {
   return {
     input: { inputA, inputB },
     output: { counterSum },
+    effects: {},
     setup: store => {
       store.addDerivedState(
         counterSum,
@@ -511,6 +521,7 @@ const getCounterWithSumSignals: () => Signals<ComposedInput, SumOutput> = () => 
     output: {
       counterSum: counterSumSignals.output.counterSum,
     },
+    effects: {},
     setup: store => {
       counterASignals.setup(store);
       counterBSignals.setup(store);
@@ -544,36 +555,47 @@ type SignalsBuild<
   IN extends NameToSignalId,
   OUT extends NameToSignalId,
   CONFIG extends Configuration,
-> = (config: CONFIG) => Signals<IN, OUT>;
+  EFF extends NameToEffectId, // ignore this for now
+> = (config: CONFIG) => Signals<IN, OUT, EFF>;
 
 // with:
 type Configuration = Record<string, any>;
 ```
 
-:warning: Back to our analogy of the `Signals` type being the reactive, immutable counterpart of a class-instance, a `SignalsBuild` is the reactive, immutable counterpart of a class/class-constructor.
+:warning: Back to our analogy of the `Signals` type being the reactive counterpart of an immutable class-instance, a `SignalsBuild` is the reactive counterpart of a class/class-constructor.
 
 ## Composition via SignalsFactory <a name="signals-factory-type"></a>
 
-As mentioned at the end of the `Signals` section, the manual composition of factory-function (hence `SignalsBuild` functions) is error-prone and needs a lot of boilerplate code.
-To generalize factory composition, _rx-signals_ features the `SignalsFactory` class as a wrapper for `SignalsBuild`.
+As mentioned at the end of the `Signals` section, the manual composition of factory-functions (hence `SignalsBuild` functions) is error-prone and needs a lot of boilerplate code.
+To generalize factory composition in a declarative way, _rx-signals_ features the `SignalsFactory` class as a wrapper for `SignalsBuild`.
 The following snippet just shows a part of the SignalsFactory methods.
 We will encounter more methods later and you can consult [the corresponding API-documentation](https://rawcdn.githack.com/gneu77/rx-signals/master/docs/tsdoc/classes/SignalsFactory.html) for details of all methods.
 ```typescript
 // This snippet only shows a small part of the full API!:
-class SignalsFactory<IN extends NameToSignalId, OUT extends NameToSignalId, CONFIG extends Configuration> {
-  constructor(readonly build: SignalsBuild<IN, OUT, CONFIG>) {}
+class SignalsFactory<
+  IN extends NameToSignalId,
+  OUT extends NameToSignalId,
+  CONFIG extends Configuration = {},
+  EFF extends NameToEffectId = {}, // ignore this for now
+> {
+  constructor(readonly build: SignalsBuild<IN, OUT, CONFIG, EFF>) {}
   
-  compose<IN2 extends NameToSignalId, OUT2 extends NameToSignalId, CONFIG2 extends Configuration>(
-    factory2: SignalsFactory<IN2, OUT2, CONFIG2>,
-  ): ComposedFactory<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>
+  compose<
+    IN2 extends NameToSignalId, 
+    OUT2 extends NameToSignalId, 
+    CONFIG2 extends Configuration, 
+    EFF2 extends NameToEffectId
+  >(
+    factory2: SignalsFactory<IN2, OUT2, CONFIG2, EFF2>,
+  ): ComposedFactory<IN, OUT, CONFIG, EFF, IN2, OUT2, CONFIG2, EFF2>
 
-  extendSetup(extend: ExtendSetup<IN, OUT, CONFIG>): SignalsFactory<IN, OUT, CONFIG>;
+  extendSetup(extend: ExtendSetup<IN, OUT, CONFIG, EFF>): SignalsFactory<IN, OUT, CONFIG, EFF>;
 
-  mapConfig<CONFIG2 extends Configuration>(mapper: MapConfig<CONFIG, CONFIG2>): SignalsFactory<IN, OUT, CONFIG2>;
+  mapConfig<CONFIG2 extends Configuration>(mapper: MapConfig<CONFIG, CONFIG2>): SignalsFactory<IN, OUT, CONFIG2, EFF>;
 
-  mapInput<IN2 extends NameToSignalId>(mapper: MapSignalIds<IN, IN2>): SignalsFactory<IN2, OUT, CONFIG>;
+  mapInput<IN2 extends NameToSignalId>(mapper: MapSignalIds<IN, IN2>): SignalsFactory<IN2, OUT, CONFIG, EFF>;
   
-  mapOutput<OUT2 extends NameToSignalId>(mapper: MapSignalIds<OUT, OUT2>): SignalsFactory<IN, OUT2, CONFIG>;
+  mapOutput<OUT2 extends NameToSignalId>(mapper: MapSignalIds<OUT, OUT2>): SignalsFactory<IN, OUT2, CONFIG, EFF>;
 }
 ```
 
@@ -607,22 +629,34 @@ const getCounterWithSumSignalsFactory: SignalsFactory<ComposedInput, SumOutput> 
 
 To understand the `compose` method, let's have a look at the signature again:
 ```typescript
-compose<IN2 extends NameToSignalId, OUT2 extends NameToSignalId, CONFIG2 extends Configuration>(
-  factory2: SignalsFactory<IN2, OUT2, CONFIG2>,
-): ComposedFactory<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>
+compose<
+  IN2 extends NameToSignalId, 
+  OUT2 extends NameToSignalId, 
+  CONFIG2 extends Configuration, 
+  EFF2 extends NameToEffectId
+>(
+  factory2: SignalsFactory<IN2, OUT2, CONFIG2, EFF2>,
+): ComposedFactory<IN, OUT, CONFIG, EFF, IN2, OUT2, CONFIG2, EFF2>
 
 // with:
 type ComposedFactory<
   IN1 extends NameToSignalId,
   OUT1 extends NameToSignalId,
   CONFIG1 extends Configuration,
+  EFF1 extends NameToEffectId,
   IN2 extends NameToSignalId,
   OUT2 extends NameToSignalId,
   CONFIG2 extends Configuration,
-> = SignalsFactory<Merged<IN1, IN2>, Merged<OUT1, OUT2>, MergedConfiguration<CONFIG1, CONFIG2>>;
+  EFF2 extends NameToEffectId,
+> = SignalsFactory<
+  Merged<IN1, IN2>,
+  Merged<OUT1, OUT2>,
+  MergedConfiguration<CONFIG1, CONFIG2>,
+  Merged<EFF1, EFF2>
+>;
 ```
 
-So the `compose` method composes two factories by taking a second `SignalsFactory<IN2, OUT2, CONFIG2>` and returning a new `SignalsFactory<Merged<IN1, IN2>, Merged<OUT1, OUT2>, MergedConfiguration<CONFIG1, CONFIG2>>`.
+So the `compose` method composes two factories by taking a second `SignalsFactory<IN2, OUT2, CONFIG2, EFF2>` and returning a new `SignalsFactory<Merged<IN1, IN2>, Merged<OUT1, OUT2>, MergedConfiguration<CONFIG1, CONFIG2>, Merged<EFF1, EFF2>>`.
 Simply put, the merge of input and output `NameToSignalId` works in a way that conflicting names are put under properties _conflicts1_ and _conflicts2_, as you can see in the connect, or mapInput/mapOutput method calls of our previous composition example.
 For details of the merge-logic, please have a look at [the corresponding API-documentation](https://rawcdn.githack.com/gneu77/rx-signals/master/docs/tsdoc/modules.html#Merged)
 
@@ -672,6 +706,7 @@ const getModelSignals = <T>(config: ModelConfig<T>): Signals<ModelInput<T>, Mode
     output: {
       model,
     },
+    effects: {},
     setup: store => {
       store.addState(model, config.defaultModel);
       store.addReducer(model, setModel, (_, event) => event);
@@ -712,6 +747,7 @@ const getSortingSignals = (): Signals<SortingInput, SortingOutput> => {
     output: {
       sorting,
     },
+    effects: {},
     setup: store => {
       store.addState(sorting, { descending: false });
       store.addReducer(sorting, ascending, (_, propertyName) => ({
@@ -749,6 +785,7 @@ const getPagingSignals = (): Signals<PagingInput, PagingOutput> => {
     output: {
       paging,
     },
+    effects: {},
     setup: store => {
       store.addState(paging, { page: 0, pageSize: 10 });
       store.addReducer(paging, setPage, (state, page) => ({
@@ -806,7 +843,6 @@ Here is a generic function producing a _QueryWithResultFactory_:
 ```typescript
 type QueryWithResultConfig<FilterType, ResultType> = {
   defaultFilter: FilterType;
-  resultEffect: Effect<[FilterType, SortParameter, PagingParameter], ResultType>;
 };
 const getQueryWithResultFactory = <FilterType, ResultType>() =>
   getFilteredSortedPagedQuerySignalsFactory<FilterType>()
@@ -821,16 +857,14 @@ const getQueryWithResultFactory = <FilterType, ResultType>() =>
           store.getBehavior(output.paging),
         ]),
       'input',
-      false, // we don't want to keep 'input' inthe composed factory
+      false, // we don't want to keep 'input' in the composed factory
       true, // as we're connecting behaviors, we can safely subscribe lazily
     )
     .mapConfig((config: QueryWithResultConfig<FilterType, ResultType>) => ({
       c1: {
         defaultModel: config.defaultFilter,
       },
-      c2: {
-        effectId: config.resultEffectId,
-      },
+      c2: {}, // here we could map the optional config of the EffectSignalsFactory
     }));
 ```
 
@@ -842,17 +876,16 @@ All factories created so far are generic and can be re-used or composed as neces
 A concrete usage could be like this:
 ```typescript
 type MyFilter = { firstName: string; lastName: string };
-const resultEffectId = getEffectId<[MyFilter, SortParameter, PagingParameter], string[]>();
 const effectMock: Effect<[MyFilter, SortParameter, PagingParameter], string[]> = input =>
   of([`${input[0].firstName} ${input[0].lastName}`]);
 store.addEffect(resultEffectId, effectMock);
-const myFactory = getQueryWithResultFactory<MyFilter, string[]>().build({
+const mySignals = getQueryWithResultFactory<MyFilter, string[]>().build({
   defaultFilter: {
     firstName: '',
     lastName: '',
   },
-  resultEffectId,
 });
+store.addEffect(mySignals.effects.id, effectMock);
 ```
 
 ## Side-effect isolation via Effect <a name="effect-isolation"></a>
@@ -880,7 +913,7 @@ Nevertheless, it is of utmost importance, to treat all the major building blocks
 There are 3 categories making code impure:
 1. mutating input (in case of a class, `this` is implicit input)
 1. accessing (read or mutate) properties that are not part of the input
-1. missing referential transparancy (not returning the same result for the same input)
+1. missing referential transparancy (not returning the same result for the same input, hence non-deterministic code)
 
 You should never do the first (keep to this and debugging and reasoning about your application becomes trivial)!
 
@@ -903,12 +936,39 @@ type Effect<InputType, ResultType> = (
 This type represents a potentially impure function that can be added to the store via `addEffect`. A corresponding effect-observable can be retrieved reactively via `getEffect`.
 
 The `Effect` function takes an input and the store and must produce a result-observable. 
-The other two additional parameters can be used to access previous input and return values of the effect, but for now we don't care about them.
+The other two additional parameters can be used to access previous input and return values of the effect, but for now we don't care about them (e.g. they can be useful to determine whether to invoke effect-logic again or use a cached result).
+
+### `Signals` with sideeffects <a name="signals-with-sideeffects"></a>
+
+We already introduced the `Signals`-type as blackbox-component of reactive application logic.
+Blackboxes that implement sideeffects have two big disadvantages:
+1. They are are dangerous, because as they are blackboxes, you have no idea what they really do. You might think a logging-blackbox performs just a writing-I/O effect, while in truth it suddenly pulls arbitrary code from compromised LDAP servers and executes it. In other words, a blackbox that implements sideeffects is either no real blackbox, cause it forces you to understand its implementation, or it is a real blackbox and therefore you can't use it, because it don't know what kind of malice it'll do.
+1. If you use them composing your application, you have to mock them in each test that uses code relying on them (leading to mockup-hell).
+
+There is only one proper solution to these problems and that is passing the code that performs the sideeffect into the blackbox from outside.
+The whole logic using the sideeffect can still remain in the blackbox and only the real sideeffect (e.g. calling console.log() or random() or new Date()) is passed in.
+
+Therefore, the `Signals` can also specify `EffectId`s it relies on and the corresponging `Effect`s are injected via store-DI.
+```typescript
+type Signals<
+  IN extends NameToSignalId,
+  OUT extends NameToSignalId,
+  EFF extends NameToEffectId = {},
+> = SetupWithStore & SignalIds<IN, OUT> & EffectIds<EFF>;
+
+// with:
+type NameToEffectId = { [key: string]: EffectId<any, any> | NameToEffectId };
+type EffectIds<EFF extends NameToEffectId> = {
+  readonly effects: EFF;
+};
+```
+
+Composition and all the mapping- an other `SignalsFactory` conveniance-methods are similar to the input and output.
 
 ### The EffectSignalsFactory <a name="effect-signals-factory"></a>
 
-While you have to implement `Effect`s yourself, you will not normally not use them directly.
-Instead, _rx-signals_ features `getEffectSignalsFactory` to create a generic `EffectSignalsFactory` that takes an `EffectId` (to retrieve the corresponding `Effect` from the store) as configuration property (among other configuration):
+While you have to implement `Effect`s yourself, you will normally not use them directly.
+Instead, _rx-signals_ features `getEffectSignalsFactory` to create a generic `EffectSignalsFactory` that uses one `EffectId` (to get the corresponding `Effect` injected from the store):
 ```typescript
 const getEffectSignalsFactory = <InputType, ResultType>(): EffectSignalsFactory<
   InputType,
@@ -919,7 +979,8 @@ const getEffectSignalsFactory = <InputType, ResultType>(): EffectSignalsFactory<
 type EffectSignalsFactory<InputType, ResultType> = SignalsFactory<
   EffectInputSignals<InputType>,
   EffectOutputSignals<InputType, ResultType>,
-  EffectConfiguration<InputType, ResultType>
+  EffectConfiguration<InputType, ResultType>,
+  EffectFactoryEffects<InputType, ResultType>
 >;
 type EffectInputSignals<InputType> = {
   input: BehaviorId<InputType>;
@@ -932,12 +993,14 @@ type EffectOutputSignals<InputType, ResultType> = {
   successes: EventId<EffectSuccess<InputType, ResultType>>;
 };
 type EffectConfiguration<InputType, ResultType> = {
-  effectId: EffectId<InputType, ResultType>;
   effectInputEquals?: (a: InputType, b: InputType) => boolean;
   withTrigger?: boolean;
   initialResultGetter?: () => ResultType;
   effectDebounceTime?: number;
   wrappedEffectGetter?: (effect: Effect<InputType, ResultType>) => Effect<InputType, ResultType>;
+};
+type EffectFactoryEffects<InputType, ResultType> = {
+  id: EffectId<InputType, ResultType>;
 };
 type CombinedEffectResult<InputType, ResultType> = {
   currentInput?: InputType;
@@ -949,7 +1012,7 @@ type CombinedEffectResult<InputType, ResultType> = {
 
 The `EffectSignalsFactory` gives you the following guarantees:
 * The `CombinedEffectResult<InputType, ResultType>` is lazy, hence, as long as it's not subscribed, the corresponding `Effect` will not be triggered (subscribed).
-  * If you don't specify `withTrigger`, or set it to false, the `Effect` corresponding to the given `effectId` will be executed whenever the `currentInput` does not match the `resultInput` (the `effectInputEquals` defaults to strict equals).
+  * If you don't specify `withTrigger`, or set it to false, the `Effect` corresponding to the given `EffectId` will be executed whenever the `currentInput` does not match the `resultInput` (the `effectInputEquals` defaults to strict equals).
   * If you set `withTrigger` to true, the `Effect` will be triggered only if `currentInput` does not match `resultInput` **AND** `trigger` event is received.
   * While `currentInput` does not match the `resultInput` and the `Effect` is triggered, `resultPending` will be true.
   * If `currentInput` matches `resultInput`, the `Effect` can still be triggered by dispatching the `invalidate` event.
@@ -967,7 +1030,7 @@ You already saw the `EffectSignalsFactory` in use in the last example of the pre
 For more details, please consult the [API documentation](https://rawcdn.githack.com/gneu77/rx-signals/master/docs/tsdoc/index.html).
 
 _rx-signals_ even features the `ValidatedInputWithResultFactory` wich is a composition of two `EffectSignalsFactory` to cover the common task of validating an input model and performing a subsequent effect only if the validation passes.
-Here, validation is also an `Effect`, because that way we can treat pure-local validation exacly the same as validation that e.g. must access some backend service.
+Here, validation is also an `Effect`, because that way we can treat pure-local validation exactly the same as validation that e.g. must access some backend service.
 In addition, also local validation can be impure.
 E.g., if you have to validate a date for not being in the future, it's impure due to accessing the current-date and thus, the corresponding validation must be isolated (making testing piece of cake).
 
@@ -987,17 +1050,23 @@ type ValidatedInputWithResultOutput<InputType, ValidationType, ResultType> = {
   resultSuccesses: EventId<EffectSuccess<InputType, ResultType>>;
 };
 type ValidatedInputWithResultConfig<InputType, ValidationType, ResultType> = {
-  validationEffectId: EffectId<InputType, ValidationType>;
   isValidationResultValid?: (validationResult: ValidationType) => boolean;
-  resultEffectId: EffectId<InputType, ResultType>;
+  validationEffectDebounceTime?: number;
+  resultEffectDebounceTime?: number;
   initialResultGetter?: () => ResultType;
   withResultTrigger?: boolean;
   resultEffectInputEquals?: (a: InputType, b: InputType) => boolean;
+  nameExtension?: string;
+};
+type ValidatedInputWithResultEffects<InputType, ValidationType, ResultType> = {
+  validation: EffectId<InputType, ValidationType>;
+  result: EffectId<InputType, ResultType>;
 };
 type ValidatedInputWithResultFactory<InputType, ValidationType, ResultType> = SignalsFactory<
   ValidatedInputWithResultInput<InputType>,
   ValidatedInputWithResultOutput<InputType, ValidationType, ResultType>,
-  ValidatedInputWithResultConfig<InputType, ValidationType, ResultType>
+  ValidatedInputWithResultConfig<InputType, ValidationType, ResultType>,
+  ValidatedInputWithResultEffects<InputType, ValidationType, ResultType>
 >;
 ```
 
@@ -1023,13 +1092,14 @@ type CounterInput = {
 type CounterOutput = {
   counter: BehaviorId<number>;
 };
-const counterFactory = new SignalsFactory<CounterInput, CounterOutput, {}>(() => {
+const counterFactory = new SignalsFactory<CounterInput, CounterOutput>(() => {
   const counter = getBehaviorId<number>();
   const inc = getEventId<void>();
   const dec = getEventId<void>();
   return {
     input: { inc, dec },
     output: { counter },
+    effects: {},
     setup: store => {
       store.addState(counter, 0);
       store.addReducer(counter, inc, state => state + 1);
@@ -1057,7 +1127,6 @@ it('should test the counter factory for correct state after inc and dec', async 
 Ok, now say we have some signals that are composed of two counter-signals and an effect-signals-factory to produce a random number in the range defined by the two counters:
 ```typescript
 type RandomRange = [number, number];
-const randomNumberEffectId = getEffectId<RandomRange, number>();
 const randomNumberEffect: Effect<RandomRange, number> = ([from, to]) => of(from + to * Math.random());
 
 const randomNumberSignals = counterFactory
@@ -1078,9 +1147,7 @@ const randomNumberSignals = counterFactory
     incTo: input.conflicts2.inc,
     decTo: input.conflicts2.dec,
   }))
-  .build({ // building the signals takes the effect-id as configuration
-    effectId: randomNumberEffectId,
-  });
+  .build({});
 ```
 
 > As a side-note: though, taking string-arguments, the `renameOutputId` method is fully type-safe (try yourself)!
@@ -1112,12 +1179,12 @@ it('should be testable WITHOUT effect-mock', async () => {
 
 The above test is concerned about the `currentInput` of the combined-behavior produced by our signals and of course, as the input does not depend on the output of the effect, there is no need to mock the effect at all.
 
-If we want to test the result of the produced combined-behavior, we simple have to add a corresponding mockup-function to our store:
+If we want to test the result of the produced combined-behavior, we simply have to add a corresponding mockup-function to our store:
 ```typescript
 it('should be testable with effect-mock', async () => {
   const store = new Store();
   randomNumberSignals.setup(store);
-  store.addEffect(randomNumberEffectId, ([from, to]) => of(from + to * 10)); // mock
+  store.addEffect(randomNumberSignals.effects.id, ([from, to]) => of(from + to * 10)); // mock
 
   const sequence = expectSequence(
     store.getBehavior(randomNumberSignals.output.combined).pipe(
@@ -1136,7 +1203,7 @@ it('should be testable with effect-mock', async () => {
 
 So in addition to individual unit-tests for each `Signals` or `SignalsFactory`, we can just write integration-tests for all composed factories and supply `Effect`-mocks only where explicitly needed.
 
-If you compose the state and data-logic of your entire application from `Signals` and `SignalFactory`, you will end up with a `Signals` type for each independent feature (you might even go to the extreme and compose to a single `Signals` type for your whole application).
+If you compose the state and data-logic of your entire application from `Signals` (using `SignalFactory`), you will end up with a `Signals` type for each independent feature (you might even go to the extreme and compose to a single `Signals` type for your whole application).
 All you have to do at application startup is:
 1. Create a `Store` instance
 1. Call `setup(store)` for all your `Signals`
