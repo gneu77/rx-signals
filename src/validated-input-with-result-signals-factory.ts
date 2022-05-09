@@ -63,10 +63,8 @@ export type ValidatedInputWithResultOutput<InputType, ValidationType, ResultType
  * The analog to EffectConfiguration, just for ValidatedInputWithResultFactory.
  */
 export type ValidatedInputWithResultConfig<InputType, ValidationType, ResultType> = {
-  // validationEffectId: EffectId<InputType, ValidationType>;
   isValidationResultValid?: (validationResult: ValidationType) => boolean;
   validationEffectDebounceTime?: number;
-  // resultEffectId: EffectId<InputType, ResultType>;
   resultEffectDebounceTime?: number;
   initialResultGetter?: () => ResultType;
   withResultTrigger?: boolean;
@@ -74,6 +72,9 @@ export type ValidatedInputWithResultConfig<InputType, ValidationType, ResultType
   nameExtension?: string;
 };
 
+/**
+ * The analog to EffectFactoryEffects, just for ValidatedInputWithResultFactory.
+ */
 export type ValidatedInputWithResultEffects<InputType, ValidationType, ResultType> = {
   validation: EffectId<InputType, ValidationType>;
   result: EffectId<InputType, ResultType>;
@@ -182,12 +183,10 @@ export const getValidatedInputWithResultSignalsFactory = <
     .renameEffectId('id', 'result')
     .mapConfig((config: ValidatedInputWithResultConfig<InputType, ValidationType, ResultType>) => ({
       c1: {
-        // effectId: config.validationEffectId,
         effectDebounceTime: config.validationEffectDebounceTime,
         nameExtension: `${config.nameExtension ?? ''}_validation`,
       },
       c2: {
-        // effectId: config.resultEffectId,
         initialResultGetter: config.initialResultGetter,
         withTrigger: config.withResultTrigger,
         effectInputEquals: config.resultEffectInputEquals,
@@ -206,7 +205,7 @@ export const getValidatedInputWithResultSignalsFactory = <
         true,
       );
     })
-    .addOrReplaceOutputId('combined', config =>
+    .addOutputId('combined', config =>
       getBehaviorId<ValidatedInputWithResult<InputType, ValidationType, ResultType>>(
         `${config.nameExtension ?? ''}_combined`,
       ),

@@ -95,6 +95,15 @@ export type EffectOutputSignals<InputType, ResultType> = {
   successes: EventId<EffectSuccess<InputType, ResultType>>;
 };
 
+/**
+ * Type specifying the effects-type of EffectSignals (the corresponding effects are NOT added to the store
+ * by the EffectSignals-setup, but by whoever uses the signals, e.g. by useExistingEffect or via extended configuration plus extendSetup).
+ *
+ * @typedef {object} EffectFactoryEffects<InputType> - object holding the effect identifiers for EffectSignals
+ * @template InputType - specifies the input type for the effect
+ * @template ResultType - specifies the result type of the effect
+ * @property {EffectId<InputType, ResultType>} id - the id for the specific Effect function to be used
+ */
 export type EffectFactoryEffects<InputType, ResultType> = {
   id: EffectId<InputType, ResultType>;
 };
@@ -129,7 +138,6 @@ export type EffectSignals<InputType, ResultType> = Signals<
  * @typedef {object} EffectConfiguration<InputType, ResultType>
  * @template InputType - specifies the input type for the effect
  * @template ResultType - specifies the result type of the effect
- * @property {EffectId<InputType, ResultType>} effectId - the id for the specific Effect function to be used (mandatory).
  * @property {function | undefined} effectInputEquals - optional function used to determine whether a new input equals the previous one. Defaults to strict equals (a === b)
  * @property {boolean | undefined} withTrigger - optional bool that defaults to false. If true, the effect will only be performed in case a trigger event is received (else, whenever the input changes).
  * @property {function | undefined} initialResultGetter - optional function that defaults to undefined. If not undefined, it will be used to determine an initial result for the result behavior.
@@ -138,7 +146,6 @@ export type EffectSignals<InputType, ResultType> = Signals<
  * @property {string | undefined} nameExtension - optional string to be used as argument to calls of getBehaviorId and getEventId
  */
 export type EffectConfiguration<InputType, ResultType> = {
-  // effectId: EffectId<InputType, ResultType>;
   effectInputEquals?: (a: InputType, b: InputType) => boolean;
   withTrigger?: boolean;
   initialResultGetter?: () => ResultType;

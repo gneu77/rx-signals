@@ -92,7 +92,7 @@ describe('SignalsFactory', () => {
   describe('modify input/output ids', () => {
     it('should add a single input signal id', async () => {
       const myEvent = getEventId<number>();
-      const signals = baseFactory.addOrReplaceInputId('newKey', () => myEvent).build({});
+      const signals = baseFactory.addInputId('newKey', () => myEvent).build({});
       const sequence = expectSequence(store.getEventStream(signals.input.newKey), [5, 7]);
       store.dispatch(myEvent, 5);
       store.dispatch(myEvent, 7);
@@ -101,30 +101,22 @@ describe('SignalsFactory', () => {
 
     it('should add a single output signal id', async () => {
       const myEvent = getEventId<number>();
-      const signals = baseFactory.addOrReplaceOutputId('newKey', () => myEvent).build({});
+      const signals = baseFactory.addOutputId('newKey', () => myEvent).build({});
       const sequence = expectSequence(store.getEventStream(signals.output.newKey), [5, 7]);
       store.dispatch(myEvent, 5);
       store.dispatch(myEvent, 7);
       await sequence;
     });
 
-    it('should replace a single input signal id', async () => {
-      const myEvent = getEventId<number>();
-      const signals = baseFactory.addOrReplaceInputId('inputA', () => myEvent).build({});
-      const sequence = expectSequence(store.getEventStream(signals.input.inputA), [5, 7]);
-      store.dispatch(myEvent, 5);
-      store.dispatch(myEvent, 7);
-      await sequence;
-    });
-
-    it('should replace a single output signal id', async () => {
-      const myEvent = getEventId<number>();
-      const signals = baseFactory.addOrReplaceOutputId('result', () => myEvent).build({});
-      const sequence = expectSequence(store.getEventStream(signals.output.result), [5, 7]);
-      store.dispatch(myEvent, 5);
-      store.dispatch(myEvent, 7);
-      await sequence;
-    });
+    // should give type error for addOutputId, cause output 'result' already exists:
+    // it('should replace a single output signal id', async () => {
+    //   const myEvent = getEventId<number>();
+    //   const signals = baseFactory.addOutputId('result', () => myEvent).build({});
+    //   const sequence = expectSequence(store.getEventStream(signals.output.result), [5, 7]);
+    //   store.dispatch(myEvent, 5);
+    //   store.dispatch(myEvent, 7);
+    //   await sequence;
+    // });
 
     it('should rename a single input signal id', async () => {
       const myEvent = getEventId<number>();
