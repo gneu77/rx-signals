@@ -5,7 +5,6 @@ import { Store } from '../src/store';
 import { BehaviorId, EventId, getBehaviorId, getEventId } from '../src/store-utils';
 import { expectSequence } from '../src/test-utils/test-utils';
 import { SignalsFactory } from './../src/signals-factory';
-import { getEffectId } from './../src/store-utils';
 
 describe('testing documentation', () => {
   let store: Store;
@@ -20,7 +19,7 @@ describe('testing documentation', () => {
   type CounterOutput = {
     counter: BehaviorId<number>;
   };
-  const counterFactory = new SignalsFactory<CounterInput, CounterOutput, {}>(() => {
+  const counterFactory = new SignalsFactory<CounterInput, CounterOutput>(() => {
     const counter = getBehaviorId<number>();
     const inc = getEventId<void>();
     const dec = getEventId<void>();
@@ -32,6 +31,7 @@ describe('testing documentation', () => {
       output: {
         counter,
       },
+      effects: {},
       setup: store => {
         store.addState(counter, 0);
         store.addReducer(counter, inc, state => state + 1);
@@ -41,7 +41,7 @@ describe('testing documentation', () => {
   });
 
   type RandomRange = [number, number];
-  const randomNumberEffectId = getEffectId<RandomRange, number>();
+
   // const randomNumberEffect: Effect<RandomRange, number> = ([from, to]) =>
   //   of(from + to * Math.random());
 
@@ -63,9 +63,7 @@ describe('testing documentation', () => {
       incTo: input.conflicts2.inc,
       decTo: input.conflicts2.dec,
     }))
-    .build({
-      effectId: randomNumberEffectId,
-    });
+    .build({});
 
   it('should test the counter factory individually', async () => {
     const { input, output, setup } = counterFactory.renameOutputId('counter', 'to').build({});
@@ -122,7 +120,7 @@ describe('testing documentation', () => {
 
   it('should be testable with effect-mock', async () => {
     randomNumberSignals.setup(store);
-    store.addEffect(randomNumberEffectId, ([from, to]) => of(from + to * 10));
+    store.addEffect(randomNumberSignals.effects.id, ([from, to]) => of(from + to * 10));
 
     const sequence = expectSequence(
       store.getBehavior(randomNumberSignals.output.combined).pipe(

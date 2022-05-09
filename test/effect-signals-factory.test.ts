@@ -27,7 +27,7 @@ describe('effect signals factory', () => {
   const inputSubject = new Subject<InputModel>();
   let effectCalled = 0;
 
-  const resultEffectId = getEffectId<InputModel, ResultModel>();
+  const resultEffectId = getEffectId<InputModel, ResultModel>('Result Effect');
   const resultEffect: Effect<InputModel, ResultModel> = (
     input: InputModel,
     _,
@@ -67,7 +67,11 @@ describe('effect signals factory', () => {
     let factory: EffectSignalsFactory<InputModel, ResultModel>;
 
     beforeEach(() => {
-      factory = getEffectSignalsFactory<InputModel, ResultModel>();
+      factory = getEffectSignalsFactory<InputModel, ResultModel>().useExistingEffect(
+        'id',
+        () => resultEffectId,
+        false,
+      );
     });
 
     describe('default settings', () => {
@@ -78,7 +82,7 @@ describe('effect signals factory', () => {
       beforeEach(() => {
         const factoryResult = factory
           .extendSetup((store, inIds) => store.connect(inputStateId, inIds.input))
-          .build({ effectId: resultEffectId });
+          .build({});
         inIds = factoryResult.input;
         outIds = factoryResult.output;
         factoryResult.setup(store);
@@ -523,7 +527,7 @@ describe('effect signals factory', () => {
       beforeEach(() => {
         const factoryResult = factory
           .extendSetup((store, inIds) => store.connect(inputStateId, inIds.input))
-          .build({ effectId: resultEffectId, withTrigger: true });
+          .build({ withTrigger: true });
         inIds = factoryResult.input;
         outIds = factoryResult.output;
         factoryResult.setup(store);
@@ -601,7 +605,6 @@ describe('effect signals factory', () => {
         const factoryResult = factory
           .extendSetup((store, inIds) => store.connect(inputStateId, inIds.input))
           .build({
-            effectId: resultEffectId,
             initialResultGetter: () => ({
               results: [],
               totalResults: 0,
@@ -664,7 +667,6 @@ describe('effect signals factory', () => {
         const factoryResult = factory
           .extendSetup((store, inIds) => store.connect(inputStateId, inIds.input))
           .build({
-            effectId: resultEffectId,
             effectDebounceTime: 50,
           });
         outIds = factoryResult.output;
@@ -736,7 +738,6 @@ describe('effect signals factory', () => {
         const factoryResult = factory
           .extendSetup((store, inIds) => store.connect(inputStateId, inIds.input))
           .build({
-            effectId: resultEffectId,
             effectInputEquals: (a, b) => a.searchString === b.searchString,
           });
         outIds = factoryResult.output;
@@ -841,7 +842,6 @@ describe('effect signals factory', () => {
         const factoryResult = factory
           .extendSetup((store, inIds) => store.connect(inputStateId, inIds.input))
           .build({
-            effectId: resultEffectId,
             wrappedEffectGetter: effect => (input, store, prevInput, prevOutput) =>
               effect(input, store, prevInput, prevOutput).pipe(
                 map(r => ({

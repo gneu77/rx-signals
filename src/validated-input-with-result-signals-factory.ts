@@ -63,15 +63,20 @@ export type ValidatedInputWithResultOutput<InputType, ValidationType, ResultType
  * The analog to EffectConfiguration, just for ValidatedInputWithResultFactory.
  */
 export type ValidatedInputWithResultConfig<InputType, ValidationType, ResultType> = {
-  validationEffectId: EffectId<InputType, ValidationType>;
+  // validationEffectId: EffectId<InputType, ValidationType>;
   isValidationResultValid?: (validationResult: ValidationType) => boolean;
   validationEffectDebounceTime?: number;
-  resultEffectId: EffectId<InputType, ResultType>;
+  // resultEffectId: EffectId<InputType, ResultType>;
   resultEffectDebounceTime?: number;
   initialResultGetter?: () => ResultType;
   withResultTrigger?: boolean;
   resultEffectInputEquals?: (a: InputType, b: InputType) => boolean;
   nameExtension?: string;
+};
+
+export type ValidatedInputWithResultEffects<InputType, ValidationType, ResultType> = {
+  validation: EffectId<InputType, ValidationType>;
+  result: EffectId<InputType, ResultType>;
 };
 
 /**
@@ -82,7 +87,8 @@ export type ValidatedInputWithResultConfig<InputType, ValidationType, ResultType
 export type ValidatedInputWithResultFactory<InputType, ValidationType, ResultType> = SignalsFactory<
   ValidatedInputWithResultInput<InputType>,
   ValidatedInputWithResultOutput<InputType, ValidationType, ResultType>,
-  ValidatedInputWithResultConfig<InputType, ValidationType, ResultType>
+  ValidatedInputWithResultConfig<InputType, ValidationType, ResultType>,
+  ValidatedInputWithResultEffects<InputType, ValidationType, ResultType>
 >;
 
 const resultInputGetter = <InputType, ValidationType>(
@@ -171,15 +177,17 @@ export const getValidatedInputWithResultSignalsFactory = <
   ResultType,
 >(): ValidatedInputWithResultFactory<InputType, ValidationType, ResultType> =>
   getEffectSignalsFactory<InputType, ValidationType>()
+    .renameEffectId('id', 'validation')
     .compose(getEffectSignalsFactory<InputType, ResultType>())
+    .renameEffectId('id', 'result')
     .mapConfig((config: ValidatedInputWithResultConfig<InputType, ValidationType, ResultType>) => ({
       c1: {
-        effectId: config.validationEffectId,
+        // effectId: config.validationEffectId,
         effectDebounceTime: config.validationEffectDebounceTime,
         nameExtension: `${config.nameExtension ?? ''}_validation`,
       },
       c2: {
-        effectId: config.resultEffectId,
+        // effectId: config.resultEffectId,
         initialResultGetter: config.initialResultGetter,
         withTrigger: config.withResultTrigger,
         effectInputEquals: config.resultEffectInputEquals,

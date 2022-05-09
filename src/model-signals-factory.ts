@@ -57,6 +57,7 @@ const getModelSignals = <T>(
     output: {
       model,
     },
+    effects: {},
     setup: store => {
       store.addState(model, config.defaultModel);
       store.addReducer(model, setModel, (_, event) => event);

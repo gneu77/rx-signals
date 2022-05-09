@@ -47,6 +47,7 @@ describe('SignalsFactory', () => {
           outputC,
           outputD,
         },
+        effects: {},
         setup: store => {
           store.addDerivedState(
             result,
@@ -160,36 +161,35 @@ describe('SignalsFactory', () => {
         someNotUsedFakeOutput: BehaviorId<number>;
       };
     };
-    type TripledFactory = SignalsFactory<TripledInput, TripledOutput, {}>;
+    type TripledFactory = SignalsFactory<TripledInput, TripledOutput>;
 
-    const tripledFactory: TripledFactory = new SignalsFactory<TripledInput, TripledOutput, {}>(
-      () => {
-        const tripleInput = getBehaviorId<number>();
-        const someNotUsedFakeInput = getBehaviorId<string>();
-        const someOtherNotUsedFakeInput = getEventId<number>();
-        const someNotUsedFakeOutput = getBehaviorId<number>();
-        const tripledResult = getBehaviorId<number>();
-        return {
-          input: {
-            tripleInput,
-            someNotUsedFakeInput,
-            someOtherNotUsedFakeInput,
+    const tripledFactory: TripledFactory = new SignalsFactory<TripledInput, TripledOutput>(() => {
+      const tripleInput = getBehaviorId<number>();
+      const someNotUsedFakeInput = getBehaviorId<string>();
+      const someOtherNotUsedFakeInput = getEventId<number>();
+      const someNotUsedFakeOutput = getBehaviorId<number>();
+      const tripledResult = getBehaviorId<number>();
+      return {
+        input: {
+          tripleInput,
+          someNotUsedFakeInput,
+          someOtherNotUsedFakeInput,
+        },
+        output: {
+          tripledResult,
+          subIds: {
+            someNotUsedFakeOutput,
           },
-          output: {
+        },
+        effects: {},
+        setup: store => {
+          store.addDerivedState(
             tripledResult,
-            subIds: {
-              someNotUsedFakeOutput,
-            },
-          },
-          setup: store => {
-            store.addDerivedState(
-              tripledResult,
-              store.getBehavior(tripleInput).pipe(map(n => 3 * n)),
-            );
-          },
-        };
-      },
-    );
+            store.getBehavior(tripleInput).pipe(map(n => 3 * n)),
+          );
+        },
+      };
+    });
 
     it('should connectObservable, also if source-value-type only extends target-value-type', async () => {
       const myEvent = getEventId<number>();

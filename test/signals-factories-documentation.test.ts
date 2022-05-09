@@ -1,17 +1,10 @@
 import { combineLatest, merge, of } from 'rxjs';
-import { map, mapTo } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 import { Effect, Store } from '../src/store';
 import { expectSequence } from '../src/test-utils/test-utils';
 import { getEffectSignalsFactory } from './../src/effect-signals-factory';
 import { Signals, SignalsFactory } from './../src/signals-factory';
-import {
-  BehaviorId,
-  EffectId,
-  EventId,
-  getBehaviorId,
-  getEffectId,
-  getEventId,
-} from './../src/store-utils';
+import { BehaviorId, EventId, getBehaviorId, getEventId } from './../src/store-utils';
 
 describe('signals factories documentation', () => {
   let store: Store;
@@ -39,6 +32,7 @@ describe('signals factories documentation', () => {
         output: {
           counter,
         },
+        effects: {},
         setup: store => {
           store.addReducer(counter, increaseBy, (state, event) => state + event);
           store.addReducer(counter, decreaseBy, (state, event) => state - event);
@@ -62,6 +56,7 @@ describe('signals factories documentation', () => {
       return {
         input: {},
         output: { counterSum },
+        effects: {},
         setup: store => {
           store.addDerivedState(
             counterSum,
@@ -80,6 +75,7 @@ describe('signals factories documentation', () => {
       return {
         input: { inputA, inputB },
         output: { counterSum },
+        effects: {},
         setup: store => {
           store.addDerivedState(
             counterSum,
@@ -125,6 +121,7 @@ describe('signals factories documentation', () => {
           output: {
             counterSum: counterSumSignals.output.counterSum,
           },
+          effects: {},
           setup: store => {
             counter1Signals.setup(store);
             counter2Signals.setup(store);
@@ -158,6 +155,7 @@ describe('signals factories documentation', () => {
           output: {
             counterSum: counterSumSignals.output.counterSum,
           },
+          effects: {},
           setup: store => {
             counterASignals.setup(store);
             counterBSignals.setup(store);
@@ -193,6 +191,7 @@ describe('signals factories documentation', () => {
           output: {
             counterSum: counterSumSignals.output.counterSum,
           },
+          effects: {},
           setup: store => {
             counter1Signals.setup(store);
             counter2Signals.setup(store);
@@ -284,6 +283,7 @@ describe('signals factories documentation', () => {
         output: {
           model,
         },
+        effects: {},
         setup: store => {
           store.addState(model, config.defaultModel);
           store.addReducer(model, setModel, (_, event) => event);
@@ -319,6 +319,7 @@ describe('signals factories documentation', () => {
         output: {
           sorting,
         },
+        effects: {},
         setup: store => {
           store.addState(sorting, { descending: false });
           store.addReducer(sorting, ascending, (_, propertyName) => ({
@@ -355,6 +356,7 @@ describe('signals factories documentation', () => {
         output: {
           paging,
         },
+        effects: {},
         setup: store => {
           store.addState(paging, { page: 0, pageSize: 10 });
           store.addReducer(paging, setPage, (state, page) => ({
@@ -396,13 +398,12 @@ describe('signals factories documentation', () => {
               store.getEventStream(input.ascending),
               store.getEventStream(input.descending),
               store.getEventStream(input.none),
-            ).pipe(mapTo(0)),
+            ).pipe(map(() => 0)),
           );
         });
 
-    type QueryWithResultConfig<FilterType, ResultType> = {
+    type QueryWithResultConfig<FilterType> = {
       defaultFilter: FilterType;
-      resultEffectId: EffectId<[FilterType, SortParameter, PagingParameter], ResultType>;
     };
     const getQueryWithResultFactory = <FilterType, ResultType>() =>
       getFilteredSortedPagedQuerySignalsFactory<FilterType>()
@@ -420,30 +421,26 @@ describe('signals factories documentation', () => {
           false,
           true,
         )
-        .mapConfig((config: QueryWithResultConfig<FilterType, ResultType>) => ({
+        .mapConfig((config: QueryWithResultConfig<FilterType>) => ({
           c1: {
             defaultModel: config.defaultFilter,
           },
-          c2: {
-            effectId: config.resultEffectId,
-          },
+          c2: {},
         }));
 
     it('should create the factory', async () => {
       type MyFilter = { firstName: string; lastName: string };
-      const resultEffectId = getEffectId<[MyFilter, SortParameter, PagingParameter], string[]>();
       const effectMock: Effect<[MyFilter, SortParameter, PagingParameter], string[]> = input =>
         of([`${input[0].firstName} ${input[0].lastName}`]);
-      store.addEffect(resultEffectId, effectMock);
-      const myFactory = getQueryWithResultFactory<MyFilter, string[]>().build({
+      const mySignals = getQueryWithResultFactory<MyFilter, string[]>().build({
         defaultFilter: {
           firstName: '',
           lastName: '',
         },
-        resultEffectId,
       });
+      store.addEffect(mySignals.effects.id, effectMock);
 
-      expect(myFactory.output.model.toString().startsWith('Symbol(B')).toBe(true);
+      expect(mySignals.output.model.toString().startsWith('Symbol(B')).toBe(true);
     });
   });
 });

@@ -1,14 +1,22 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
-import { Observable } from 'rxjs';
+import { Observable, take } from 'rxjs';
 import { Store } from './store';
 import {
   BehaviorId,
+  EffectId,
   getBehaviorId,
   SignalId,
   ToBehaviorIdValueType,
   ToSignalIdValueType,
 } from './store-utils';
-import { Configuration, merge, Merged, MergedConfiguration, WithValueType } from './type-utils';
+import {
+  Configuration,
+  KeysOfValueType,
+  merge,
+  Merged,
+  MergedConfiguration,
+  WithValueType,
+} from './type-utils';
 
 /**
  * This type defines an object that maps identifier names to signal ids or nested NameToSignalIds.
@@ -16,6 +24,8 @@ import { Configuration, merge, Merged, MergedConfiguration, WithValueType } from
  * @typedef {object} NameToSignalId - maps strings on SignalId<any> | NameToSignalId
  */
 export type NameToSignalId = { [key: string]: SignalId<any> | NameToSignalId };
+
+export type NameToEffectId = { [key: string]: EffectId<any, any> | NameToEffectId };
 
 /**
  * This type defines an object that holds input and output signal-ids of a Signals type.
@@ -27,6 +37,10 @@ export type NameToSignalId = { [key: string]: SignalId<any> | NameToSignalId };
 export type SignalIds<IN extends NameToSignalId, OUT extends NameToSignalId> = {
   readonly input: IN;
   readonly output: OUT;
+};
+
+export type EffectIds<EFF extends NameToEffectId> = {
+  readonly effects: EFF;
 };
 
 /**
@@ -51,8 +65,16 @@ export type SetupWithStore = {
  * @template IN - concrete NameToSignalIds defining input signal-ids. SetupWithStore does NOT configure corresponding signals in the store (hence this must be done by the user of this Signals object, e.g. via connect)
  * @template OUT - concrete NameToSignalIds defining output signal-ids. In contrast to the input signal-ids, the SetupWithStore method takes care of setting up corresponding signals in the store.
  */
-export type Signals<IN extends NameToSignalId, OUT extends NameToSignalId> = SetupWithStore &
-  SignalIds<IN, OUT>;
+export type Signals<
+  IN extends NameToSignalId,
+  OUT extends NameToSignalId,
+  EFF extends NameToEffectId = {},
+> = SetupWithStore & SignalIds<IN, OUT> & EffectIds<EFF>;
+
+export type NoEffectSignals<
+  IN extends NameToSignalId,
+  OUT extends NameToSignalId,
+> = SetupWithStore & SignalIds<IN, OUT>;
 
 /**
  * This type defines a function taking some config-object as argument and returning a Signals object.
@@ -71,7 +93,14 @@ export type SignalsBuild<
   IN extends NameToSignalId,
   OUT extends NameToSignalId,
   CONFIG extends Configuration,
-> = (config: CONFIG) => Signals<IN, OUT>;
+  EFF extends NameToEffectId,
+> = (config: CONFIG) => Signals<IN, OUT, EFF>;
+
+export type NoEffectSignalsBuild<
+  IN extends NameToSignalId,
+  OUT extends NameToSignalId,
+  CONFIG extends Configuration,
+> = (config: CONFIG) => NoEffectSignals<IN, OUT>;
 
 /**
  * This type specifies a function mapping from SignalsBuild<IN1, OUT1, CONFIG1> to a SignalsFactory<IN2, OUT2, CONFIG2>,
@@ -89,10 +118,14 @@ export type BindMapper<
   IN1 extends NameToSignalId,
   OUT1 extends NameToSignalId,
   CONFIG1 extends Configuration,
+  EFF1 extends NameToEffectId,
   IN2 extends NameToSignalId,
   OUT2 extends NameToSignalId,
   CONFIG2 extends Configuration,
-> = (signalsBuild: SignalsBuild<IN1, OUT1, CONFIG1>) => SignalsFactory<IN2, OUT2, CONFIG2>;
+  EFF2 extends NameToEffectId,
+> = (
+  signalsBuild: SignalsBuild<IN1, OUT1, CONFIG1, EFF1>,
+) => SignalsFactory<IN2, OUT2, CONFIG2, EFF2>;
 
 /**
  * This type specifies a function mapping from SignalsBuild<IN1, OUT1, CONFIG1> to SignalsBuild<IN2, OUT2, CONFIG2>,
@@ -110,10 +143,14 @@ export type BuildMapper<
   IN1 extends NameToSignalId,
   OUT1 extends NameToSignalId,
   CONFIG1 extends Configuration,
+  EFF1 extends NameToEffectId,
   IN2 extends NameToSignalId,
   OUT2 extends NameToSignalId,
   CONFIG2 extends Configuration,
-> = (signalsBuild: SignalsBuild<IN1, OUT1, CONFIG1>) => SignalsBuild<IN2, OUT2, CONFIG2>;
+  EFF2 extends NameToEffectId,
+> = (
+  signalsBuild: SignalsBuild<IN1, OUT1, CONFIG1, EFF1>,
+) => SignalsBuild<IN2, OUT2, CONFIG2, EFF2>;
 
 /**
  * This type specifies the result of the SignalsFactory compose method.
@@ -130,10 +167,17 @@ export type ComposedFactory<
   IN1 extends NameToSignalId,
   OUT1 extends NameToSignalId,
   CONFIG1 extends Configuration,
+  EFF1 extends NameToEffectId,
   IN2 extends NameToSignalId,
   OUT2 extends NameToSignalId,
   CONFIG2 extends Configuration,
-> = SignalsFactory<Merged<IN1, IN2>, Merged<OUT1, OUT2>, MergedConfiguration<CONFIG1, CONFIG2>>;
+  EFF2 extends NameToEffectId,
+> = SignalsFactory<
+  Merged<IN1, IN2>,
+  Merged<OUT1, OUT2>,
+  MergedConfiguration<CONFIG1, CONFIG2>,
+  Merged<EFF1, EFF2>
+>;
 
 /**
  * This type specifies the argument to the extendSetup-method of SignalFactories.
@@ -147,7 +191,8 @@ export type ExtendSetup<
   IN extends NameToSignalId,
   OUT extends NameToSignalId,
   CONFIG extends Configuration,
-> = (store: Store, input: IN, output: OUT, config: CONFIG) => void;
+  EFF extends NameToEffectId,
+> = (store: Store, input: IN, output: OUT, config: CONFIG, effects: EFF) => void;
 
 /**
  * Function mapping from CONFIG1 to CONFIG2
@@ -160,6 +205,11 @@ export type MapConfig<CONFIG1 extends Configuration, CONFIG2 extends Configurati
  * Function mapping from one concrete NameToSignalId to another NameToSignalId
  */
 export type MapSignalIds<T1 extends NameToSignalId, T2 extends NameToSignalId, CONFIG> = (
+  ids: T1,
+  config: CONFIG,
+) => T2;
+
+export type MapEffectIds<T1 extends NameToEffectId, T2 extends NameToEffectId, CONFIG> = (
   ids: T1,
   config: CONFIG,
 ) => T2;
@@ -180,6 +230,14 @@ export type AddOrReplaceId<
   [K in N]: ID;
 };
 
+export type AddOrReplaceEffectId<
+  T extends NameToEffectId,
+  N extends keyof T,
+  ID extends EffectId<any, any>,
+> = Omit<T, N> & {
+  [K in N]: ID;
+};
+
 /**
  * RenameId is the result type of renaming a key in a NameToSignalId.
  *
@@ -193,6 +251,27 @@ export type RenameId<T extends NameToSignalId, N1 extends keyof T, N2 extends st
   N1 | N2
 > & {
   [K in N2]: T[N1];
+};
+
+export type RenameEffectId<T extends NameToEffectId, N1 extends keyof T, N2 extends string> = Omit<
+  T,
+  N1 | N2
+> & {
+  [K in N2]: T[N1];
+};
+
+export type NonIntersectingKeys<
+  K extends string,
+  T extends { [key: string]: any },
+  Message extends string,
+> = (K & (K extends keyof T ? never : K)) | Message;
+
+export type AddEffectId<
+  T extends NameToEffectId,
+  N extends keyof T,
+  ID extends EffectId<any, any>,
+> = T & {
+  [K in N]: ID;
 };
 
 /**
@@ -211,6 +290,7 @@ export class SignalsFactory<
   IN extends NameToSignalId,
   OUT extends NameToSignalId,
   CONFIG extends Configuration = {},
+  EFF extends NameToEffectId = {},
 > {
   /**
    * The constructor takes a pure function implementing SignalsBuild<IN, OUT, CONFIG>.
@@ -218,7 +298,7 @@ export class SignalsFactory<
    * @param {SignalsBuild<IN, OUT, CONFIG>} build - a pure function mapping from CONFIG to Signals<IN, OUT>
    * @constructor
    */
-  constructor(readonly build: SignalsBuild<IN, OUT, CONFIG>) {}
+  constructor(readonly build: SignalsBuild<IN, OUT, CONFIG, EFF>) {}
 
   /**
    * The compose method takes a second SignalsFactory<IN2, OUT2, CONFIG2> and returns a new SignalsFactory
@@ -229,10 +309,20 @@ export class SignalsFactory<
    * @param {SignalsFactory<IN2, OUT2, CONFIG2>} factory2 - a SignalsFactory<IN2, OUT2, CONFIG2>
    * @returns {ComposedFactory<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>} - the SignalsFactory resulting from the composition of SignalsFactory<IN, OUT, CONFIG> and SignalsFactory<IN2, OUT2, CONFIG2>
    */
-  compose<IN2 extends NameToSignalId, OUT2 extends NameToSignalId, CONFIG2 extends Configuration>(
-    factory2: SignalsFactory<IN2, OUT2, CONFIG2>,
-  ): ComposedFactory<IN, OUT, CONFIG, IN2, OUT2, CONFIG2> {
-    const build = (config: MergedConfiguration<CONFIG, CONFIG2>) => {
+  compose<
+    IN2 extends NameToSignalId,
+    OUT2 extends NameToSignalId,
+    CONFIG2 extends Configuration,
+    EFF2 extends NameToEffectId,
+  >(
+    factory2: SignalsFactory<IN2, OUT2, CONFIG2, EFF2>,
+  ): ComposedFactory<IN, OUT, CONFIG, EFF, IN2, OUT2, CONFIG2, EFF2> {
+    const build: SignalsBuild<
+      Merged<IN, IN2>,
+      Merged<OUT, OUT2>,
+      MergedConfiguration<CONFIG, CONFIG2>,
+      Merged<EFF, EFF2>
+    > = (config: MergedConfiguration<CONFIG, CONFIG2>) => {
       const s1 = this.build(config?.c1 ?? config);
       const s2 = factory2.build(config?.c2 ?? config);
       return {
@@ -242,12 +332,14 @@ export class SignalsFactory<
         },
         input: merge(s1.input, s2.input),
         output: merge(s1.output, s2.output),
+        effects: merge(s1.effects, s2.effects),
       };
     };
     return new SignalsFactory<
       Merged<IN, IN2>,
       Merged<OUT, OUT2>,
-      MergedConfiguration<CONFIG, CONFIG2>
+      MergedConfiguration<CONFIG, CONFIG2>,
+      Merged<EFF, EFF2>
     >(build);
   }
 
@@ -261,11 +353,16 @@ export class SignalsFactory<
    * @param {BindMapper<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>} mapper - a pure function mapping from SignalsBuild<IN, OUT, CONFIG> to SignalsFactory<IN2, OUT2, CONFIG2>
    * @returns {SignalsFactory<IN2, OUT2, CONFIG>} - a new SignalsFactory<IN2, OUT2, CONFIG2>
    */
-  bind<IN2 extends NameToSignalId, OUT2 extends NameToSignalId, CONFIG2 extends Configuration>(
-    mapper: BindMapper<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>,
-  ): SignalsFactory<IN2, OUT2, CONFIG2> {
+  bind<
+    IN2 extends NameToSignalId,
+    OUT2 extends NameToSignalId,
+    CONFIG2 extends Configuration,
+    EFF2 extends NameToEffectId,
+  >(
+    mapper: BindMapper<IN, OUT, CONFIG, EFF, IN2, OUT2, CONFIG2, EFF2>,
+  ): SignalsFactory<IN2, OUT2, CONFIG2, EFF2> {
     const newBuild = (config: CONFIG2) => mapper(this.build).build(config);
-    return new SignalsFactory<IN2, OUT2, CONFIG2>(newBuild);
+    return new SignalsFactory<IN2, OUT2, CONFIG2, EFF2>(newBuild);
   }
 
   /**
@@ -278,11 +375,16 @@ export class SignalsFactory<
    * @param {BuildMapper<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>} mapper - a pure function mapping from SignalsBuild<IN, OUT, CONFIG> to SignalsBuild<IN2, OUT2, CONFIG2>
    * @returns {SignalsFactory<IN2, OUT2, CONFIG2>} - a new SignalsFactory<IN2, OUT2, CONFIG2>
    */
-  fmap<IN2 extends NameToSignalId, OUT2 extends NameToSignalId, CONFIG2 extends Configuration>(
-    mapper: BuildMapper<IN, OUT, CONFIG, IN2, OUT2, CONFIG2>,
-  ): SignalsFactory<IN2, OUT2, CONFIG2> {
+  fmap<
+    IN2 extends NameToSignalId,
+    OUT2 extends NameToSignalId,
+    CONFIG2 extends Configuration,
+    EFF2 extends NameToEffectId,
+  >(
+    mapper: BuildMapper<IN, OUT, CONFIG, EFF, IN2, OUT2, CONFIG2, EFF2>,
+  ): SignalsFactory<IN2, OUT2, CONFIG2, EFF2> {
     const newBuild = (config: CONFIG2) => mapper(this.build)(config);
-    return new SignalsFactory<IN2, OUT2, CONFIG2>(newBuild);
+    return new SignalsFactory<IN2, OUT2, CONFIG2, EFF2>(newBuild);
   }
 
   /**
@@ -293,14 +395,14 @@ export class SignalsFactory<
    * @param {ExtendSetup<IN, OUT, CONFIG>} extend - a function extending the setup method of the Signals produced by the SignalsBuild of the resulting SignalsFactory
    * @returns {SignalsFactory<IN, OUT, CONFIG>} - a new SignalsFactory with extended store setup
    */
-  extendSetup(extend: ExtendSetup<IN, OUT, CONFIG>): SignalsFactory<IN, OUT, CONFIG> {
-    return this.fmap<IN, OUT, CONFIG>(sb => config => {
+  extendSetup(extend: ExtendSetup<IN, OUT, CONFIG, EFF>): SignalsFactory<IN, OUT, CONFIG, EFF> {
+    return this.fmap<IN, OUT, CONFIG, EFF>(sb => config => {
       const s = sb(config);
       return {
         ...s,
         setup: (store: Store) => {
           s.setup(store);
-          extend(store, s.input, s.output, config);
+          extend(store, s.input, s.output, config, s.effects);
         },
       };
     });
@@ -337,15 +439,17 @@ export class SignalsFactory<
     inputName: KIN,
     keepInputId: B,
     lazy: boolean | undefined = undefined,
-  ): B extends true ? SignalsFactory<IN, OUT, CONFIG> : SignalsFactory<Omit<IN, KIN>, OUT, CONFIG> {
-    const fnew: SignalsFactory<IN, OUT, CONFIG> = this.extendSetup((store, input, output) => {
+  ): B extends true
+    ? SignalsFactory<IN, OUT, CONFIG, EFF>
+    : SignalsFactory<Omit<IN, KIN>, OUT, CONFIG, EFF> {
+    const fnew: SignalsFactory<IN, OUT, CONFIG, EFF> = this.extendSetup((store, input, output) => {
       const fromId: SignalId<any> = output[outputName] as SignalId<any>;
       const toId: SignalId<any> = input[inputName] as SignalId<any>;
       store.connect(fromId, toId, lazy);
     });
     const result = (keepInputId ? fnew : fnew.removeInputId(inputName)) as B extends true
-      ? SignalsFactory<IN, OUT, CONFIG>
-      : SignalsFactory<Omit<IN, KIN>, OUT, CONFIG>;
+      ? SignalsFactory<IN, OUT, CONFIG, EFF>
+      : SignalsFactory<Omit<IN, KIN>, OUT, CONFIG, EFF>;
     return result;
   }
 
@@ -365,14 +469,16 @@ export class SignalsFactory<
     inputName: K,
     keepInputId: B,
     lazy: boolean | undefined = undefined,
-  ): B extends true ? SignalsFactory<IN, OUT, CONFIG> : SignalsFactory<Omit<IN, K>, OUT, CONFIG> {
-    const fnew: SignalsFactory<IN, OUT, CONFIG> = this.extendSetup((store, input) => {
+  ): B extends true
+    ? SignalsFactory<IN, OUT, CONFIG, EFF>
+    : SignalsFactory<Omit<IN, K>, OUT, CONFIG, EFF> {
+    const fnew: SignalsFactory<IN, OUT, CONFIG, EFF> = this.extendSetup((store, input) => {
       const toId: SignalId<any> = input[inputName] as SignalId<any>;
       store.connect(fromId, toId, lazy);
     });
     const result = (keepInputId ? fnew : fnew.removeInputId(inputName)) as B extends true
-      ? SignalsFactory<IN, OUT, CONFIG>
-      : SignalsFactory<Omit<IN, K>, OUT, CONFIG>;
+      ? SignalsFactory<IN, OUT, CONFIG, EFF>
+      : SignalsFactory<Omit<IN, K>, OUT, CONFIG, EFF>;
     return result;
   }
 
@@ -397,14 +503,16 @@ export class SignalsFactory<
     inputName: K,
     keepInputId: B,
     lazy: boolean,
-  ): B extends true ? SignalsFactory<IN, OUT, CONFIG> : SignalsFactory<Omit<IN, K>, OUT, CONFIG> {
-    const fnew: SignalsFactory<IN, OUT, CONFIG> = this.extendSetup((st, ip, op, conf) => {
+  ): B extends true
+    ? SignalsFactory<IN, OUT, CONFIG, EFF>
+    : SignalsFactory<Omit<IN, K>, OUT, CONFIG, EFF> {
+    const fnew: SignalsFactory<IN, OUT, CONFIG, EFF> = this.extendSetup((st, ip, op, conf) => {
       const toId: SignalId<any> = ip[inputName] as SignalId<any>;
       st.connectObservable(sourceGetter(st, op, conf), toId, lazy);
     });
     const result = (keepInputId ? fnew : fnew.removeInputId(inputName)) as B extends true
-      ? SignalsFactory<IN, OUT, CONFIG>
-      : SignalsFactory<Omit<IN, K>, OUT, CONFIG>;
+      ? SignalsFactory<IN, OUT, CONFIG, EFF>
+      : SignalsFactory<Omit<IN, K>, OUT, CONFIG, EFF>;
     return result;
   }
 
@@ -417,9 +525,9 @@ export class SignalsFactory<
    */
   mapConfig<CONFIG2 extends Configuration>(
     mapper: MapConfig<CONFIG, CONFIG2>,
-  ): SignalsFactory<IN, OUT, CONFIG2> {
+  ): SignalsFactory<IN, OUT, CONFIG2, EFF> {
     const build = (config: CONFIG2) => this.build(mapper(config));
-    return new SignalsFactory<IN, OUT, CONFIG2>(build);
+    return new SignalsFactory<IN, OUT, CONFIG2, EFF>(build);
   }
 
   /**
@@ -431,8 +539,8 @@ export class SignalsFactory<
    */
   mapInput<IN2 extends NameToSignalId>(
     mapper: MapSignalIds<IN, IN2, CONFIG>,
-  ): SignalsFactory<IN2, OUT, CONFIG> {
-    return this.fmap<IN2, OUT, CONFIG>(sb => config => {
+  ): SignalsFactory<IN2, OUT, CONFIG, EFF> {
+    return this.fmap<IN2, OUT, CONFIG, EFF>(sb => config => {
       const s = sb(config);
       return {
         ...s,
@@ -454,7 +562,7 @@ export class SignalsFactory<
   addOrReplaceInputId<K extends string, ID extends SignalId<any>>(
     name: K,
     idGetter: (config: CONFIG) => ID,
-  ): SignalsFactory<AddOrReplaceId<IN, K, ID>, OUT, CONFIG> {
+  ): SignalsFactory<AddOrReplaceId<IN, K, ID>, OUT, CONFIG, EFF> {
     return this.mapInput<AddOrReplaceId<IN, K, ID>>((input, config) => ({
       ...input,
       [name]: idGetter(config),
@@ -474,7 +582,7 @@ export class SignalsFactory<
   renameInputId<K1 extends keyof IN, K2 extends string>(
     oldName: K1,
     newName: K2,
-  ): SignalsFactory<RenameId<IN, K1, K2>, OUT, CONFIG> {
+  ): SignalsFactory<RenameId<IN, K1, K2>, OUT, CONFIG, EFF> {
     return this.mapInput<RenameId<IN, K1, K2>>(input => {
       const { [oldName]: mapId, ...rest } = input;
       const result = {
@@ -493,7 +601,7 @@ export class SignalsFactory<
    * @param {K} name - the name of the SignalId to be removed
    * @returns {SignalsFactory<Omit<IN, K>, OUT, CONFIG>} - a new SignalsFactory with modified input signals
    */
-  removeInputId<K extends keyof IN>(name: K): SignalsFactory<Omit<IN, K>, OUT, CONFIG> {
+  removeInputId<K extends keyof IN>(name: K): SignalsFactory<Omit<IN, K>, OUT, CONFIG, EFF> {
     return this.mapInput<Omit<IN, K>>(input => {
       const result = { ...input };
       delete result[name];
@@ -510,8 +618,8 @@ export class SignalsFactory<
    */
   mapOutput<OUT2 extends NameToSignalId>(
     mapper: MapSignalIds<OUT, OUT2, CONFIG>,
-  ): SignalsFactory<IN, OUT2, CONFIG> {
-    return this.fmap<IN, OUT2, CONFIG>(sb => config => {
+  ): SignalsFactory<IN, OUT2, CONFIG, EFF> {
+    return this.fmap<IN, OUT2, CONFIG, EFF>(sb => config => {
       const s = sb(config);
       return {
         ...s,
@@ -533,11 +641,86 @@ export class SignalsFactory<
   addOrReplaceOutputId<K extends string, ID extends SignalId<any>>(
     name: K,
     idGetter: (config: CONFIG) => ID,
-  ): SignalsFactory<IN, AddOrReplaceId<OUT, K, ID>, CONFIG> {
+  ): SignalsFactory<IN, AddOrReplaceId<OUT, K, ID>, CONFIG, EFF> {
     return this.mapOutput<AddOrReplaceId<OUT, K, ID>>((output, config) => ({
       ...output,
       [name]: idGetter(config),
     }));
+  }
+
+  mapEffects<EFF2 extends NameToEffectId>(
+    mapper: MapEffectIds<EFF, EFF2, CONFIG>,
+  ): SignalsFactory<IN, OUT, CONFIG, EFF2> {
+    return this.fmap<IN, OUT, CONFIG, EFF2>(sb => config => {
+      const s = sb(config);
+      return {
+        ...s,
+        effects: mapper(s.effects, config),
+      };
+    });
+  }
+
+  addEffectId<
+    K extends NonIntersectingKeys<string, EFF, 'any name not in keyof EFF'>,
+    ID extends EffectId<any, any>,
+  >(
+    name: K,
+    idGetter: (config: CONFIG) => ID,
+  ): SignalsFactory<IN, OUT, CONFIG, AddEffectId<EFF, K, ID>> {
+    return this.mapEffects<AddEffectId<EFF, K, ID>>((effects, config) => ({
+      ...effects,
+      [name]: idGetter(config),
+    }));
+  }
+
+  removeEffectId<K extends keyof EFF>(name: K): SignalsFactory<IN, OUT, CONFIG, Omit<EFF, K>> {
+    return this.mapEffects<Omit<EFF, K>>(effects => {
+      const result = { ...effects };
+      delete result[name];
+      return result;
+    });
+  }
+
+  useExistingEffect<
+    InputType,
+    ResultType,
+    K extends KeysOfValueType<EFF, EffectId<InputType, ResultType>>,
+    B extends boolean,
+  >(
+    name: K,
+    idGetter: (config: CONFIG) => EffectId<InputType, ResultType>,
+    keepEffectId: B,
+  ): B extends true
+    ? SignalsFactory<IN, OUT, CONFIG, Omit<EFF, K>>
+    : SignalsFactory<IN, OUT, CONFIG, EFF> {
+    const result = this.extendSetup((store, _, _2, config, effects) => {
+      store
+        .getEffect(idGetter(config))
+        .pipe(take(1))
+        .subscribe(effect => {
+          store.addEffect(effects[name] as EffectId<InputType, ResultType>, effect);
+        });
+    });
+    if (keepEffectId) {
+      return result;
+    }
+    return result.removeEffectId(name) as B extends true
+      ? SignalsFactory<IN, OUT, CONFIG, Omit<EFF, K>>
+      : SignalsFactory<IN, OUT, CONFIG, EFF>;
+  }
+
+  renameEffectId<K1 extends keyof EFF, K2 extends string>(
+    oldName: K1,
+    newName: K2,
+  ): SignalsFactory<IN, OUT, CONFIG, RenameEffectId<EFF, K1, K2>> {
+    return this.mapEffects<RenameEffectId<EFF, K1, K2>>(effects => {
+      const { [oldName]: mapId, ...rest } = effects;
+      const result = {
+        ...rest,
+        [newName]: mapId,
+      };
+      return result as RenameEffectId<EFF, K1, K2>;
+    });
   }
 
   /**
@@ -553,7 +736,7 @@ export class SignalsFactory<
   renameOutputId<K1 extends keyof OUT, K2 extends string>(
     oldName: K1,
     newName: K2,
-  ): SignalsFactory<IN, RenameId<OUT, K1, K2>, CONFIG> {
+  ): SignalsFactory<IN, RenameId<OUT, K1, K2>, CONFIG, EFF> {
     return this.mapOutput<RenameId<OUT, K1, K2>>(output => {
       const { [oldName]: mapId, ...rest } = output;
       const result = {
@@ -572,7 +755,7 @@ export class SignalsFactory<
    * @param {K} name - the name of the SignalId to be removed
    * @returns {SignalsFactory<IN, Omit<OUT, K>, CONFIG>} - a new SignalsFactory with modified output signals
    */
-  removeOutputId<K extends keyof OUT>(name: K): SignalsFactory<IN, Omit<OUT, K>, CONFIG> {
+  removeOutputId<K extends keyof OUT>(name: K): SignalsFactory<IN, Omit<OUT, K>, CONFIG, EFF> {
     return this.mapOutput<Omit<OUT, K>>(output => {
       const result = { ...output };
       delete result[name];
@@ -603,8 +786,8 @@ export class SignalsFactory<
       output: OUT,
       config: CONFIG,
     ) => Observable<TNEW>,
-  ): SignalsFactory<IN, AddOrReplaceId<OUT, KOUT, BehaviorId<TNEW>>, CONFIG> {
-    return this.fmap<IN, AddOrReplaceId<OUT, KOUT, BehaviorId<TNEW>>, CONFIG>(sb => config => {
+  ): SignalsFactory<IN, AddOrReplaceId<OUT, KOUT, BehaviorId<TNEW>>, CONFIG, EFF> {
+    return this.fmap<IN, AddOrReplaceId<OUT, KOUT, BehaviorId<TNEW>>, CONFIG, EFF>(sb => config => {
       const s = sb(config);
       const newId = getBehaviorId<TNEW>();
       const oldId = s.output[outputName] as BehaviorId<ToBehaviorIdValueType<OUT[KOUT]>>;

@@ -1,8 +1,16 @@
 import { combineLatest, of, throwError } from 'rxjs';
-import { catchError, debounceTime, filter, map, mapTo, switchMap, take } from 'rxjs/operators';
+import { catchError, debounceTime, filter, map, switchMap, take } from 'rxjs/operators';
 import { Signals, SignalsFactory } from './signals-factory';
 import { Effect, Store } from './store';
-import { BehaviorId, EffectId, EventId, getBehaviorId, getEventId, NO_VALUE } from './store-utils';
+import {
+  BehaviorId,
+  EffectId,
+  EventId,
+  getBehaviorId,
+  getEffectId,
+  getEventId,
+  NO_VALUE,
+} from './store-utils';
 
 /**
  * This specifies the type for the lazy behavior produced by EffectSignals.
@@ -87,6 +95,10 @@ export type EffectOutputSignals<InputType, ResultType> = {
   successes: EventId<EffectSuccess<InputType, ResultType>>;
 };
 
+export type EffectFactoryEffects<InputType, ResultType> = {
+  id: EffectId<InputType, ResultType>;
+};
+
 /**
  * This type specifies generic effect signals. EffectSignals generically handle side-effects (hence, are an abstraction over side-effects).
  * They fulfill the following requirements:
@@ -107,7 +119,8 @@ export type EffectOutputSignals<InputType, ResultType> = {
  */
 export type EffectSignals<InputType, ResultType> = Signals<
   EffectInputSignals<InputType>,
-  EffectOutputSignals<InputType, ResultType>
+  EffectOutputSignals<InputType, ResultType>,
+  EffectFactoryEffects<InputType, ResultType>
 >;
 
 /**
@@ -125,7 +138,7 @@ export type EffectSignals<InputType, ResultType> = Signals<
  * @property {string | undefined} nameExtension - optional string to be used as argument to calls of getBehaviorId and getEventId
  */
 export type EffectConfiguration<InputType, ResultType> = {
-  effectId: EffectId<InputType, ResultType>;
+  // effectId: EffectId<InputType, ResultType>;
   effectInputEquals?: (a: InputType, b: InputType) => boolean;
   withTrigger?: boolean;
   initialResultGetter?: () => ResultType;
@@ -165,8 +178,9 @@ const getOutputSignalIds = <InputType, ResultType>(
 const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
   config: EffectConfiguration<IT, RT>,
 ): EffectSignals<IT, RT> => {
+  const effectId = getEffectId<IT, RT>();
   const internalResultEffect = (input: IT, store: Store, previousInput?: IT, previousResult?: RT) =>
-    store.getEffect(config.effectId).pipe(
+    store.getEffect(effectId).pipe(
       take(1),
       switchMap(effect => {
         try {
@@ -260,10 +274,10 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
         switchMap(([input, resultState, token, triggeredInput]) =>
           config.withTrigger && input !== triggeredInput
             ? store.getEventStream(inIds.trigger).pipe(
-                mapTo({
+                map(() => ({
                   type: triggeredInputEvent,
                   event: input,
-                }),
+                })),
               )
             : internalResultEffect(input, store, resultState.resultInput, resultState.result).pipe(
                 switchMap(result =>
@@ -340,6 +354,9 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
     setup,
     input: inIds,
     output: outIds,
+    effects: {
+      id: effectId,
+    },
   };
 };
 
@@ -353,7 +370,8 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
 export type EffectSignalsFactory<InputType, ResultType> = SignalsFactory<
   EffectInputSignals<InputType>,
   EffectOutputSignals<InputType, ResultType>,
-  EffectConfiguration<InputType, ResultType>
+  EffectConfiguration<InputType, ResultType>,
+  EffectFactoryEffects<InputType, ResultType>
 >;
 
 /**
@@ -370,5 +388,6 @@ export const getEffectSignalsFactory = <InputType, ResultType>(): EffectSignalsF
   new SignalsFactory<
     EffectInputSignals<InputType>,
     EffectOutputSignals<InputType, ResultType>,
-    EffectConfiguration<InputType, ResultType>
+    EffectConfiguration<InputType, ResultType>,
+    EffectFactoryEffects<InputType, ResultType>
   >(getEffectBuilder);
