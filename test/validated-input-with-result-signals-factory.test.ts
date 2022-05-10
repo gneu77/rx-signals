@@ -75,8 +75,8 @@ describe('validated input with result signals factory', () => {
         .extendSetup((store, inIds) => {
           store.connect(inputStateId, inIds.input);
         })
-        .useExistingEffect('validation', () => validationEffectId, false)
-        .useExistingEffect('result', () => resultEffectId, false);
+        .useExistingEffect('validation', () => validationEffectId, true)
+        .useExistingEffect('result', () => resultEffectId, true);
       const signals = factory.build({
         nameExtension: 'test',
       });
@@ -188,8 +188,8 @@ describe('validated input with result signals factory', () => {
         ResultModel
       >()
         .extendSetup((store, inIds) => store.connect(inputStateId, inIds.input))
-        .useExistingEffect('validation', () => validationEffectId, false)
-        .useExistingEffect('result', () => resultEffectId, false);
+        .useExistingEffect('validation', () => validationEffectId, true)
+        .useExistingEffect('result', () => resultEffectId, true);
       signals = factory.build({
         withResultTrigger: true,
       });
@@ -434,8 +434,8 @@ describe('validated input with result signals factory', () => {
         ResultModel
       >()
         .extendSetup((store, inIds) => store.connect(inputStateId, inIds.input))
-        .useExistingEffect('validation', () => validationEffectId, false)
-        .useExistingEffect('result', () => resultEffectId, false);
+        .useExistingEffect('validation', () => validationEffectId, true)
+        .useExistingEffect('result', () => resultEffectId, true);
       const signals = factory.build({
         initialResultGetter: () => ({
           results: [],
@@ -521,8 +521,8 @@ describe('validated input with result signals factory', () => {
         ResultModel
       >()
         .extendSetup((store, inIds) => store.connect(inputStateId, inIds.input))
-        .useExistingEffect('validation', () => validationEffectId, false)
-        .useExistingEffect('result', () => resultEffectId, false);
+        .useExistingEffect('validation', () => validationEffectId, true)
+        .useExistingEffect('result', () => resultEffectId, true);
       const signals = factory.build({
         resultEffectInputEquals: (a, b) => a.searchString === b.searchString,
       });

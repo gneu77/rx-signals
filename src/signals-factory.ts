@@ -856,8 +856,8 @@ export class SignalsFactory<
     idGetter: (config: CONFIG) => EffectId<InputType, ResultType>,
     keepEffectId: B,
   ): B extends true
-    ? SignalsFactory<IN, OUT, CONFIG, Omit<EFF, K>>
-    : SignalsFactory<IN, OUT, CONFIG, EFF> {
+    ? SignalsFactory<IN, OUT, CONFIG, EFF>
+    : SignalsFactory<IN, OUT, CONFIG, Omit<EFF, K>> {
     const result = this.extendSetup((store, _, _2, config, effects) => {
       store
         .getEffect(idGetter(config))
@@ -866,12 +866,9 @@ export class SignalsFactory<
           store.addEffect(effects[name] as EffectId<InputType, ResultType>, effect);
         });
     });
-    if (keepEffectId) {
-      return result;
-    }
-    return result.removeEffectId(name) as B extends true
-      ? SignalsFactory<IN, OUT, CONFIG, Omit<EFF, K>>
-      : SignalsFactory<IN, OUT, CONFIG, EFF>;
+    return (keepEffectId ? result : result.removeEffectId(name)) as B extends true
+      ? SignalsFactory<IN, OUT, CONFIG, EFF>
+      : SignalsFactory<IN, OUT, CONFIG, Omit<EFF, K>>;
   }
 
   /**

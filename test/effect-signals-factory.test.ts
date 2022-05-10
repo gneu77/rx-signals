@@ -70,7 +70,7 @@ describe('effect signals factory', () => {
       factory = getEffectSignalsFactory<InputModel, ResultModel>().useExistingEffect(
         'id',
         () => resultEffectId,
-        false,
+        true,
       );
     });
 
