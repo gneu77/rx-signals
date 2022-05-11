@@ -93,6 +93,8 @@ There can be multiple sources for a given _event-type_. One source that all even
 store.dispatch(id: EventId<T>, value: T);
 ```
 
+(The actual signature is a bit more complicated to allow for optional value in case of T being undefined or void.)
+
 Calling `dispatch` for an _event-type_ that has no subscribed event-stream is a No-Op.
 
 You can add further event-sources as follows:
@@ -1116,9 +1118,9 @@ it('should test the counter factory for correct state after inc and dec', async 
   const { input, output, setup } = counterFactory.build({}); // building signals
   setup(store); // calling setup for our signals
   const sequence = expectSequence(store.getBehavior(output.counter), [0, 1, 2, 1]);
-  store.dispatch(input.inc, null);
-  store.dispatch(input.inc, null);
-  store.dispatch(input.dec, null);
+  store.dispatch(input.inc);
+  store.dispatch(input.inc);
+  store.dispatch(input.dec);
   await sequence; // expectSequence returns a Promise that gets resolved, if the given Observable
                   // produced the expected sequence.
 });
@@ -1169,9 +1171,9 @@ it('should be testable WITHOUT effect-mock', async () => {
       [1, 2], // incFrom
     ],
   );
-  store.dispatch(randomNumberSignals.input.incTo, null);
-  store.dispatch(randomNumberSignals.input.incTo, null);
-  store.dispatch(randomNumberSignals.input.incFrom, null);
+  store.dispatch(randomNumberSignals.input.incTo);
+  store.dispatch(randomNumberSignals.input.incTo);
+  store.dispatch(randomNumberSignals.input.incFrom);
 
   await sequence;
 });
@@ -1193,9 +1195,9 @@ it('should be testable with effect-mock', async () => {
     ),
     [undefined, 0, 10, 20, 21],
   );
-  store.dispatch(randomNumberSignals.input.incTo, null);
-  store.dispatch(randomNumberSignals.input.incTo, null);
-  store.dispatch(randomNumberSignals.input.incFrom, null);
+  store.dispatch(randomNumberSignals.input.incTo);
+  store.dispatch(randomNumberSignals.input.incTo);
+  store.dispatch(randomNumberSignals.input.incFrom);
 
   await sequence;
 });
