@@ -37,9 +37,9 @@ describe('completeAllSignals', () => {
 
   it('should not do anything after a call to completeAllSignals', async () => {
     const sequence = expectSequence(observable, [1, 2, 4, 8]);
-    store.dispatch(calculateEvent, null);
-    store.dispatch(calculateEvent, null);
-    store.dispatch(calculateEvent, null);
+    store.dispatch(calculateEvent);
+    store.dispatch(calculateEvent);
+    store.dispatch(calculateEvent);
     await sequence;
     await expectSequence(observable, [8]);
     expect(calculationCalled).toBe(3);
@@ -51,8 +51,8 @@ describe('completeAllSignals', () => {
       merge(store.getEventStream(calculateEvent).pipe(mapTo(3)), observable),
       [3, 3],
     );
-    store.dispatch(calculateEvent, null);
-    store.dispatch(calculateEvent, null);
+    store.dispatch(calculateEvent);
+    store.dispatch(calculateEvent);
     await sequence2;
     expect(calculationCalled).toBe(3);
     expect(store.isSubscribed(calculateEvent)).toBe(false);

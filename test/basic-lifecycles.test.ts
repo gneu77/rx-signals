@@ -8,7 +8,7 @@ describe('Lifecycle basics', () => {
   const numberBehavior = getBehaviorId<number>();
   const numberBehavior2 = getBehaviorId<number>();
   const numberEvent = getEventId<number>();
-  const triggerEvent = getEventId<void>();
+  const triggerEvent = getEventId<undefined>();
 
   let store: Store;
 
@@ -41,14 +41,14 @@ describe('Lifecycle basics', () => {
     });
 
     const sequence = expectSequence(store.getEventStream(numberEvent), [1, 2, 1, 2]);
-    store.dispatch(triggerEvent, null);
-    store.dispatch(triggerEvent, null);
+    store.dispatch(triggerEvent, undefined);
+    store.dispatch(triggerEvent, undefined);
     await sequence;
 
     const sequence2 = expectSequence(store.getEventStream(numberEvent), [1, 1]);
     handle.end();
-    store.dispatch(triggerEvent, null);
-    store.dispatch(triggerEvent, null);
+    store.dispatch(triggerEvent, undefined);
+    store.dispatch(triggerEvent, undefined);
     await sequence2;
   });
 
@@ -64,7 +64,7 @@ describe('Lifecycle basics', () => {
     const sequence2 = expectSequence(store.getBehavior(numberBehavior), [0, 1]);
     expect(store.isSubscribed(numberBehavior)).toBe(true);
     expect(store.isSubscribed(numberBehavior2)).toBe(true);
-    await store.dispatch(triggerEvent, null);
+    await store.dispatch(triggerEvent, undefined);
     expect(store.isSubscribed(numberBehavior)).toBe(true);
     expect(store.isSubscribed(numberBehavior2)).toBe(true);
 
@@ -75,7 +75,7 @@ describe('Lifecycle basics', () => {
     expect(store.isSubscribed(numberBehavior2)).toBe(false);
     expect(store.getNumberOfBehaviorSources(numberBehavior)).toBe(2);
     expect(store.getNumberOfBehaviorSources(numberBehavior2)).toBe(0);
-    store.dispatch(triggerEvent, null);
+    store.dispatch(triggerEvent, undefined);
     await sequence1;
     await sequence2;
   });
@@ -90,10 +90,10 @@ describe('Lifecycle basics', () => {
 
     const sequence1 = expectSequence(store.getBehavior(numberBehavior), [0, 1, 2, 3]);
     const sequence2 = expectSequence(store.getBehavior(numberBehavior2), [0, 1, 2, 0, 1]);
-    await store.dispatch(triggerEvent, null);
-    await store.dispatch(triggerEvent, null);
+    await store.dispatch(triggerEvent, undefined);
+    await store.dispatch(triggerEvent, undefined);
     handle.reset();
-    store.dispatch(triggerEvent, null);
+    store.dispatch(triggerEvent, undefined);
     await sequence1;
     await sequence2;
   });

@@ -70,13 +70,13 @@ export type EffectSuccess<InputType, ResultType> = {
  * @typedef {object} EffectInputSignals<InputType> - object holding the input signal identifiers for EffectSignals
  * @template InputType - specifies the input type for the effect
  * @property {BehaviorId<InputType>} input - identifier for the behavior being consumed by EffectSignals as input
- * @property {EventId<void>} invalidate - identifier for the invalidation event that can be dispatched to trigger re-evaluation of the current input under the given effect
- * @property {EventId<void>} trigger - identifier for the trigger event that can be dispatched to trigger the given effect. This event has only meaning, if withTrigger is configured (see EffectConfiguration)
+ * @property {EventId<undefined>} invalidate - identifier for the invalidation event that can be dispatched to trigger re-evaluation of the current input under the given effect
+ * @property {EventId<undefined>} trigger - identifier for the trigger event that can be dispatched to trigger the given effect. This event has only meaning, if withTrigger is configured (see EffectConfiguration)
  */
 export type EffectInputSignals<InputType> = {
   input: BehaviorId<InputType>;
-  invalidate: EventId<void>;
-  trigger: EventId<void>;
+  invalidate: EventId<undefined>;
+  trigger: EventId<undefined>;
 };
 
 /**
@@ -168,8 +168,8 @@ export type EffectSignalsBuild = <InputType, ResultType>(
 
 const getInputSignalIds = <InputType>(nameExtension?: string): EffectInputSignals<InputType> => ({
   input: getBehaviorId<InputType>(`${nameExtension ?? ''}_input`),
-  invalidate: getEventId<void>(`${nameExtension ?? ''}_invalidate`),
-  trigger: getEventId<void>(`${nameExtension ?? ''}_trigger`),
+  invalidate: getEventId<undefined>(`${nameExtension ?? ''}_invalidate`),
+  trigger: getEventId<undefined>(`${nameExtension ?? ''}_trigger`),
 });
 
 const getOutputSignalIds = <InputType, ResultType>(

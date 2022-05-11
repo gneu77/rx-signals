@@ -19,6 +19,7 @@ import {
   isBehaviorId,
   NO_VALUE,
   SignalId,
+  ToEventIdValueType,
   ToSignalIdValueType,
 } from './store-utils';
 
@@ -506,10 +507,19 @@ export class Store {
    * either in form of another event, or in form of a corresponding new state)!
    *
    * @param {EventId<T>} identifier - the unique identifier for the event
-   * @param {T} event - the event of the type specified by the identifier
+   * @param {T} event - the event of the type specified by the identifier (optional in case of void type)
    * @returns {Promise<boolean>} - a promise that resolves to true, if the event was subscribed, else to false
    */
-  dispatch<T>(identifier: EventId<T>, event: T): Promise<boolean> {
+  dispatch(identifier: EventId<undefined>, event?: never): Promise<boolean>; // to make the event optional in case of EventId<undefined>
+  dispatch(identifier: EventId<void>, event?: never): Promise<boolean>;
+  dispatch<ID extends EventId<any>>(
+    identifier: ID,
+    event: ToEventIdValueType<ID>,
+  ): Promise<boolean>;
+  dispatch<ID extends EventId<any>>(
+    identifier: ID,
+    event: ToEventIdValueType<ID>,
+  ): Promise<boolean> {
     const controlledSubject = this.getEventStreamControlledSubject(identifier);
     if (controlledSubject.isObservableSubscribed()) {
       const result: Promise<boolean> = this.getEventStream(identifier)

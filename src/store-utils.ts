@@ -11,7 +11,7 @@ import { Observable } from 'rxjs';
  * @property {symbol} symbol - a symbol, making the BehaviorId unique
  */
 export type BehaviorId<T> = symbol & {
-  _behaviorTypeTemplate: T;
+  _behaviorType: T;
 };
 
 /**
@@ -25,7 +25,7 @@ export type BehaviorId<T> = symbol & {
  * @property {symbol} symbol - a symbol, making the EventId unique
  */
 export type EventId<T> = symbol & {
-  _eventTypeTemplate: T;
+  _eventType: T;
 };
 
 /**
@@ -114,8 +114,8 @@ export type ToObservableValueType<O> = O extends Observable<infer T> ? T : never
  * @property {symbol} symbol - a symbol, making the EffectId unique
  */
 export type EffectId<InputType, ResultType> = symbol & {
-  _inputTypeTemplate: InputType;
-  _resultTypeTemplate: ResultType;
+  _inputType: InputType;
+  _resultType: ResultType;
 };
 
 let behaviorExtension = 1;

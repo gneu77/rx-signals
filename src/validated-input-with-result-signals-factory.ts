@@ -43,9 +43,9 @@ export type ValidatedInputWithResult<InputType, ValidationType, ResultType> = {
  */
 export type ValidatedInputWithResultInput<InputType> = {
   input: BehaviorId<InputType>;
-  validationInvalidate: EventId<void>;
-  resultInvalidate: EventId<void>;
-  resultTrigger: EventId<void>;
+  validationInvalidate: EventId<undefined>;
+  resultInvalidate: EventId<undefined>;
+  resultTrigger: EventId<undefined>;
 };
 
 /**

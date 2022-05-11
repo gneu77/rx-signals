@@ -261,7 +261,7 @@ describe('signals factories documentation', () => {
     type ModelInput<T> = {
       setModel: EventId<T>;
       updateModel: EventId<Partial<T>>;
-      resetModel: EventId<void>;
+      resetModel: EventId<undefined>;
     };
     type ModelOutput<T> = {
       model: BehaviorId<T>;
@@ -273,7 +273,7 @@ describe('signals factories documentation', () => {
       const model = getBehaviorId<T>();
       const setModel = getEventId<T>();
       const updateModel = getEventId<Partial<T>>();
-      const resetModel = getEventId<void>();
+      const resetModel = getEventId<undefined>();
       return {
         input: {
           setModel,
@@ -300,7 +300,7 @@ describe('signals factories documentation', () => {
     type SortingInput = {
       ascending: EventId<string>;
       descending: EventId<string>;
-      none: EventId<void>;
+      none: EventId<undefined>;
     };
     type SortingOutput = {
       sorting: BehaviorId<SortParameter>;
@@ -309,7 +309,7 @@ describe('signals factories documentation', () => {
       const sorting = getBehaviorId<SortParameter>();
       const ascending = getEventId<string>();
       const descending = getEventId<string>();
-      const none = getEventId<void>();
+      const none = getEventId<undefined>();
       return {
         input: {
           ascending,

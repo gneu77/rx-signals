@@ -367,4 +367,73 @@ describe('Event streams', () => {
       await s4;
     });
   });
+
+  it('dispatch type checking', () => {
+    const eNumber = getEventId<number>();
+    const eNumberOrNull = getEventId<number | null>();
+    const eNumberOrString = getEventId<number | string>();
+    const eString = getEventId<string>();
+    const eArray = getEventId<number[]>();
+    const eAny = getEventId<any>();
+    const eUndefined = getEventId<undefined>();
+    const eNull = getEventId<null>();
+
+    // const x: number = 42;
+    // store.dispatch(x, 5); // error
+
+    store.dispatch(eNumber, 5);
+    // store.dispatch(eNumber, [5]); // error
+    // store.dispatch(eNumber, ''); // error
+    // store.dispatch(eNumber, null); // error
+    // store.dispatch(eNumber, undefined); // error
+    // store.dispatch(eNumber); // error
+
+    store.dispatch(eNumberOrNull, 5);
+    // store.dispatch(eNumberOrNull, [5]); // error
+    // store.dispatch(eNumberOrNull, ''); // error
+    store.dispatch(eNumberOrNull, null);
+    // store.dispatch(eNumberOrNull, undefined); // error
+    // store.dispatch(eNumberOrNull); // error
+
+    store.dispatch(eNumberOrString, 5);
+    // store.dispatch(eNumberOrString, [5]); // error
+    store.dispatch(eNumberOrString, '');
+    // store.dispatch(eNumberOrString, null); // error
+    // store.dispatch(eNumberOrString, undefined); // error
+    // store.dispatch(eNumberOrString); // error
+
+    store.dispatch(eString, '');
+    // store.dispatch(eString, [5]); // error
+    // store.dispatch(eString, 5); // error
+    // store.dispatch(eString, null); // error
+    // store.dispatch(eString, undefined); // error
+    // store.dispatch(eString); // error
+
+    store.dispatch(eArray, [5]);
+    // store.dispatch(eArray, ['5']); // error
+    // store.dispatch(eArray, ''); // error
+    // store.dispatch(eArray, null); // error
+    // store.dispatch(eArray, undefined); // error
+    // store.dispatch(eArray); // error
+
+    store.dispatch(eAny, 5);
+    store.dispatch(eAny, [5]);
+    store.dispatch(eAny, '');
+    store.dispatch(eAny, null);
+    store.dispatch(eAny, undefined);
+    store.dispatch(eAny);
+
+    store.dispatch(eUndefined, undefined);
+    // store.dispatch(eUndefined, [5]); // error
+    // store.dispatch(eUndefined, ''); // error
+    // store.dispatch(eUndefined, null); // error
+    store.dispatch(eUndefined, undefined);
+    store.dispatch(eUndefined);
+
+    store.dispatch(eNull, null);
+    // store.dispatch(eNull, [5]); // error
+    // store.dispatch(eNull, ''); // error
+    // store.dispatch(eNull, undefined); // error
+    // store.dispatch(eNull); // error
+  });
 });

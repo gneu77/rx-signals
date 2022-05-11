@@ -9,12 +9,12 @@ import { BehaviorId, EventId, getBehaviorId, getEventId } from './store-utils';
  * @template T - the type of the model to be handled
  * @property {EventId<T>} setModel - identifier for the event to replace the complete model
  * @property {EventId<Partial<T>>} updateModel - identifier for the event to update the model by a given partial model
- * @property {EventId<void>} resetModel - identifier for the event to reset the model to the configured default
+ * @property {EventId<undefined>} resetModel - identifier for the event to reset the model to the configured default
  */
 export type ModelInputSignals<T> = {
   setModel: EventId<T>;
   updateModel: EventId<Partial<T>>;
-  resetModel: EventId<void>;
+  resetModel: EventId<undefined>;
 };
 
 /**
@@ -47,7 +47,7 @@ const getModelSignals = <T>(
   const model = getBehaviorId<T>(`${config.nameExtension ?? ''}_model`);
   const setModel = getEventId<T>(`${config.nameExtension ?? ''}_setModel`);
   const updateModel = getEventId<Partial<T>>(`${config.nameExtension ?? ''}_updateModel`);
-  const resetModel = getEventId<void>(`${config.nameExtension ?? ''}_resetModel`);
+  const resetModel = getEventId<undefined>(`${config.nameExtension ?? ''}_resetModel`);
   return {
     input: {
       setModel,

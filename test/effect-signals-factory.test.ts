@@ -515,7 +515,7 @@ describe('effect signals factory', () => {
           page: 2,
         });
         await sequence2;
-        store.dispatch(inIds.invalidate, null);
+        store.dispatch(inIds.invalidate);
       });
     });
 
@@ -592,7 +592,7 @@ describe('effect signals factory', () => {
           searchString: 'test',
           page: 4,
         });
-        store.dispatch(inIds.trigger, null);
+        store.dispatch(inIds.trigger);
         await sequence;
       });
     });

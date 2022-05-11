@@ -73,7 +73,7 @@ describe('ModelSignalsFactory', () => {
       defaultModel,
     ]);
     store.dispatch(inputSignals.setModel, newModel);
-    store.dispatch(inputSignals.resetModel, null);
+    store.dispatch(inputSignals.resetModel);
     await sequence;
   });
 });

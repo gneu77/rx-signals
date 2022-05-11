@@ -13,16 +13,16 @@ describe('testing documentation', () => {
   });
 
   type CounterInput = {
-    inc: EventId<void>;
-    dec: EventId<void>;
+    inc: EventId<undefined>;
+    dec: EventId<undefined>;
   };
   type CounterOutput = {
     counter: BehaviorId<number>;
   };
   const counterFactory = new SignalsFactory<CounterInput, CounterOutput>(() => {
     const counter = getBehaviorId<number>();
-    const inc = getEventId<void>();
-    const dec = getEventId<void>();
+    const inc = getEventId<undefined>();
+    const dec = getEventId<undefined>();
     return {
       input: {
         inc,
@@ -70,9 +70,9 @@ describe('testing documentation', () => {
     setup(store);
 
     const sequence = expectSequence(store.getBehavior(output.to), [0, 1, 2, 1]);
-    store.dispatch(input.inc, null);
-    store.dispatch(input.inc, null);
-    store.dispatch(input.dec, null);
+    store.dispatch(input.inc);
+    store.dispatch(input.inc);
+    store.dispatch(input.dec);
 
     await sequence;
   });
@@ -92,9 +92,9 @@ describe('testing documentation', () => {
     setup(store);
 
     const sequence = expectSequence(store.getBehavior(output.to), [0, 1, 2, 1]);
-    store.dispatch(input.incTo, null);
-    store.dispatch(input.incTo, null);
-    store.dispatch(input.decTo, null);
+    store.dispatch(input.incTo);
+    store.dispatch(input.incTo);
+    store.dispatch(input.decTo);
 
     await sequence;
   });
@@ -111,9 +111,9 @@ describe('testing documentation', () => {
         [1, 2], // incFrom
       ],
     );
-    store.dispatch(randomNumberSignals.input.incTo, null);
-    store.dispatch(randomNumberSignals.input.incTo, null);
-    store.dispatch(randomNumberSignals.input.incFrom, null);
+    store.dispatch(randomNumberSignals.input.incTo);
+    store.dispatch(randomNumberSignals.input.incTo);
+    store.dispatch(randomNumberSignals.input.incFrom);
 
     await sequence;
   });
@@ -129,9 +129,9 @@ describe('testing documentation', () => {
       ),
       [undefined, 0, 10, 20, 21],
     );
-    store.dispatch(randomNumberSignals.input.incTo, null);
-    store.dispatch(randomNumberSignals.input.incTo, null);
-    store.dispatch(randomNumberSignals.input.incFrom, null);
+    store.dispatch(randomNumberSignals.input.incTo);
+    store.dispatch(randomNumberSignals.input.incTo);
+    store.dispatch(randomNumberSignals.input.incFrom);
 
     await sequence;
   });

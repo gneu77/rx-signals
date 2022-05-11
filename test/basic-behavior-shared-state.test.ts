@@ -14,7 +14,7 @@ describe('shared behavior state', () => {
   };
 
   const id = getBehaviorId<number>();
-  const calculateEvent = getEventId<void>();
+  const calculateEvent = getEventId<undefined>();
 
   let observable: Observable<number>;
 
@@ -37,9 +37,9 @@ describe('shared behavior state', () => {
 
   it('should calculate correct values', async () => {
     const sequence = expectSequence(observable, [1, 2, 4, 8]);
-    store.dispatch(calculateEvent, null);
-    store.dispatch(calculateEvent, null);
-    store.dispatch(calculateEvent, null);
+    store.dispatch(calculateEvent);
+    store.dispatch(calculateEvent);
+    store.dispatch(calculateEvent);
     await sequence;
     expect(calculationCalled).toBe(3);
   });
@@ -47,15 +47,15 @@ describe('shared behavior state', () => {
   it('should share calculated values', async () => {
     const sequence = expectSequence(observable, [1, 2, 4, 8]);
     const sequence2 = expectSequence(observable, [1, 2, 4, 8]);
-    store.dispatch(calculateEvent, null);
-    store.dispatch(calculateEvent, null);
-    store.dispatch(calculateEvent, null);
+    store.dispatch(calculateEvent);
+    store.dispatch(calculateEvent);
+    store.dispatch(calculateEvent);
     await sequence;
     await sequence2;
     expect(calculationCalled).toBe(3);
     expect(store.isSubscribed(id)).toBe(false);
     const sequence3 = expectSequence(observable, [8, 16]);
-    store.dispatch(calculateEvent, null);
+    store.dispatch(calculateEvent);
     await sequence3;
     expect(calculationCalled).toBe(4);
   });
@@ -63,11 +63,11 @@ describe('shared behavior state', () => {
   it('should share calculated values when subscribed at different times', async () => {
     const sequence = expectSequence(observable, [1, 2, 4, 8]);
     const sequence2 = expectSequence(observable, [1, 2, 4, 8, 16]);
-    await store.dispatch(calculateEvent, null);
-    await store.dispatch(calculateEvent, null);
+    await store.dispatch(calculateEvent);
+    await store.dispatch(calculateEvent);
     const sequence3 = expectSequence(observable, [4, 8]);
-    store.dispatch(calculateEvent, null);
-    store.dispatch(calculateEvent, null);
+    store.dispatch(calculateEvent);
+    store.dispatch(calculateEvent);
     await sequence;
     await sequence2;
     await sequence3;

@@ -12,6 +12,7 @@
     "outDir": "./dist/esm",
     "strict": true,
     "strictNullChecks": true,
+    "strictFunctionTypes": true,
     "alwaysStrict": true,
     "noImplicitAny": true,
     "noImplicitThis": true,
