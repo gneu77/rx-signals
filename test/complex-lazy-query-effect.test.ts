@@ -5,7 +5,7 @@ import { awaitStringifyEqualState, expectSequence } from '../src/test-utils/test
 import { Store } from './../src/store';
 describe('Lazy query pattern', () => {
   interface ResultType {
-    result: Array<number | string>;
+    result: Array<number | string | null>;
     resultQuery: string | null;
   }
 

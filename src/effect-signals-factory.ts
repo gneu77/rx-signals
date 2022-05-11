@@ -247,7 +247,7 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
           resultToken: object | null;
         },
         object | null,
-        IT,
+        IT | null,
       ]
     >();
     store.addDerivedState(
