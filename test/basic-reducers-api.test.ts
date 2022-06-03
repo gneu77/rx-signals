@@ -1,9 +1,9 @@
 import { Store } from '../src/store';
-import { getBehaviorId, getEventId } from '../src/store-utils';
+import { getEventId, getStateId } from '../src/store-utils';
 import { expectSequence } from '../src/test-utils/test-utils';
 
 describe('Reducers', () => {
-  const counterState = getBehaviorId<number>();
+  const counterState = getStateId<number>();
   const increaseEvent = getEventId<number>();
   const decreaseEvent = getEventId<number>();
 

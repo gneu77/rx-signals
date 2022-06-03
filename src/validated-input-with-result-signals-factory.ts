@@ -9,7 +9,7 @@ import {
 } from './effect-signals-factory';
 import { SignalsFactory } from './signals-factory';
 import { Store } from './store';
-import { BehaviorId, EffectId, EventId, getBehaviorId } from './store-utils';
+import { BehaviorId, DerivedId, EffectId, EventId, getDerivedId } from './store-utils';
 import { Merged } from './type-utils';
 
 /**
@@ -42,7 +42,7 @@ export type ValidatedInputWithResult<InputType, ValidationType, ResultType> = {
  * The analog to EffectInputSignals, just for ValidatedInputWithResultFactory.
  */
 export type ValidatedInputWithResultInput<InputType> = {
-  input: BehaviorId<InputType>;
+  input: DerivedId<InputType>;
   validationInvalidate: EventId<undefined>;
   resultInvalidate: EventId<undefined>;
   resultTrigger: EventId<undefined>;
@@ -52,7 +52,7 @@ export type ValidatedInputWithResultInput<InputType> = {
  * The analog to EffectOutputSignals, just for ValidatedInputWithResultFactory.
  */
 export type ValidatedInputWithResultOutput<InputType, ValidationType, ResultType> = {
-  combined: BehaviorId<ValidatedInputWithResult<InputType, ValidationType, ResultType>>;
+  combined: DerivedId<ValidatedInputWithResult<InputType, ValidationType, ResultType>>;
   validationErrors: EventId<EffectError<InputType>>;
   validationSuccesses: EventId<EffectSuccess<InputType, ValidationType>>;
   resultErrors: EventId<EffectError<InputType>>;
@@ -129,7 +129,7 @@ const setupCombinedBehavior = <InputType, ValidationType, ResultType>(
     EffectOutputSignals<InputType, ValidationType>,
     EffectOutputSignals<InputType, ResultType>
   >,
-  id: BehaviorId<ValidatedInputWithResult<InputType, ValidationType, ResultType>>,
+  id: DerivedId<ValidatedInputWithResult<InputType, ValidationType, ResultType>>,
   isValidationResultValid: (validationResult: ValidationType) => boolean,
   initialResultGetter?: () => ResultType,
 ) => {
@@ -202,11 +202,10 @@ export const getValidatedInputWithResultSignalsFactory = <
           config.isValidationResultValid ?? (validationResult => validationResult === null),
         ),
         inIds.conflicts2.input,
-        true,
       );
     })
     .addOutputId('combined', config =>
-      getBehaviorId<ValidatedInputWithResult<InputType, ValidationType, ResultType>>(
+      getDerivedId<ValidatedInputWithResult<InputType, ValidationType, ResultType>>(
         `${config.nameExtension ?? ''}_combined`,
       ),
     )

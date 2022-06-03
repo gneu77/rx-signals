@@ -3,7 +3,7 @@ import { delay } from 'rxjs/operators';
 import { Signals } from '../src/signals-factory';
 import { Effect, Store } from '../src/store';
 import { expectSequence, withSubscription } from '../src/test-utils/test-utils';
-import { getBehaviorId, getEffectId } from './../src/store-utils';
+import { getEffectId, getStateId } from './../src/store-utils';
 import {
   getValidatedInputWithResultSignalsFactory,
   ValidatedInputWithResult,
@@ -25,7 +25,7 @@ describe('validated input with result signals factory', () => {
     totalResults: number;
   };
 
-  const inputStateId = getBehaviorId<InputModel>();
+  const inputStateId = getStateId<InputModel>();
   const inputSubject = new Subject<InputModel>();
 
   const validationEffectId = getEffectId<InputModel, ValidationResult>();
@@ -59,7 +59,7 @@ describe('validated input with result signals factory', () => {
     store = new Store();
     store.addEffect(validationEffectId, validationEffect);
     store.addEffect(resultEffectId, resultEffect);
-    store.addBehavior(inputStateId, inputSubject.asObservable(), false);
+    store.connectObservable(inputSubject.asObservable(), inputStateId);
   });
 
   describe('default options', () => {

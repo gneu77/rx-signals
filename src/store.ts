@@ -14,11 +14,15 @@ import { DelayedEventQueue } from './delayed-event-queue';
 import { SourceObservable } from './source-observable';
 import {
   BehaviorId,
+  DerivedId,
   EffectId,
   EventId,
   isBehaviorId,
+  isDerivedId,
+  isStateId,
   NO_VALUE,
   SignalId,
+  StateId,
   ToBehaviorIdValueType,
   ToEventIdValueType,
   ToSignalIdValueType,
@@ -160,27 +164,11 @@ export class Store {
     return childStore;
   }
 
-  /**
-   * This method adds the given observable as source for the behavior identified by the
-   * given identifier. If the observable represents root-state (state that depends on events only, but not on any
-   * other behaviors), subscribeLazy should be false, except for cases where you're really sure that it is OK to
-   * miss events while you do not actively subscribe the behavior.
-   * If the observable only depends on other behaviors, but not on any events, subscribeLazy should be true of course (there
-   * is no need to run the observable until it becomes actively subscribed).
-   * Also, if it depends on any other lazy behavior (derived state), subscribeLazy should be true (because otherwise the lazy
-   * behavior it depends on would become non-lazy).
-   * Analogously, if it depends on an event-source that should be lazy subscribed, subscribeLazy should be true.
-   * If your behavior needs to be non-lazy, but at the same time an event-source you depend on should be lazy,
-   * this situation can be solved using one of the addXTypedEventSource methods (see corresponding documentation).
-   *
-   * @param {BehaviorId<T>} identifier - the unique identifier for the behavior
-   * @param {Observable<T>} observable - the source for the behavior
-   * @param {boolean} subscribeLazy - set this to false, if the behavior should always be subscribed (the Store will subscribe it in that case, immediately turning it into a hot observable)
-   * @param {T | (() => T) | symbol} initialValueOrValueGetter - the initial value or value getter (for lazy initialization) or symbol NO_VALUE, if there is no initial value (default)
-   * @throws if a behavior for the given identifier has already been added to this Store
-   * @returns {void}
-   */
-  addBehavior<ID extends BehaviorId<any>>(
+  // This method was public in pre-3.0.0-rc22 versions, however, distinction between
+  // lazy and eager subscriptions becomes much clearer and less error-prone, when
+  // differentiating between StateId and DerivedId, which I introduced with 3.0.0-rc22.
+  // Thus, to protect users from misusage, I made this low-level method private.
+  private addBehavior<ID extends BehaviorId<any>>(
     identifier: ID,
     observable: Observable<ToBehaviorIdValueType<ID>>,
     subscribeLazy: boolean,
@@ -208,17 +196,21 @@ export class Store {
   }
 
   /**
-   * This adds an observable representing derived state, hence only depending on other
-   * behaviors, to the store.
-   * It is equivalent to calling addBehavior with parameter subscribeLazy = true.
-   * (See addBehavior documentation for more detailed information on lazy vs. non-lazy behaviors.)
+   * This adds an observable representing derived state, hence state that
+   * depends on other behaviors, to the store.
+   * The store will not eagerly subscribe the given observable.
+   * While derived state usually depends on other Behaviors and not on events, there are still
+   * valid use-cases where the given observable might depend on an event.
+   * E.g., if you want to transform an event-stream into a lazily-subscribed behavior (However, the
+   * more idiomatic way to do this would be to use the connect method instead.).
    *
-   * @param {BehaviorId<T>} identifier - the unique identifier for the behavior
+   * @param {DerivedId<T>} identifier - the unique identifier for the derived-state behavior
    * @param {Observable<T>} observable - the source for the behavior
    * @param {T | (() => T) | symbol} initialValueOrValueGetter - the initial value or value getter (for lazy initialization) or symbol NO_VALUE, if there is no initial value (default)
+   * @throws if a state for the given identifier has already been added to this Store
    * @returns {void}
    */
-  addDerivedState<ID extends BehaviorId<any>>(
+  addDerivedState<ID extends DerivedId<any>>(
     identifier: ID,
     observable: Observable<ToBehaviorIdValueType<ID>>,
     initialValueOrValueGetter:
@@ -230,20 +222,21 @@ export class Store {
   }
 
   /**
-   * This method adds a source for the non-lazy behavior specified by the given identifier, that provides the
-   * given value as initial value for the behavior. It will be the only value, as long as no reducer is added.
-   * Calling addState(id, value) has the same result as calling addBehavior(id, NEVER, false, value) , however,
-   * the latter would not be idiomatic.
-   * You can however use addBehavior instead of addState plus reducers, e.g. if there's only a single event
-   * myEvent, you could use something like addBehavior(id, store.getEventStream(myEvent), false, initialValue).
-   * (See addBehavior documentation on how to decide between lazy and non-lazy)
+   * This method adds a source for the state specified by the given identifier, that provides the
+   * given value as initial value for the corresponding behavior.
+   * It will be the only value, as long as no reducer is added.
+   * Use this for root-state only, hence state that only depends on events, but not on any other behavior.
+   * The store will eagerly subscribe all reducers being added for the state.
+   * If one of those reducers depends on an event-source that should be lazy, this situation
+   * can be solved using one of the addXTypedEventSource methods (see corresponding documentation) for the
+   * corresponding event-source.
    *
-   * @param {BehaviorId<T>} identifier - the unique identifier for the behavior
-   * @param {T | (() => T)} initialValueOrValueGetter - the initial value or value getter (for lazy initialization)
+   * @param {StateId<T>} identifier - the unique identifier for the root-state behavior
+   * @param {T | (() => T)} initialValueOrValueGetter - the initial value or value getter
    * @throws if a state for the given identifier has already been added to this Store
    * @returns {void}
    */
-  addState<ID extends BehaviorId<any>>(
+  addState<ID extends StateId<any>>(
     identifier: ID,
     initialValueOrValueGetter: ToBehaviorIdValueType<ID> | (() => ToBehaviorIdValueType<ID>),
   ): void {
@@ -263,15 +256,17 @@ export class Store {
 
   /**
    * This adds a reducer to a behavior. This is meant to be used together with the addState method.
-   * Technically, you can also add reducers to behaviors that were added with the addBevavior method.
-   * However, this is strongly discouraged and might result in unexpected behavior (literally)!
+   * The corresponding event will be subscribed eagerly by the store.
+   * If the event comes from an event-source that should be lazy, this situation
+   * can be solved using one of the addXTypedEventSource methods (see corresponding documentation) for this
+   * event-source (another solution would be to switchMap the event-source depending on whatever condition).
    *
-   * @param {BehaviorId<T>} stateIdentifier - the unique identifier for the behavior
+   * @param {StateId<T>} stateIdentifier - the unique identifier for the root-state behavior
    * @param {EventId<T>} eventIdentifier - the unique identifier for the event reducing the state
    * @param {StateReducer<T, E>} reducer - pure function that takes the previous state and the event and returns a new state
    * @returns {void}
    */
-  addReducer<SID extends BehaviorId<any>, EID extends EventId<any>>(
+  addReducer<SID extends StateId<any>, EID extends EventId<any>>(
     stateIdentifier: SID,
     eventIdentifier: EID,
     reducer: StateReducer<ToBehaviorIdValueType<SID>, ToEventIdValueType<EID>>,
@@ -286,87 +281,78 @@ export class Store {
   }
 
   /**
-   * This method can be used to remove a reducer from a behavior.
+   * This method can be used to remove a reducer from a root-state behavior.
    *
-   * @param {TypeIdentifier<T>} stateIdentifier - the unique identifier for the behavior
-   * @param {TypeIdentifier<T>} eventIdentifier - the unique identifier for the event the reducer is handling
+   * @param {StateId<T>} stateIdentifier - the unique identifier for the root-state behavior
+   * @param {EventId<T>} eventIdentifier - the unique identifier for the event the reducer is handling
    * @returns {void}
    */
-  removeReducer<T, E>(stateIdentifier: BehaviorId<T>, eventIdentifier: EventId<E>): void {
+  removeReducer<T, E>(stateIdentifier: StateId<T>, eventIdentifier: EventId<E>): void {
     this.getBehaviorControlledSubject(stateIdentifier).removeSource(eventIdentifier);
   }
 
   /**
-   * The connect method takes a source- and a target-ID and add a corresponding source for the targetId
+   * The connect method takes a source- and a target-ID and adds a corresponding source for the targetId
    * to the store, connecting the source event or behavior with the target event or behavior.
-   *
-   * If the targetId is a BehaviorId, the optional lazy-parameter is considered:
-   * In case the sourceId is an EventId, it defaults to false, else to true.
-   *
-   * If the targetId is an EventId, a corresponding EventSource will be added to the store and the optional
-   * lazy-parameter has no meaning.
-   *
-   * Hence, if targetId is a BehaviorId, it must not yet exist in the store, else this method will throw a corresponding error!
+   * Thus, if targetId is a BehaviorId, a source must not yet exist in the store, else this method will throw a corresponding error!
    *
    * @param {SignalId<S extends T>} sourceId - the unique identifier for the source event or behavior
    * @param {SignalId<T>} targetId - the unique identifier for the target event or behavior
-   * @param {boolean | undefined} lazy - optional parameter that defaults to false, if the source is an event, else to true. If the target is a behavior, lazy defines whether its lazy or not, else the parameter is meaningless.
    * @throws if targetId is a BehaviorId and already exists in this Store
    * @returns {void | symbol} - symbol of the added event source in case the targetId is an EventId, else void
    */
   connect<TID extends SignalId<any>, S extends ToSignalIdValueType<TID>>(
     sourceId: SignalId<S>,
     targetId: TID,
-    lazy?: boolean,
   ): TID extends BehaviorId<ToSignalIdValueType<TID>> ? void : symbol {
-    // We must use <TID extends SignalId<any>, S extends ToSignalIdValueType<TID>>,
+    // We must use <TID extends SignalId, S extends ToSignalIdValueType<TID>>,
     // because for some reason, TS does not enforce S extends T, if we
-    // use <T, S extends T, TID extends SignalId<T>> (which it should in my opinion)
+    // use <T, S extends T, TID extends SignalId> (which it should in my opinion)
     const source = isBehaviorId(sourceId)
       ? this.getBehavior(sourceId as BehaviorId<S>)
       : this.getEventStream(sourceId as EventId<S>);
-    const lazyParam = (lazy ?? null) === null ? isBehaviorId(sourceId) : (lazy as boolean);
-    return this.connectObservable(source, targetId, lazyParam);
+    return this.connectObservable(source, targetId);
   }
 
   /**
    * This connects the source observable with the target event or behavior.
    * If the targetId is a BehaviorId, a corresponding behavior source will be added
-   * to the store, considering the lazy-parameter (see addBehavior).
-   * If the targetId is an EventId, a corresponding EventSource will be added to the store and the
-   * lazy-parameter has no meaning.
+   * to the store.
+   * If the targetId is an EventId, a corresponding EventSource will be added to the store.
    * Hence, if targetId is a BehaviorId, it must not yet exist in the store, else this method will throw a corresponding error!
    *
    * @param {Observable<S extends T>} source - the source observable
    * @param {SignalId<T>} targetId - the unique identifier for the target event or behavior
-   * @param {boolean} lazy - If the target is a behavior, lazy defines whether its lazy or not, else the parameter is meaningless.
    * @throws if targetId is a BehaviorId and already exists in this Store
    * @returns {void | symbol} - symbol of the added event source in case the targetId is an EventId, else void
    */
   connectObservable<TID extends SignalId<any>, S extends ToSignalIdValueType<TID>>(
     source: Observable<S>,
     targetId: TID,
-    lazy: boolean,
   ): TID extends BehaviorId<ToSignalIdValueType<TID>> ? void : symbol {
-    if (isBehaviorId(targetId)) {
-      return this.addBehavior(
-        targetId as BehaviorId<ToSignalIdValueType<TID>>,
-        source,
-        lazy,
-        NO_VALUE,
-      ) as TID extends BehaviorId<ToSignalIdValueType<TID>> ? void : symbol;
-    } else {
-      return this.addEventSource(
-        targetId as EventId<ToSignalIdValueType<TID>>,
+    if (isDerivedId(targetId)) {
+      return this.addDerivedState(
+        targetId as DerivedId<ToSignalIdValueType<TID>>,
         source,
       ) as TID extends BehaviorId<ToSignalIdValueType<TID>> ? void : symbol;
     }
+    if (isStateId(targetId)) {
+      return this.addBehavior(
+        targetId as BehaviorId<ToSignalIdValueType<TID>>,
+        source,
+        false,
+      ) as TID extends BehaviorId<ToSignalIdValueType<TID>> ? void : symbol;
+    }
+    return this.addEventSource(
+      targetId as EventId<ToSignalIdValueType<TID>>,
+      source,
+    ) as TID extends BehaviorId<ToSignalIdValueType<TID>> ? void : symbol;
   }
 
   /**
    * This method removes all sources for a behavior.
    * (Yes, from the API-point-of-view, there can be only one source for a behavior. However, technically
-   *  each reducer added for a behavior also represents a source.)
+   *  each reducer added for a root-state-behavior also represents a source.)
    *
    * @param {BehaviorId<T>} identifier - the unique identifier for the behavior
    * @returns {void}
@@ -629,11 +615,11 @@ export class Store {
   /**
    * See add2TypedEventSource
    *
-   * @param {TypeIdentifier<A>} eventIdentifierA - the unique identifier for event type A
-   * @param {TypeIdentifier<B>} eventIdentifierB - the unique identifier for event type B
-   * @param {TypeIdentifier<C>} eventIdentifierC - the unique identifier for event type C
+   * @param {EventId<A>} eventIdentifierA - the unique identifier for event type A
+   * @param {EventId<B>} eventIdentifierB - the unique identifier for event type B
+   * @param {EventId<C>} eventIdentifierC - the unique identifier for event type C
    * @param {Observable<TypedEvent<A> | TypedEvent<B> | TypedEvent<C>>} observable - the event source
-   * @param {TypeIdentifier<any> | null} subscribeObservableOnlyIfEventIsSubscribed - defaults to null
+   * @param {EventId<any> | null} subscribeObservableOnlyIfEventIsSubscribed - defaults to null
    * @returns {smybol} - a symbol that can be used to remove the event-source from the store
    */
   add3TypedEventSource<
@@ -680,12 +666,12 @@ export class Store {
   /**
    * See add2TypedEventSource
    *
-   * @param {TypeIdentifier<A>} eventIdentifierA - the unique identifier for event type A
-   * @param {TypeIdentifier<B>} eventIdentifierB - the unique identifier for event type B
-   * @param {TypeIdentifier<C>} eventIdentifierC - the unique identifier for event type C
-   * @param {TypeIdentifier<D>} eventIdentifierD - the unique identifier for event type D
+   * @param {EventId<A>} eventIdentifierA - the unique identifier for event type A
+   * @param {EventId<B>} eventIdentifierB - the unique identifier for event type B
+   * @param {EventId<C>} eventIdentifierC - the unique identifier for event type C
+   * @param {EventId<D>} eventIdentifierD - the unique identifier for event type D
    * @param {Observable<TypedEvent<A> | TypedEvent<B> | TypedEvent<C> | TypedEvent<D>>} observable - the event source
-   * @param {TypeIdentifier<any> | null} subscribeObservableOnlyIfEventIsSubscribed - defaults to null
+   * @param {EventId<any> | null} subscribeObservableOnlyIfEventIsSubscribed - defaults to null
    * @returns {smybol} - a symbol that can be used to remove the event-source from the store
    */
   add4TypedEventSource<
@@ -740,13 +726,13 @@ export class Store {
   /**
    * See add2TypedEventSource
    *
-   * @param {TypeIdentifier<A>} eventIdentifierA - the unique identifier for event type A
-   * @param {TypeIdentifier<B>} eventIdentifierB - the unique identifier for event type B
-   * @param {TypeIdentifier<C>} eventIdentifierC - the unique identifier for event type C
-   * @param {TypeIdentifier<D>} eventIdentifierD - the unique identifier for event type D
-   * @param {TypeIdentifier<E>} eventIdentifierE - the unique identifier for event type E
+   * @param {EventId<A>} eventIdentifierA - the unique identifier for event type A
+   * @param {EventId<B>} eventIdentifierB - the unique identifier for event type B
+   * @param {EventId<C>} eventIdentifierC - the unique identifier for event type C
+   * @param {EventId<D>} eventIdentifierD - the unique identifier for event type D
+   * @param {EventId<E>} eventIdentifierE - the unique identifier for event type E
    * @param {Observable<TypedEvent<A> | TypedEvent<B> | TypedEvent<C> | TypedEvent<D> | TypedEvent<E>>} observable - the event source
-   * @param {TypeIdentifier<any> | null} subscribeObservableOnlyIfEventIsSubscribed - defaults to null
+   * @param {EventId<any> | null} subscribeObservableOnlyIfEventIsSubscribed - defaults to null
    * @returns {smybol} - a symbol that can be used to remove the event-source from the store
    */
   add5TypedEventSource<A, B, C, D, E>(
@@ -779,14 +765,14 @@ export class Store {
   /**
    * See add2TypedEventSource
    *
-   * @param {TypeIdentifier<A>} eventIdentifierA - the unique identifier for event type A
-   * @param {TypeIdentifier<B>} eventIdentifierB - the unique identifier for event type B
-   * @param {TypeIdentifier<C>} eventIdentifierC - the unique identifier for event type C
-   * @param {TypeIdentifier<D>} eventIdentifierD - the unique identifier for event type D
-   * @param {TypeIdentifier<E>} eventIdentifierE - the unique identifier for event type E
-   * @param {TypeIdentifier<F>} eventIdentifierF - the unique identifier for event type F
+   * @param {EventId<A>} eventIdentifierA - the unique identifier for event type A
+   * @param {EventId<B>} eventIdentifierB - the unique identifier for event type B
+   * @param {EventId<C>} eventIdentifierC - the unique identifier for event type C
+   * @param {EventId<D>} eventIdentifierD - the unique identifier for event type D
+   * @param {EventId<E>} eventIdentifierE - the unique identifier for event type E
+   * @param {EventId<F>} eventIdentifierF - the unique identifier for event type F
    * @param {Observable<TypedEvent<A> | TypedEvent<B> | TypedEvent<C> | TypedEvent<D> | TypedEvent<E> | TypedEvent<F>>} observable - the event source
-   * @param {TypeIdentifier<any> | null} subscribeObservableOnlyIfEventIsSubscribed - defaults to null
+   * @param {EventId<any> | null} subscribeObservableOnlyIfEventIsSubscribed - defaults to null
    * @returns {smybol} - a symbol that can be used to remove the event-source from the store
    */
   add6TypedEventSource<A, B, C, D, E, F>(
@@ -876,7 +862,7 @@ export class Store {
     id: EffectId<InputType, ResultType>,
     effect: Effect<InputType, ResultType>,
   ): void {
-    this.addState(id as unknown as BehaviorId<Effect<InputType, ResultType>>, () => effect);
+    this.addState(id as unknown as StateId<Effect<InputType, ResultType>>, () => effect);
   }
 
   /**

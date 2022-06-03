@@ -1,11 +1,11 @@
-import { merge, of } from 'rxjs';
-import { filter, map, mapTo, switchMap, take, tap, withLatestFrom } from 'rxjs/operators';
+import { of } from 'rxjs';
+import { filter, map, mapTo, switchMap, take, tap } from 'rxjs/operators';
 import { Store } from '../src/store';
-import { getBehaviorId, getEventId } from '../src/store-utils';
+import { getEventId, getStateId } from '../src/store-utils';
 import { expectSequence } from '../src/test-utils/test-utils';
 
 describe('Event order', () => {
-  const counterState = getBehaviorId<number>();
+  const counterState = getStateId<number>();
   const addEvent = getEventId<number>();
   const multiplyEvent = getEventId<number>();
 
@@ -14,23 +14,9 @@ describe('Event order', () => {
   beforeEach(() => {
     store = new Store();
 
-    store.addBehavior(
-      counterState,
-      merge(store.getTypedEventStream(addEvent), store.getTypedEventStream(multiplyEvent)).pipe(
-        withLatestFrom(store.getBehavior(counterState)),
-        map(([typedEvent, state]) => {
-          if (typedEvent.type === addEvent) {
-            return state + typedEvent.event;
-          }
-          if (typedEvent.type === multiplyEvent) {
-            return state * typedEvent.event;
-          }
-          return state;
-        }),
-      ),
-      false,
-      0, // => 0
-    );
+    store.addState(counterState, 0);
+    store.addReducer(counterState, addEvent, (s, e) => s + e);
+    store.addReducer(counterState, multiplyEvent, (s, e) => s * e);
 
     store.addEventSource(
       addEvent,

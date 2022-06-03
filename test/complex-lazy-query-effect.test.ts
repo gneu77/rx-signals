@@ -1,17 +1,17 @@
 import { combineLatest, of } from 'rxjs';
 import { debounceTime, filter, map, switchMap } from 'rxjs/operators';
-import { getBehaviorId, getEventId } from '../src/store-utils';
+import { getDerivedId, getEventId } from '../src/store-utils';
 import { awaitStringifyEqualState, expectSequence } from '../src/test-utils/test-utils';
 import { Store } from './../src/store';
-describe('Lazy query pattern', () => {
-  interface ResultType {
+describe('All lazy query pattern', () => {
+  type ResultType = {
     result: Array<number | string | null>;
     resultQuery: string | null;
-  }
+  };
 
-  const queryBehavior = getBehaviorId<string | null>();
-  const resultBehavior = getBehaviorId<ResultType>();
-  const loadingBehavior = getBehaviorId<boolean>();
+  const queryBehavior = getDerivedId<string | null>();
+  const resultBehavior = getDerivedId<ResultType>();
+  const loadingBehavior = getDerivedId<boolean>();
   const queryEvent = getEventId<string | null>();
   const resultEvent = getEventId<ResultType>();
 
@@ -20,19 +20,18 @@ describe('Lazy query pattern', () => {
   beforeEach((): void => {
     store = new Store();
 
-    store.addBehavior(queryBehavior, store.getEventStream(queryEvent), true, null);
+    store.addDerivedState(queryBehavior, store.getEventStream(queryEvent), null);
 
-    store.addBehavior(resultBehavior, store.getEventStream(resultEvent), true, {
+    store.addDerivedState(resultBehavior, store.getEventStream(resultEvent), {
       result: [],
       resultQuery: null,
     });
 
-    store.addBehavior(
+    store.addDerivedState(
       loadingBehavior,
       combineLatest([store.getBehavior(queryBehavior), store.getBehavior(resultBehavior)]).pipe(
         map(([query, result]) => query !== result.resultQuery),
       ),
-      true,
     );
 
     const eventSource = combineLatest([
@@ -179,23 +178,22 @@ describe('Lazy query pattern', () => {
         resultQuery: string | null;
       }>;
 
-      const query = getBehaviorId<string>();
-      const result = getBehaviorId<QueryResult>();
-      const pending = getBehaviorId<boolean>();
+      const query = getDerivedId<string>();
+      const result = getDerivedId<QueryResult>();
+      const pending = getDerivedId<boolean>();
       const setQuery = getEventId<string>();
       const setResult = getEventId<QueryResult>();
 
-      store.addBehavior(query, store.getEventStream(setQuery), true, '');
-      store.addBehavior(result, store.getEventStream(setResult), true, {
+      store.addDerivedState(query, store.getEventStream(setQuery), '');
+      store.addDerivedState(result, store.getEventStream(setResult), {
         result: [],
         resultQuery: null,
       });
-      store.addBehavior(
+      store.addDerivedState(
         pending,
         combineLatest([store.getBehavior(query), store.getBehavior(result)]).pipe(
           map(([q, r]) => q !== r.resultQuery),
         ),
-        true,
       );
       store.addEventSource(
         setResult,

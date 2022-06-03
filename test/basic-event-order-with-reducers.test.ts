@@ -1,11 +1,11 @@
 import { of } from 'rxjs';
 import { filter, switchMap } from 'rxjs/operators';
 import { Store } from '../src/store';
-import { getBehaviorId, getEventId } from '../src/store-utils';
+import { getEventId, getStateId } from '../src/store-utils';
 import { expectSequence } from '../src/test-utils/test-utils';
 
 describe('Event order', () => {
-  const counterState = getBehaviorId<number>();
+  const counterState = getStateId<number>();
   const addEvent = getEventId<number>();
   const multiplyEvent = getEventId<number>();
 
@@ -15,9 +15,7 @@ describe('Event order', () => {
     store = new Store();
 
     store.addState(counterState, 0);
-
     store.addReducer(counterState, addEvent, (state, event) => state + event);
-
     store.addReducer(counterState, multiplyEvent, (state, event) => state * event);
 
     store.addEventSource(

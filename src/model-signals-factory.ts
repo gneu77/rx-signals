@@ -1,5 +1,5 @@
 import { Signals, SignalsFactory } from './signals-factory';
-import { BehaviorId, EventId, getBehaviorId, getEventId } from './store-utils';
+import { EventId, getEventId, getStateId, StateId } from './store-utils';
 
 /**
  * Type specifying the input signal ids produced by a ModelSignalsFactory (the corresponding signal-sources
@@ -22,10 +22,10 @@ export type ModelInputSignals<T> = {
  *
  * @typedef {object} ModelOutputSignals<T> - object holding the output signal identifiers for ModelSignals
  * @template T - the type of the model to be handled
- * @property {BehaviorId<T>} model - identifier for the model behavior
+ * @property {StateId<T>} model - identifier for the model behavior
  */
 export type ModelOutputSignals<T> = {
-  model: BehaviorId<T>;
+  model: StateId<T>;
 };
 
 /**
@@ -44,7 +44,7 @@ export type ModelConfig<T> = {
 const getModelSignals = <T>(
   config: ModelConfig<T>,
 ): Signals<ModelInputSignals<T>, ModelOutputSignals<T>> => {
-  const model = getBehaviorId<T>(`${config.nameExtension ?? ''}_model`);
+  const model = getStateId<T>(`${config.nameExtension ?? ''}_model`);
   const setModel = getEventId<T>(`${config.nameExtension ?? ''}_setModel`);
   const updateModel = getEventId<Partial<T>>(`${config.nameExtension ?? ''}_updateModel`);
   const resetModel = getEventId<undefined>(`${config.nameExtension ?? ''}_resetModel`);

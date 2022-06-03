@@ -3,22 +3,22 @@ import { map } from 'rxjs/operators';
 import { Store } from '../src/store';
 import { expectSequence } from '../src/test-utils/test-utils';
 import { SignalsFactory } from './../src/signals-factory';
-import { BehaviorId, EventId, getBehaviorId, getEventId } from './../src/store-utils';
+import { DerivedId, EventId, getDerivedId, getEventId } from './../src/store-utils';
 
 describe('SignalsFactory', () => {
   const operationAdd = 'add';
   const operationMultiply = 'multiply';
   type Operation = typeof operationAdd | typeof operationMultiply;
   type BaseInput = {
-    inputA: BehaviorId<number>;
-    inputB: BehaviorId<number>;
-    inputC: BehaviorId<number | null>;
-    inputD: BehaviorId<string>; // unused
+    inputA: DerivedId<number>;
+    inputB: DerivedId<number>;
+    inputC: DerivedId<number | null>;
+    inputD: DerivedId<string>; // unused
   };
   type BaseOutput = {
-    result: BehaviorId<number>;
-    outputC: BehaviorId<number | null>;
-    outputD: BehaviorId<string>; // unused
+    result: DerivedId<number>;
+    outputC: DerivedId<number | null>;
+    outputD: DerivedId<string>; // unused
   };
   type BaseConfig = {
     operation?: Operation;
@@ -27,13 +27,13 @@ describe('SignalsFactory', () => {
 
   const baseFactory: BaseFactory = new SignalsFactory<BaseInput, BaseOutput, BaseConfig>(
     (config: BaseConfig) => {
-      const inputA = getBehaviorId<number>();
-      const inputB = getBehaviorId<number>();
-      const inputC = getBehaviorId<number | null>();
-      const inputD = getBehaviorId<string>(); // not used
-      const result = getBehaviorId<number>();
-      const outputC = getBehaviorId<number | null>();
-      const outputD = getBehaviorId<string>(); // not used
+      const inputA = getDerivedId<number>();
+      const inputB = getDerivedId<number>();
+      const inputC = getDerivedId<number | null>();
+      const inputD = getDerivedId<string>(); // not used
+      const result = getDerivedId<number>();
+      const outputC = getDerivedId<number | null>();
+      const outputD = getDerivedId<string>(); // not used
       const operation = config.operation ?? operationAdd;
       return {
         input: {
@@ -143,24 +143,24 @@ describe('SignalsFactory', () => {
 
   describe('composition', () => {
     type TripledInput = {
-      tripleInput: BehaviorId<number>;
-      someNotUsedFakeInput: BehaviorId<string>;
+      tripleInput: DerivedId<number>;
+      someNotUsedFakeInput: DerivedId<string>;
       someOtherNotUsedFakeInput: EventId<number>;
     };
     type TripledOutput = {
-      tripledResult: BehaviorId<number>;
+      tripledResult: DerivedId<number>;
       subIds: {
-        someNotUsedFakeOutput: BehaviorId<number>;
+        someNotUsedFakeOutput: DerivedId<number>;
       };
     };
     type TripledFactory = SignalsFactory<TripledInput, TripledOutput>;
 
     const tripledFactory: TripledFactory = new SignalsFactory<TripledInput, TripledOutput>(() => {
-      const tripleInput = getBehaviorId<number>();
-      const someNotUsedFakeInput = getBehaviorId<string>();
+      const tripleInput = getDerivedId<number>();
+      const someNotUsedFakeInput = getDerivedId<string>();
       const someOtherNotUsedFakeInput = getEventId<number>();
-      const someNotUsedFakeOutput = getBehaviorId<number>();
-      const tripledResult = getBehaviorId<number>();
+      const someNotUsedFakeOutput = getDerivedId<number>();
+      const tripledResult = getDerivedId<number>();
       return {
         input: {
           tripleInput,
@@ -187,9 +187,9 @@ describe('SignalsFactory', () => {
       const myEvent = getEventId<number>();
       // const myEvent2 = getEventId<number | null>();
       const signals = baseFactory
-        .connectObservable(st => st.getEventStream(myEvent), 'inputC', false, true) // no problem, because number is assignable to number | null
-        // .connectObservable(st => st.getEventStream(myEvent2), 'inputB', false, true) // compiler must error that null is not assignable to number
-        // .connectObservable(st => st.getEventStream(myEvent), 'inputD', false, true) // compiler must error that number is not assignable to string
+        .connectObservable(st => st.getEventStream(myEvent), 'inputC', false) // no problem, because number is assignable to number | null
+        // .connectObservable(st => st.getEventStream(myEvent2), 'inputB', false) // compiler must error that null is not assignable to number
+        // .connectObservable(st => st.getEventStream(myEvent), 'inputD', false) // compiler must error that number is not assignable to string
         .build({});
       signals.setup(store);
       const sequence = expectSequence(store.getBehavior(signals.output.outputC), [5, 7]);

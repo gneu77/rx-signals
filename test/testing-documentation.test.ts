@@ -2,7 +2,7 @@ import { combineLatest, map, of } from 'rxjs';
 import { distinctUntilChanged } from 'rxjs/operators';
 import { getEffectSignalsFactory } from '../src/effect-signals-factory';
 import { Store } from '../src/store';
-import { BehaviorId, EventId, getBehaviorId, getEventId } from '../src/store-utils';
+import { BehaviorId, EventId, getEventId, getStateId } from '../src/store-utils';
 import { expectSequence } from '../src/test-utils/test-utils';
 import { SignalsFactory } from './../src/signals-factory';
 
@@ -20,7 +20,7 @@ describe('testing documentation', () => {
     counter: BehaviorId<number>;
   };
   const counterFactory = new SignalsFactory<CounterInput, CounterOutput>(() => {
-    const counter = getBehaviorId<number>();
+    const counter = getStateId<number>();
     const inc = getEventId<undefined>();
     const dec = getEventId<undefined>();
     return {
@@ -55,7 +55,6 @@ describe('testing documentation', () => {
         combineLatest([store.getBehavior(output.from), store.getBehavior(output.to)]),
       'input',
       false,
-      true,
     )
     .mapInput(input => ({
       incFrom: input.conflicts1.inc,

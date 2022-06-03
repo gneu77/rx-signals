@@ -1,12 +1,10 @@
 import { interval, NEVER, of } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { Store } from '../src/store';
-import { getBehaviorId } from '../src/store-utils';
+import { getDerivedId, getStateId } from '../src/store-utils';
 import { awaitCompletion, awaitError, expectSequence } from '../src/test-utils/test-utils';
 
 describe('Behavior basics', () => {
-  const testId = getBehaviorId<number>();
-
   let store: Store;
 
   beforeEach(() => {
@@ -14,12 +12,14 @@ describe('Behavior basics', () => {
   });
 
   describe('addLazyBehavior', () => {
+    const testId = getDerivedId<number>();
+
     it('should throw, if behavior with given identifier already has a source', () => {
-      store.addBehavior(testId, NEVER, true);
+      store.addDerivedState(testId, NEVER);
       expect(() => {
-        store.addBehavior(testId, NEVER, true);
+        store.addDerivedState(testId, NEVER);
       }).toThrowError(
-        'A behavior or event source with the given identifier has already been added: Symbol(B_1)',
+        'A behavior or event source with the given identifier has already been added: Symbol(D_1)',
       );
     });
     it('should be possible to add behavior sources again, after initial source has completed', async () => {
@@ -28,11 +28,11 @@ describe('Behavior basics', () => {
         true,
         false,
       ]);
-      store.addBehavior(testId, of(1), true);
+      store.addDerivedState(testId, of(1));
       expect(store.isSubscribed(testId)).toBe(false);
       const sequence = expectSequence(store.getBehavior(testId), [1, 2]);
       expect(store.isSubscribed(testId)).toBe(true);
-      store.addBehavior(testId, of(2), true);
+      store.addDerivedState(testId, of(2));
       await sequence;
       await isSubscribedSequence;
     });
@@ -40,7 +40,7 @@ describe('Behavior basics', () => {
     it('should subscribe its source lazily', async () => {
       expect(store.getNumberOfBehaviorSources(testId)).toBe(0);
       await expectSequence(store.getIsSubscribedObservable(testId), [false]);
-      store.addBehavior(testId, of(1), true);
+      store.addDerivedState(testId, of(1));
       expect(store.getNumberOfBehaviorSources(testId)).toBe(1);
       const subscribeSequence = expectSequence(store.getIsSubscribedObservable(testId), [
         false,
@@ -53,54 +53,45 @@ describe('Behavior basics', () => {
   });
 
   describe('addNonLazyBehavior', () => {
+    const testId = getStateId<number>();
+
     it('should throw, if behavior with given identifier already has a source', () => {
-      store.addBehavior(testId, NEVER, false);
+      store.addState(testId, 42);
       expect(() => {
-        store.addBehavior(testId, NEVER, false);
+        store.addState(testId, 42);
       }).toThrowError(
-        'A behavior or event source with the given identifier has already been added: Symbol(B_1)',
+        'A behavior or event source with the given identifier has already been added: Symbol(S_1)',
       );
     });
 
     it('should always subscribe its source', async () => {
       expect(store.getNumberOfBehaviorSources(testId)).toBe(0);
 
-      // no source -> nonLazy source -> completed source removed
+      // no source -> nonLazy source
       const subscribeSequence1 = expectSequence(store.getIsSubscribedObservable(testId), [
         false,
         true,
-        false,
       ]);
-      store.addBehavior(testId, of(1), false);
+      store.addState(testId, 1);
       await subscribeSequence1;
-      expect(store.getNumberOfBehaviorSources(testId)).toBe(0); // the source has already completed and was thus removed
-
-      const subscribeSequence = expectSequence(store.getIsSubscribedObservable(testId), [
-        false,
-        true,
-        false,
-      ]);
-      store.addBehavior(testId, of(2), false); // possible, because the original source has completed and was thus removed
-      expect(store.getNumberOfBehaviorSources(testId)).toBe(0); // the source has already completed and was thus removed
-
-      await expectSequence(store.getBehavior(testId), [2]); // we get the latest value, though the source of it has already completed
-      await subscribeSequence;
     });
   });
 
   describe('removeBehaviorSources', () => {
+    const testId = getDerivedId<number>();
+
     it('should work without completing target subscriptions', async () => {
-      store.addBehavior(testId, NEVER, true);
+      store.addDerivedState(testId, NEVER);
       const sequence = expectSequence(store.getBehavior(testId), [1, 2]);
       expect(store.getNumberOfBehaviorSources(testId)).toBe(1);
       store.removeBehaviorSources(testId);
       expect(store.getNumberOfBehaviorSources(testId)).toBe(0);
-      store.addBehavior(testId, of(1, 2), true);
+      store.addDerivedState(testId, of(1, 2));
       await sequence;
     });
 
     it('should propagate source errors and still work after re-subscribe', async () => {
-      store.addBehavior(
+      store.addDerivedState(
         testId,
         interval(10).pipe(
           map(val => {
@@ -110,7 +101,6 @@ describe('Behavior basics', () => {
             return val;
           }),
         ),
-        true,
       );
       await awaitError(store.getBehavior(testId));
       expect(store.getNumberOfBehaviorSources(testId)).toBe(1);
@@ -119,8 +109,10 @@ describe('Behavior basics', () => {
   });
 
   describe('completeBehavior', () => {
+    const testId = getDerivedId<number>();
+
     it('should remove all sources, and complete the target', async () => {
-      store.addBehavior(
+      store.addDerivedState(
         testId,
         interval(10).pipe(
           tap(s => {
@@ -129,7 +121,6 @@ describe('Behavior basics', () => {
             }
           }),
         ),
-        true,
       );
 
       await expectSequence(store.getBehavior(testId), [0, 1, 2]);

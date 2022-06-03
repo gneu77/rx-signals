@@ -1,14 +1,14 @@
 import { of } from 'rxjs';
 import { Store } from '../src/store';
-import { getBehaviorId, getEventId } from '../src/store-utils';
+import { getDerivedId, getEventId } from '../src/store-utils';
 import { expectSequence } from '../src/test-utils/test-utils';
 
 describe('Parent store', () => {
-  const idInParent = getBehaviorId<number>();
-  const idInChild = getBehaviorId<number>();
-  const idInParentAndChild = getBehaviorId<number>();
-  const idInParentAndLaterInChild = getBehaviorId<number>();
-  const idLaterInChild = getBehaviorId<number>();
+  const idInParent = getDerivedId<number>();
+  const idInChild = getDerivedId<number>();
+  const idInParentAndChild = getDerivedId<number>();
+  const idInParentAndLaterInChild = getDerivedId<number>();
+  const idLaterInChild = getDerivedId<number>();
   const eventId = getEventId<number>();
 
   let store: Store;
@@ -18,11 +18,11 @@ describe('Parent store', () => {
     store = new Store();
     childStore = store.createChildStore();
 
-    store.addBehavior(idInParent, of(1), true);
-    childStore.addBehavior(idInChild, of(2), true);
-    store.addBehavior(idInParentAndChild, of(3), true);
-    childStore.addBehavior(idInParentAndChild, of(4), true);
-    store.addBehavior(idInParentAndLaterInChild, of(5), true);
+    store.addDerivedState(idInParent, of(1));
+    childStore.addDerivedState(idInChild, of(2));
+    store.addDerivedState(idInParentAndChild, of(3));
+    childStore.addDerivedState(idInParentAndChild, of(4));
+    store.addDerivedState(idInParentAndLaterInChild, of(5));
   });
 
   it('should access behavior from child, if source is available', async () => {
@@ -40,13 +40,13 @@ describe('Parent store', () => {
 
   it('should access behavior from parent and switch to child, once it becomes available there', async () => {
     await expectSequence(childStore.getBehavior(idInParentAndLaterInChild), [5]);
-    childStore.addBehavior(idInParentAndLaterInChild, of(6), true);
+    childStore.addDerivedState(idInParentAndLaterInChild, of(6));
     await expectSequence(childStore.getBehavior(idInParentAndLaterInChild), [6]);
   });
 
   it('should access non-parent behavior from child, once it becomes available there', async () => {
     const sequence = expectSequence(childStore.getBehavior(idLaterInChild), [7]);
-    childStore.addBehavior(idLaterInChild, of(7), true);
+    childStore.addDerivedState(idLaterInChild, of(7));
     await sequence;
   });
 

@@ -1,18 +1,40 @@
 import { Observable } from 'rxjs';
 
 /**
- * The rx-signals Store uses this type to uniquely identify all of its behaviors.
- * A BehaviorId<T> does not make any use of the generic T itself, but is given this
+ * The rx-signals Store uses this type to uniquely identify behaviors representing a root-state behavior.
+ * A StateId<T> does not make any use of the generic T itself, but is given this
  * parameter only as a trick to let Typescript infer and thus enforce the correct types.
- * Use the getBehaviorId<T>() function to generate a corresponding ID.
+ * Use the getStateId<T>() function to generate a corresponding ID.
+ *
+ * @typedef {object} StateId<T> - type to uniquely identify a certain root-state behavior
+ * @template T - specifies the type for the corresponding behavior observable
+ * @property {symbol} symbol - a symbol, making the StateId unique
+ */
+export type StateId<T> = symbol & {
+  _rootStateType: T;
+};
+
+/**
+ * The rx-signals Store uses this type to uniquely identify behaviors representing a derived-state behavior.
+ * A StateId<T> does not make any use of the generic T itself, but is given this
+ * parameter only as a trick to let Typescript infer and thus enforce the correct types.
+ * Use the getDerivedId<T>() function to generate a corresponding ID.
+ *
+ * @typedef {object} DerivedId<T> - type to uniquely identify a certain derived-state behavior
+ * @template T - specifies the type for the corresponding behavior observable
+ * @property {symbol} symbol - a symbol, making the DerivedId unique
+ */
+export type DerivedId<T> = symbol & {
+  _derivedStateType: T;
+};
+
+/**
+ * The rx-signals Store uses this type for cases where either a StateId or a DerivedId is expected.
  *
  * @typedef {object} BehaviorId<T> - type to uniquely identify a certain behavior
  * @template T - specifies the type for the corresponding behavior observable
- * @property {symbol} symbol - a symbol, making the BehaviorId unique
  */
-export type BehaviorId<T> = symbol & {
-  _behaviorType: T;
-};
+export type BehaviorId<T> = StateId<T> | DerivedId<T>;
 
 /**
  * The rx-signals Store uses this type to uniquely identify all of its events.
@@ -118,19 +140,30 @@ export type EffectId<InputType, ResultType> = symbol & {
   _resultType: ResultType;
 };
 
-let behaviorExtension = 1;
+let stateExtension = 1;
+let derivedExtension = 1;
 let eventExtension = 1;
 let effectExtension = 1;
 
 /**
- * Function to get a new, unique BehaviorId.
+ * Function to get a new, unique StateId.
  *
  * @template T - specifies the type for the corresponding behavior
  * @param {string} nameExtension - an optional extension to the symbol name (so the string representation). Usually, you don't need this, cause even for debugging purposes, you should use store.setIdName/getIdName.
- * @returns {BehaviorId<T>}
+ * @returns {StateId<T>}
  */
-export const getBehaviorId = <T>(nameExtension?: string): BehaviorId<T> =>
-  Symbol(`B_${(nameExtension ?? '') + behaviorExtension++}`) as BehaviorId<T>;
+export const getStateId = <T>(nameExtension?: string): StateId<T> =>
+  Symbol(`S_${(nameExtension ?? '') + stateExtension++}`) as StateId<T>;
+
+/**
+ * Function to get a new, unique DerivedId.
+ *
+ * @template T - specifies the type for the corresponding behavior
+ * @param {string} nameExtension - an optional extension to the symbol name (so the string representation). Usually, you don't need this, cause even for debugging purposes, you should use store.setIdName/getIdName.
+ * @returns {DerivedId<T>}
+ */
+export const getDerivedId = <T>(nameExtension?: string): DerivedId<T> =>
+  Symbol(`D_${(nameExtension ?? '') + derivedExtension++}`) as DerivedId<T>;
 
 /**
  * Function to get a new, unique EventId.
@@ -156,13 +189,31 @@ export const getEffectId = <InputType, ResultType>(
   Symbol(`Effect_${(nameExtension ?? '') + effectExtension++}`) as EffectId<InputType, ResultType>;
 
 /**
+ * Function to check whether a given SignalId is a StateId.
+ *
+ * @template T - specifies the type for the corresponding signal
+ * @param {Signal<T>} id - a signal identifier.
+ * @returns {boolean}
+ */
+export const isStateId = <T>(id: SignalId<T>): boolean => id.toString().startsWith('Symbol(S');
+
+/**
+ * Function to check whether a given SignalId is a DerivedId.
+ *
+ * @template T - specifies the type for the corresponding signal
+ * @param {Signal<T>} id - a signal identifier.
+ * @returns {boolean}
+ */
+export const isDerivedId = <T>(id: SignalId<T>): boolean => id.toString().startsWith('Symbol(D');
+
+/**
  * Function to check whether a given SignalId is a BehaviorId.
  *
  * @template T - specifies the type for the corresponding signal
  * @param {Signal<T>} id - a signal identifier.
  * @returns {boolean}
  */
-export const isBehaviorId = <T>(id: SignalId<T>): boolean => id.toString().startsWith('Symbol(B');
+export const isBehaviorId = <T>(id: SignalId<T>): boolean => isStateId(id) || isDerivedId(id);
 
 /**
  * Function to check whether a given SignalId is an EventId.

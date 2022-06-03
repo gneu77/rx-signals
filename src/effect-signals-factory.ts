@@ -3,12 +3,13 @@ import { catchError, debounceTime, filter, map, switchMap, take } from 'rxjs/ope
 import { Signals, SignalsFactory } from './signals-factory';
 import { Effect, Store } from './store';
 import {
-  BehaviorId,
+  DerivedId,
   EffectId,
   EventId,
-  getBehaviorId,
+  getDerivedId,
   getEffectId,
   getEventId,
+  getStateId,
   NO_VALUE,
 } from './store-utils';
 
@@ -69,12 +70,12 @@ export type EffectSuccess<InputType, ResultType> = {
  *
  * @typedef {object} EffectInputSignals<InputType> - object holding the input signal identifiers for EffectSignals
  * @template InputType - specifies the input type for the effect
- * @property {BehaviorId<InputType>} input - identifier for the behavior being consumed by EffectSignals as input
+ * @property {DerivedId<InputType>} input - identifier for the behavior being consumed by EffectSignals as input
  * @property {EventId<undefined>} invalidate - identifier for the invalidation event that can be dispatched to trigger re-evaluation of the current input under the given effect
  * @property {EventId<undefined>} trigger - identifier for the trigger event that can be dispatched to trigger the given effect. This event has only meaning, if withTrigger is configured (see EffectConfiguration)
  */
 export type EffectInputSignals<InputType> = {
-  input: BehaviorId<InputType>;
+  input: DerivedId<InputType>;
   invalidate: EventId<undefined>;
   trigger: EventId<undefined>;
 };
@@ -85,12 +86,12 @@ export type EffectInputSignals<InputType> = {
  * @typedef {object} EffectOutputSignals<InputType, ResultType> - object holding the output signal identifiers
  * @template InputType - specifies the input type for the effect
  * @template ResultType - specifies the result type of the effect
- * @property {BehaviorId<CombinedEffectResult<InputType, ResultType>>} combined - identifier for the produced combined effect result behavior
+ * @property {DerivedId<CombinedEffectResult<InputType, ResultType>>} combined - identifier for the produced combined effect result behavior
  * @property {EventId<EffectError<InputType>>} errors - identifier for the produced error events
  * @property {EventId<EffectSuccess<InputType, ResultType>>} successes - identifier for the produced success events
  */
 export type EffectOutputSignals<InputType, ResultType> = {
-  combined: BehaviorId<CombinedEffectResult<InputType, ResultType>>;
+  combined: DerivedId<CombinedEffectResult<InputType, ResultType>>;
   errors: EventId<EffectError<InputType>>;
   successes: EventId<EffectSuccess<InputType, ResultType>>;
 };
@@ -167,7 +168,7 @@ export type EffectSignalsBuild = <InputType, ResultType>(
 ) => EffectSignals<InputType, ResultType>;
 
 const getInputSignalIds = <InputType>(nameExtension?: string): EffectInputSignals<InputType> => ({
-  input: getBehaviorId<InputType>(`${nameExtension ?? ''}_input`),
+  input: getDerivedId<InputType>(`${nameExtension ?? ''}_input`),
   invalidate: getEventId<undefined>(`${nameExtension ?? ''}_invalidate`),
   trigger: getEventId<undefined>(`${nameExtension ?? ''}_trigger`),
 });
@@ -175,7 +176,7 @@ const getInputSignalIds = <InputType>(nameExtension?: string): EffectInputSignal
 const getOutputSignalIds = <InputType, ResultType>(
   nameExtension?: string,
 ): EffectOutputSignals<InputType, ResultType> => ({
-  combined: getBehaviorId<CombinedEffectResult<InputType, ResultType>>(
+  combined: getDerivedId<CombinedEffectResult<InputType, ResultType>>(
     `${nameExtension ?? ''}_combined`,
   ),
   errors: getEventId<EffectError<InputType>>(`${nameExtension ?? ''}_errors`),
@@ -206,22 +207,16 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
   const inIds = getInputSignalIds<IT>(config.nameExtension);
   const outIds = getOutputSignalIds<IT, RT>(config.nameExtension);
   const setup = (store: Store) => {
-    const invalidateTokenBehavior = getBehaviorId<object | null>();
-    store.addBehavior(
-      invalidateTokenBehavior,
-      store.getEventStream(inIds.invalidate).pipe(
-        map(() => ({})), // does not work with mapTo, because mapTo would always assign the same object
-      ),
-      false,
-      null,
-    );
+    const invalidateTokenBehavior = getStateId<object | null>();
+    store.addState(invalidateTokenBehavior, null);
+    store.addReducer(invalidateTokenBehavior, inIds.invalidate, () => ({}));
 
     const resultEvent = getEventId<{
       result?: RT;
       resultInput: IT;
       resultToken: object | null;
     }>();
-    const resultBehavior = getBehaviorId<{
+    const resultBehavior = getDerivedId<{
       result?: RT;
       resultInput?: IT;
       resultToken: object | null;
@@ -233,12 +228,12 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
     });
 
     const triggeredInputEvent = getEventId<IT>();
-    const triggeredInputBehavior = getBehaviorId<IT | null>();
+    const triggeredInputBehavior = getDerivedId<IT | null>();
     store.addDerivedState(triggeredInputBehavior, store.getEventStream(triggeredInputEvent), null);
 
     // It is important to setup the combined observable as behavior,
     // because a simple shareReplay (even with refCount) would create a memory leak!!!
-    const combinedId = getBehaviorId<
+    const combinedId = getDerivedId<
       [
         IT,
         {

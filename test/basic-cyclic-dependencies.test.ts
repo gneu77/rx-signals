@@ -1,10 +1,10 @@
 import { map, withLatestFrom } from 'rxjs/operators';
 import { Store } from '../src/store';
-import { getBehaviorId, getEventId } from '../src/store-utils';
+import { getDerivedId, getEventId } from '../src/store-utils';
 import { expectSequence } from '../src/test-utils/test-utils';
-describe('Cyclic dependencies', () => {
-  const cyclicBehavior = getBehaviorId<number>();
-  const derivedBehavior = getBehaviorId<number>();
+describe('Cyclic dependencies all lazy', () => {
+  const cyclicBehavior = getDerivedId<number>();
+  const derivedBehavior = getDerivedId<number>();
   const inputEvent = getEventId<number>();
 
   let store: Store;
@@ -14,20 +14,18 @@ describe('Cyclic dependencies', () => {
 
     // derivedBehavior depends on cyclicBehavior && cyclicBehavior depends on derivedBehavior
 
-    store.addBehavior(
+    store.addDerivedState(
       cyclicBehavior,
       store
         .getEventStream(inputEvent)
         .pipe(withLatestFrom(store.getBehavior(derivedBehavior).pipe(map(val => val * 10))))
         .pipe(map(pair => pair[0] * pair[1])),
-      true,
       1,
     );
 
-    store.addBehavior(
+    store.addDerivedState(
       derivedBehavior,
       store.getBehavior(cyclicBehavior).pipe(map(val => val * 10)),
-      true,
     );
   });
 

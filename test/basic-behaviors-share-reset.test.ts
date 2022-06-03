@@ -1,11 +1,10 @@
 import { map, tap, withLatestFrom } from 'rxjs/operators';
-import { getBehaviorId, getEventId } from '../src/store-utils';
+import { getDerivedId, getEventId, getStateId } from '../src/store-utils';
 import { expectSequence } from '../src/test-utils/test-utils';
 import { Store } from './../src/store';
 describe('Behaviors share and reset logic', () => {
-  const rootBehavior = getBehaviorId<number>();
-  const doubledBehavior = getBehaviorId<number>();
-  const tripledBehavior = getBehaviorId<number>();
+  const doubledBehavior = getDerivedId<number>();
+  const tripledBehavior = getDerivedId<number>();
 
   const addToRootEvent = getEventId<number>();
 
@@ -14,21 +13,22 @@ describe('Behaviors share and reset logic', () => {
   let tripledCalculated: number;
 
   describe('with lazy root behavior', () => {
+    const rootBehavior = getDerivedId<number>();
+
     beforeEach((): void => {
       store = new Store();
       doubledCalculated = 0;
       tripledCalculated = 0;
 
-      store.addBehavior(
+      store.addDerivedState(
         rootBehavior,
         store.getEventStream(addToRootEvent).pipe(
           withLatestFrom(store.getBehavior(rootBehavior)),
           map(([add, state]) => state + add),
         ),
-        true,
         5,
       );
-      store.addBehavior(
+      store.addDerivedState(
         doubledBehavior,
         store.getBehavior(rootBehavior).pipe(
           map(root => root * 2),
@@ -36,9 +36,8 @@ describe('Behaviors share and reset logic', () => {
             doubledCalculated = doubledCalculated + 1;
           }),
         ),
-        true,
       );
-      store.addBehavior(
+      store.addDerivedState(
         tripledBehavior,
         store.getBehavior(rootBehavior).pipe(
           map(root => root * 3),
@@ -46,7 +45,6 @@ describe('Behaviors share and reset logic', () => {
             tripledCalculated = tripledCalculated + 1;
           }),
         ),
-        true,
       );
     });
 
@@ -160,21 +158,16 @@ describe('Behaviors share and reset logic', () => {
   });
 
   describe('with not-lazy root behavior', () => {
+    const rootBehavior = getStateId<number>();
+
     beforeEach((): void => {
       store = new Store();
       doubledCalculated = 0;
       tripledCalculated = 0;
 
-      store.addBehavior(
-        rootBehavior,
-        store.getEventStream(addToRootEvent).pipe(
-          withLatestFrom(store.getBehavior(rootBehavior)),
-          map(([add, state]) => state + add),
-        ),
-        false,
-        5,
-      );
-      store.addBehavior(
+      store.addState(rootBehavior, 5);
+      store.addReducer(rootBehavior, addToRootEvent, (state, event) => state + event);
+      store.addDerivedState(
         doubledBehavior,
         store.getBehavior(rootBehavior).pipe(
           map(root => root * 2),
@@ -182,9 +175,8 @@ describe('Behaviors share and reset logic', () => {
             doubledCalculated = doubledCalculated + 1;
           }),
         ),
-        true,
       );
-      store.addBehavior(
+      store.addDerivedState(
         tripledBehavior,
         store.getBehavior(rootBehavior).pipe(
           map(root => root * 3),
@@ -192,7 +184,6 @@ describe('Behaviors share and reset logic', () => {
             tripledCalculated = tripledCalculated + 1;
           }),
         ),
-        true,
       );
     });
 

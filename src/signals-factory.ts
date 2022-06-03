@@ -3,8 +3,9 @@ import { Observable, take } from 'rxjs';
 import { Store } from './store';
 import {
   BehaviorId,
+  DerivedId,
   EffectId,
-  getBehaviorId,
+  getDerivedId,
   SignalId,
   ToBehaviorIdValueType,
   ToSignalIdValueType,
@@ -464,10 +465,7 @@ export class SignalsFactory<
    * new Signal<T> corresponding to the named input-id.
    * If keepInputId is set to false, it also extends the setup logic to connect the corresponding signal-ids, but in addition
    * the specified input-id will be excluded from the IN-type of the resulting factory.
-   * If the input-id is a BehaviorId, the source being added to the store will be lazily subscribed in the following cases:
-   *  - lazy is set to false
-   *  - lazy is not set (defaulting to undefined) and the output-id is a BehaviorId
-   * (also see store.connect for a more detailed description)
+   * (also see store.connect documentation, as this is used under the hood)
    * Typescript will enforce that both names (keys) map to compatible signal ids, hence if KIN corresponds to SignalId<T>,
    * then KOUT must correspond to SignalId<S extends T> (though one might be an EventId and the other a BehaviorId).
    * That is, even though you only use strings as arguments, this method is still type-safe and will not compile if you try to specify names of non-existing or incompatible ids.
@@ -475,7 +473,6 @@ export class SignalsFactory<
    * @param {KIN} inputName - a key of IN, where IN[toName] must be of type Signal<T>
    * @param {KOUT} outputName - a key of OUT, where OUT[fromName] must be of type Signal<S extends T>
    * @param {boolean} keepInputId - if set to false, the input-id corresponding to toName will be removed from the resulting factories' IN
-   * @param {boolean | undefined} lazy - defaults to undefined and is used as lazy-argument to store.connect
    * @returns {SignalsFactory} - a new SignalsFactory with the concrete type depending on the keepInputId argument
    */
   connect<
@@ -486,14 +483,13 @@ export class SignalsFactory<
     outputName: KOUT,
     inputName: KIN,
     keepInputId: B,
-    lazy: boolean | undefined = undefined,
   ): B extends true
     ? SignalsFactory<IN, OUT, CONFIG, EFF>
     : SignalsFactory<Omit<IN, KIN>, OUT, CONFIG, EFF> {
     const fnew: SignalsFactory<IN, OUT, CONFIG, EFF> = this.extendSetup((store, input, output) => {
       const fromId: SignalId<any> = output[outputName] as SignalId<any>;
       const toId: SignalId<any> = input[inputName] as SignalId<any>;
-      store.connect(fromId, toId, lazy);
+      store.connect(fromId, toId);
     });
     const result = (keepInputId ? fnew : fnew.removeInputId(inputName)) as B extends true
       ? SignalsFactory<IN, OUT, CONFIG, EFF>
@@ -509,20 +505,18 @@ export class SignalsFactory<
    * @param {KIN} inputName - a key of IN, where IN[toName] must be of type Signal<T>
    * @param {ID} fromId - a Signal<S extends T>
    * @param {boolean} keepInputId - if set to false, the input-id corresponding to toName will be removed from the resulting factories' IN
-   * @param {boolean | undefined} lazy - defaults to undefined and is used as lazy-argument to store.connect
    * @returns {SignalsFactory} - a new SignalsFactory with the concrete type depending on the keepInputId argument
    */
   connectId<K extends keyof IN, ID extends SignalId<ToSignalIdValueType<IN[K]>>, B extends boolean>(
     fromId: ID,
     inputName: K,
     keepInputId: B,
-    lazy: boolean | undefined = undefined,
   ): B extends true
     ? SignalsFactory<IN, OUT, CONFIG, EFF>
     : SignalsFactory<Omit<IN, K>, OUT, CONFIG, EFF> {
     const fnew: SignalsFactory<IN, OUT, CONFIG, EFF> = this.extendSetup((store, input) => {
       const toId: SignalId<any> = input[inputName] as SignalId<any>;
-      store.connect(fromId, toId, lazy);
+      store.connect(fromId, toId);
     });
     const result = (keepInputId ? fnew : fnew.removeInputId(inputName)) as B extends true
       ? SignalsFactory<IN, OUT, CONFIG, EFF>
@@ -538,7 +532,6 @@ export class SignalsFactory<
    * @param {KIN} inputName - a key of IN, where IN[toName] must be of type Signal<T>
    * @param {function} sourceGetter - a function returning an Observable<S extends T>
    * @param {boolean} keepInputId - if set to false, the input-id corresponding to toName will be removed from the resulting factories' IN
-   * @param {boolean | undefined} lazy - defaults to undefined and is used as lazy-argument to store.connect
    * @returns {SignalsFactory} - a new SignalsFactory with the concrete type depending on the keepInputId argument
    */
   connectObservable<
@@ -550,13 +543,12 @@ export class SignalsFactory<
     sourceGetter: (store: Store, output: OUT, config: CONFIG) => O,
     inputName: K,
     keepInputId: B,
-    lazy: boolean,
   ): B extends true
     ? SignalsFactory<IN, OUT, CONFIG, EFF>
     : SignalsFactory<Omit<IN, K>, OUT, CONFIG, EFF> {
     const fnew: SignalsFactory<IN, OUT, CONFIG, EFF> = this.extendSetup((st, ip, op, conf) => {
       const toId: SignalId<any> = ip[inputName] as SignalId<any>;
-      st.connectObservable(sourceGetter(st, op, conf), toId, lazy);
+      st.connectObservable(sourceGetter(st, op, conf), toId);
     });
     const result = (keepInputId ? fnew : fnew.removeInputId(inputName)) as B extends true
       ? SignalsFactory<IN, OUT, CONFIG, EFF>
@@ -759,10 +751,10 @@ export class SignalsFactory<
       output: OUT,
       config: CONFIG,
     ) => Observable<TNEW>,
-  ): SignalsFactory<IN, AddOrReplaceId<OUT, KOUT, BehaviorId<TNEW>>, CONFIG, EFF> {
-    return this.fmap<IN, AddOrReplaceId<OUT, KOUT, BehaviorId<TNEW>>, CONFIG, EFF>(sb => config => {
+  ): SignalsFactory<IN, AddOrReplaceId<OUT, KOUT, DerivedId<TNEW>>, CONFIG, EFF> {
+    return this.fmap<IN, AddOrReplaceId<OUT, KOUT, DerivedId<TNEW>>, CONFIG, EFF>(sb => config => {
       const s = sb(config);
-      const newId = getBehaviorId<TNEW>();
+      const newId = getDerivedId<TNEW>();
       const oldId = s.output[outputName] as BehaviorId<ToBehaviorIdValueType<OUT[KOUT]>>;
       return {
         ...s,

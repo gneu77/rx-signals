@@ -8,7 +8,7 @@ import {
   getEffectSignalsFactory,
 } from '../src/effect-signals-factory';
 import { Effect, Store } from '../src/store';
-import { getBehaviorId } from '../src/store-utils';
+import { getStateId } from '../src/store-utils';
 import { expectSequence, withSubscription } from '../src/test-utils/test-utils';
 import { getEffectId } from './../src/store-utils';
 
@@ -23,7 +23,7 @@ describe('effect signals factory', () => {
     totalResults: number;
   };
 
-  const inputStateId = getBehaviorId<InputModel>();
+  const inputStateId = getStateId<InputModel>();
   const inputSubject = new Subject<InputModel>();
   let effectCalled = 0;
 
@@ -60,7 +60,7 @@ describe('effect signals factory', () => {
     effectCalled = 0;
     store = new Store();
     store.addEffect(resultEffectId, resultEffect);
-    store.addBehavior(inputStateId, inputSubject.asObservable(), false);
+    store.connectObservable(inputSubject.asObservable(), inputStateId);
   });
 
   describe('getEffectSignalsFactory', () => {

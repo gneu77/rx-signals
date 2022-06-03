@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs';
 import { map, withLatestFrom } from 'rxjs/operators';
 import { Store } from '../src/store';
-import { getBehaviorId, getEventId } from '../src/store-utils';
+import { getDerivedId, getEventId } from '../src/store-utils';
 import { expectSequence } from '../src/test-utils/test-utils';
 
 describe('shared behavior state', () => {
@@ -13,7 +13,7 @@ describe('shared behavior state', () => {
     return input * 2;
   };
 
-  const id = getBehaviorId<number>();
+  const id = getDerivedId<number>();
   const calculateEvent = getEventId<undefined>();
 
   let observable: Observable<number>;
@@ -22,13 +22,12 @@ describe('shared behavior state', () => {
     store = new Store();
     calculationCalled = 0;
 
-    store.addBehavior(
+    store.addDerivedState(
       id,
       store.getEventStream(calculateEvent).pipe(
         withLatestFrom(store.getBehavior(id)),
         map(pair => calculator(pair[1])),
       ),
-      true,
       1,
     );
 

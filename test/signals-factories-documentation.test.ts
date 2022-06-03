@@ -4,7 +4,15 @@ import { Effect, Store } from '../src/store';
 import { expectSequence } from '../src/test-utils/test-utils';
 import { getEffectSignalsFactory } from './../src/effect-signals-factory';
 import { Signals, SignalsFactory } from './../src/signals-factory';
-import { BehaviorId, EventId, getBehaviorId, getEventId } from './../src/store-utils';
+import {
+  BehaviorId,
+  DerivedId,
+  EventId,
+  getDerivedId,
+  getEventId,
+  getStateId,
+  StateId,
+} from './../src/store-utils';
 
 describe('signals factories documentation', () => {
   let store: Store;
@@ -18,10 +26,10 @@ describe('signals factories documentation', () => {
       decreaseBy: EventId<number>;
     };
     type CounterOutput = {
-      counter: BehaviorId<number>;
+      counter: StateId<number>;
     };
     const getCounterSignals: () => Signals<CounterInput, CounterOutput> = () => {
-      const counter = getBehaviorId<number>();
+      const counter = getStateId<number>();
       const increaseBy = getEventId<number>();
       const decreaseBy = getEventId<number>();
       return {
@@ -42,17 +50,17 @@ describe('signals factories documentation', () => {
     };
 
     type SumInput = {
-      inputA: BehaviorId<number>;
-      inputB: BehaviorId<number>;
+      inputA: DerivedId<number>;
+      inputB: DerivedId<number>;
     };
     type SumOutput = {
-      counterSum: BehaviorId<number>;
+      counterSum: DerivedId<number>;
     };
     const getSumSignalsBad: (
       inputA: BehaviorId<number>,
       inputB: BehaviorId<number>,
     ) => Signals<{}, SumOutput> = (inputA, inputB) => {
-      const counterSum = getBehaviorId<number>();
+      const counterSum = getDerivedId<number>();
       return {
         input: {},
         output: { counterSum },
@@ -69,9 +77,9 @@ describe('signals factories documentation', () => {
     };
 
     const getSumSignals: () => Signals<SumInput, SumOutput> = () => {
-      const inputA = getBehaviorId<number>();
-      const inputB = getBehaviorId<number>();
-      const counterSum = getBehaviorId<number>();
+      const inputA = getDerivedId<number>();
+      const inputB = getDerivedId<number>();
+      const counterSum = getDerivedId<number>();
       return {
         input: { inputA, inputB },
         output: { counterSum },
@@ -234,7 +242,6 @@ describe('signals factories documentation', () => {
             (store, output) => store.getBehavior(output.conflicts2.counter),
             'inputB',
             false,
-            true,
           )
           .mapInput(ids => ({
             inputA: ids.conflicts1,
@@ -270,7 +277,7 @@ describe('signals factories documentation', () => {
       defaultModel: T;
     };
     const getModelSignals = <T>(config: ModelConfig<T>): Signals<ModelInput<T>, ModelOutput<T>> => {
-      const model = getBehaviorId<T>();
+      const model = getStateId<T>();
       const setModel = getEventId<T>();
       const updateModel = getEventId<Partial<T>>();
       const resetModel = getEventId<undefined>();
@@ -306,7 +313,7 @@ describe('signals factories documentation', () => {
       sorting: BehaviorId<SortParameter>;
     };
     const getSortingSignals = (): Signals<SortingInput, SortingOutput> => {
-      const sorting = getBehaviorId<SortParameter>();
+      const sorting = getStateId<SortParameter>();
       const ascending = getEventId<string>();
       const descending = getEventId<string>();
       const none = getEventId<undefined>();
@@ -345,7 +352,7 @@ describe('signals factories documentation', () => {
       paging: BehaviorId<PagingParameter>;
     };
     const getPagingSignals = (): Signals<PagingInput, PagingOutput> => {
-      const paging = getBehaviorId<PagingParameter>();
+      const paging = getStateId<PagingParameter>();
       const setPage = getEventId<number>();
       const setPageSize = getEventId<number>();
       return {
@@ -419,7 +426,6 @@ describe('signals factories documentation', () => {
             ]),
           'input',
           false,
-          true,
         )
         .mapConfig((config: QueryWithResultConfig<FilterType>) => ({
           c1: {
@@ -440,7 +446,7 @@ describe('signals factories documentation', () => {
       });
       store.addEffect(mySignals.effects.id, effectMock);
 
-      expect(mySignals.output.model.toString().startsWith('Symbol(B')).toBe(true);
+      expect(mySignals.output.model.toString().startsWith('Symbol(S')).toBe(true);
     });
   });
 });

@@ -1,22 +1,22 @@
 import { combineLatest, of } from 'rxjs';
-import { filter, map, switchMap, withLatestFrom } from 'rxjs/operators';
-import { getBehaviorId, getEventId } from '../src/store-utils';
+import { filter, map, switchMap } from 'rxjs/operators';
+import { getDerivedId, getEventId, getStateId } from '../src/store-utils';
 import { awaitStringifyEqualState, expectSequence } from '../src/test-utils/test-utils';
 import { Store } from './../src/store';
 describe('Stateful query pattern', () => {
-  interface QueryType {
+  type QueryType = {
     firstName: string | null;
     lastName: string | null;
-  }
+  };
 
-  interface ResultType {
+  type ResultType = {
     result: Array<number | QueryType>;
     resultQuery: QueryType | null;
-  }
+  };
 
-  const queryBehavior = getBehaviorId<QueryType>();
-  const resultBehavior = getBehaviorId<ResultType>();
-  const loadingBehavior = getBehaviorId<boolean>();
+  const queryBehavior = getStateId<QueryType>();
+  const resultBehavior = getDerivedId<ResultType>();
+  const loadingBehavior = getDerivedId<boolean>();
   const queryEvent = getEventId<Partial<QueryType>>();
   const resultEvent = getEventId<ResultType>();
 
@@ -25,33 +25,25 @@ describe('Stateful query pattern', () => {
   beforeEach((): void => {
     store = new Store();
 
-    store.addBehavior(
-      queryBehavior,
-      store.getEventStream(queryEvent).pipe(
-        withLatestFrom(store.getBehavior(queryBehavior)),
-        map(([queryEvent, currentQuery]) => ({
-          ...currentQuery,
-          ...queryEvent,
-        })),
-      ),
-      false,
-      {
-        firstName: null,
-        lastName: null,
-      },
-    );
+    store.addState(queryBehavior, {
+      firstName: null,
+      lastName: null,
+    });
+    store.addReducer(queryBehavior, queryEvent, (state, event) => ({
+      ...state,
+      ...event,
+    }));
 
-    store.addBehavior(resultBehavior, store.getEventStream(resultEvent), true, {
+    store.addDerivedState(resultBehavior, store.getEventStream(resultEvent), {
       result: [],
       resultQuery: null,
     });
 
-    store.addBehavior(
+    store.addDerivedState(
       loadingBehavior,
       combineLatest([store.getBehavior(queryBehavior), store.getBehavior(resultBehavior)]).pipe(
         map(([query, result]) => query !== result.resultQuery),
       ),
-      true,
     );
 
     const eventSource = combineLatest([
