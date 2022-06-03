@@ -29,6 +29,7 @@ There is more however:
   * if you master _RxJs_ you've already mastered 80% of _rx-signals_
 * Offer clean abstractions for encapsulation
 * Offer clean abstractions for re-usability
+* Offer clean abstractions for composition
 
 ## Using the store <a name="store"></a>
 
@@ -38,9 +39,9 @@ The _rx-signals_ store is a class to reactively manage state and effects.
 * With respect to [state management](https://github.com/gneu77/rx-signals/blob/master/docs/rp_state_effects_start.md), the store is used
   * to define dependencies explicitly
   * to hold root-state and sources for derived-state
-* With respect to [reactivity](https://github.com/gneu77/rx-signals/blob/master/docs/rp_state_effects_start.md), the store is used
+* With respect to [reactivity](https://github.com/gneu77/rx-signals/blob/master/docs/rp_state_effects_start.md), the store
   * propagates changes via behaviors and event-streams
-  * for reactive dependency injection
+  * performs reactive dependency injection
 * With respect to [effects management](https://github.com/gneu77/blob/master/rx-signals/docs/rp_state_effects_start.md), the store
   * is the _world_ as pure function argument
   * is used to inject isolated side-effects
@@ -58,9 +59,11 @@ Signal identifiers
 
 A signal identifier can be either an event- or behavior id: `type SignalId<T> = BehaviorId<T> | EventId<T>`
 
-For a given event- or behavior-type `T`, you can obtain a new, unique id using `getEventId<T>():` or `getBehaviorId<T>():` (these are not store methods, but independent utility functions).
+There are also two different kinds of behavior ids, depending on whether it identifies a root-state or derived state: `type BehaviorId<T> = StateId<T> | DerivedId<T>`
 
-Under the hood, the returned identifier is a `symbol`. Thus, e.g. two calls of `getBehaviorId<number>()` will return two different identifiers!
+For a given event- or behavior-type `T`, you can obtain a new, unique id using `getEventId<T>()`, `getStateId<T>()` or `getDerivedId<T>()` (these are not store methods, but independent utility functions).
+
+Under the hood, the returned identifier is a `symbol`. Thus, e.g. two calls of `getEventId<number>()` will return two different identifiers!
 
 ### Events <a name="events"></a>
 
@@ -102,9 +105,9 @@ You can add further event-sources as follows:
 store.addEventSource(
   eventId: EventId<T>,
   observable: Observable<T>,
-);
+): symbol;
 ```
-* a `sourceIdentifier` is required, because it must be possible to remove event-sources from the store.
+* the returned `symbol` can be used to remove the event-source from the store.
 * `eventId` is your _event-type_
 * `observable` can be any observable of the correct _event-values-type_ (even a behavior)
   * The store will **not** eagerly subscribe the source-observable, but only, if the corresponding event-stream is subscribed
@@ -117,7 +120,7 @@ Of course, even if all added event-sources for a given _event-type_ complete, th
 
 There are some important **guarantees** concerning event-dispatch (whether manually or via event-sources):
 * The store always dispatches events asynchronously
-  * Relying on synchronous dispatch would break reactive design (remember that one purpose of RP is to [abstract away the need to think about time](https://github.com/gneu77/rx-signals/blob/master/docs/rp_state_effects_start.md#abstract_away_time)). The async dispatch also enables definition of cyclic dependencies.
+  * Relying on synchronous dispatch would break reactive design (remember that one purpose of RP is to [abstract away the need to think about time](https://github.com/gneu77/rx-signals/blob/master/docs/rp_state_effects_start.md#abstract_away_time)). The async dispatch also enables definition of cyclic dependencies (which are no problem in case of immutable architectures).
 * Though async, the order in which events are dispatched will always be preserved
   * So dispatching e.g. two events `A`, `B`, the `B` will be dispatched only after **all** subscribers got the `A`
   * This holds true even for the dispatch-order between parent- and child-stores (cause they're using a shared dispatch-queue)
@@ -160,7 +163,7 @@ The output will be in order of the numbers:
 Please have in mind that dispatching an event is always a side-effect. That means
 * you should use `dispatch` only to translate non-store events (like browser events) to store events
 * event-sources are either effects or event-transformers (mapping from one _event-type_ to another)
-  * though on a low-level, all side-effects could be implemented via event-sources, the store has an additional way to describe input-output-effects via the `Effect` type. This will be described later in the [EffectSignalsFactory section](#effect-signals-factory).
+  * though on a low-level, all side-effects could be implemented via event-sources, the store has an additional, better way to describe input-output-effects via the `Effect` type. This will be described later in the [EffectSignalsFactory section](#effect-signals-factory).
 
 The previous example was already a bit complicated and you should strive for a low number of event-sources that would lead to automatic dispatch->state->dispatch cycles.
 Nevertheless, it's important to fully understand how the dispatch-queue works.
@@ -236,88 +239,122 @@ store.add2TypedEventSource(
 );
 ```
 
-Without the last parameter, the `store.getEventStream(appError)` that you have somewhere in your global error-handler would automatically subscribe your 2-typed-event-source. Thus, the requirement that the effect should only be executed, if `myEffectSuccess` is subscribed would not be fulfilled.
+Without the last parameter, the `store.getEventStream(appError)` that you have somewhere in your global error-handler would automatically subscribe your 2-typed-event-source. Thus, the requirement that the effect should only be executed, if `myEffectSuccess` is subscribed, would not be fulfilled.
 However, with the last parameter, we are telling the store to subscribe the source only if `myEffectSuccess` is subscribed.
+
+Analogously, there are also methods `add3TypedEventSource`, `add4TypedEventSource`, etc. (cause I was not yet able to implement this as a single method that is still 100% type-safe).
 
 ### Behaviors <a name="behaviors"></a>
 
 If you don't know what a behavior in the sense of RP is, then head back to [Terminology](https://github.com/gneu77/rx-signals/blob/master/README.md#terminology).
 
 In _rx-signals_, a behavior is an _RxJs_-observable that always has the current value when subscribed.
-Behaviors represent observed state, either being root-state or derived state.
+Behaviors represent observed state, either being root-state or derived-state.
 In addition to this definition, _rx-signals_-behaviors
-1. can be non-lazy or lazy
+1. root-state-behaviors are non-lazy and derived-state-behaviors are lazy
     1. Non-lazy behaviors are subscribed by the store itself as soon as you add a corresponding behavior-source to the store.
     1. Lazy behaviors will **not** be subscribed by the store itself, as long as there are no subscribers.
-1. <a name="distinct_pipe"></a> always behave as if piped with `distinctUntilChanged()` and `shareReplay(1)`. (However, internally they do **not** use `shareReplay(1)` and thus, there is **no** risk of the memory-leaks that are possible with `shareReplay`.)
+1. <a name="distinct_pipe"></a> always behave as if piped with `distinctUntilChanged()` and `shareReplay(1)`. (However, internally they do **not** use `shareReplay(1)` and thus, there is **no** risk of the memory-leaks that are possible with `shareReplay` (or were possible at least in _RxJs < 7.0_).)
 
 Behaviors are used to model application state. Make sure to understand the importance of [modeling dependencies in your state explicitly](https://github.com/gneu77/rx-signals/blob/master/docs/rp_state_effects_start.md).
 As a rule of thumb, root-state (state that depends on events only) should be non-lazy, while derived-state should be modeled using lazy behaviors. (It is however also possible to make the complete state lazy, as well as it's possible to have non-lazy dependent state.)
-
-#### Basic behaviors
 
 No big surprise that getting a behavior from the store just requires a `BehaviorId<T>`:
 ```typescript
 store.getBehavior(behaviorId);
 ```
 
-Adding a lazy behavior source can either be done by:
-```typescript
-store.addDerivedState(
-  identifier: BehaviorId<T>,
-  observable: Observable<T>,
-  initialValueOrValueGetter: T | (() => T) | symbol = NO_VALUE,
-);
-```
+Behavior-sources can be added either via `addState + addReducer` or via `addDerivedState`.
+In contrast to event-streams, a behavior can have only one source.
+So if you call `addState` or `addDerivedState` two times with the same identifier, you will get an error on the second one (though you can remove a behavior source via `removeBehaviorSources` and then add a new source with the same identifier).
 
-or by using the low-level method `addBehavior` with the corresponding `subscribeLazy` argument set true:
-```typescript
-addBehavior<T>(
-  identifier: BehaviorId<T>,
-  observable: Observable<T>,
-  subscribeLazy: boolean,
-  initialValueOrValueGetter: T | (() => T) | symbol = NO_VALUE,
-);
-```
-
-Consequently, setting `subscribeLazy` to false, the same method can be used to add a non-lazy behavior source.
-In most cases however, you should use the `addState` method described in the next sub-section!
-
-* The `observable` argument to `addBehavior`, is the source of the behavior
-  * In contrast to event-streams, a behavior can have only one source. So if you call `addBehavior` (or `addState` or `addDerivedState`) two times with the same identifier, you will get an error on the second one (though you can remove a behavior source via `removeBehaviorSources` and then add a new source with the same identifier).
-  * As for event-streams, if the behavior-source completes, the behavior will **not** complete.
-    * In addition, after a behavior-source has completed, new subscribers of the behavior will still get the last value, as long as the behavior-source is not explicitly removed from the store!
-    * (However, having completing behavior-sources is often bad design. Prefer child-stores for behaviors that do not share the complete application lifetime.) 
-* The `initialValueOrValueGetter` is optional. It can be an inital value or a function that yields the initial value (so if the behavior is never subscribed, then the function will never be called).
+As for event-streams, if a behavior-source completes, the behavior will **not** complete.
+In addition, after a behavior-source has completed, new subscribers of the behavior will still get the last value, as long as the behavior-source is not explicitly removed from the store!
+(However, having completing behavior-sources is often bad design. Prefer child-stores for behaviors that do not share the complete application lifetime, or even better use `store.getLifecycleHandle`.)
 
 When you call `getBehavior` you're not just getting a piped observable of whatever you added as behavior-source.
 For example, you can subscribe a behavior even before a corresponding source has been added.
 This is what makes cyclic dependencies and reactive dependency injection possible.
 
+#### Root-state behaviors
+
+Root-state is state that depends on no other state (behaviors), but on event only.
+A root state can be added to the store as follows:
+```typescript
+store.addState(identifier, initialValueOrValueGetter);
+```
+
+Changes to a root-state happen in response to events.
+For each event a corresponding reducer (a pure function that gets the current state and the event and returns a new state) can be added as follows:
+```typescript
+store.addReducer(
+  stateId: StateId<T>,
+  eventId: EventId<E>,
+  stateReducer: (state: T, event: E) => T
+);
+```
+
+For a specific root-state, you can add as many reducers as you like, one for each event that should be handled (trying to add a second reducer with the same stateId **and** eventId would result in an error).
+
+It's time for the counter-example that is found in the documentation of almost all state-management libs (though for better demonstration, we use increaseBy and decreaseBy instead of simple increase/decrease):
+```typescript
+const counter = getStateId<number>();
+const increaseBy = getEventId<number>();
+const decreaseBy = getEventId<number>();
+
+store.addReducer(counter, increaseBy, (state, event) => state + event);
+store.addReducer(counter, decreaseBy, (state, event) => state - event);
+store.addState(counter, 0);
+```
+
+As you can see, it's no problem to add reducers **before** the state itself is added.
+This is possible, because all the wireing is done based on identifiers and not based on the corresponding observables.
+Hence, decoupling is achieved by defining dependencies based on identifiers instead of concrete sources (so the identifiers are kind of an interface).
+This is the same approach as in classic dependency injection, just better, because it's reactive.
+
+It is important to know that as soon as you add a reducer to the store, the store will subscribe the corresponding event-stream.
+If you have an event-stream that should be subscribed lazily, but still need it in a reducer, this might indicate a flawed design.
+However, there are cases where this is a valid requirement.
+You can then either use an X-typed event source with the `subscribeObservableOnlyIfEventIsSubscribed` argument described in a previous section, or you can handle this manually by switchMapping the source-observable of your event-source by any other behavior and/or event.
+
+#### Derived-state behaviors
+
+In contrast to root-state, derived-state usually depends on one or more other behaviors.
+Adding a derived-state behavior source is done by:
+```typescript
+store.addDerivedState(
+  identifier: DerivedId<T>,
+  observable: Observable<T>,
+  initialValueOrValueGetter: T | (() => T) | symbol = NO_VALUE,
+);
+```
+
+* The `observable` argument to `addDerivedState`, is the source of the behavior (and this source depends on other behaviors via all the standard _RxJs_ features you hopefully know).
+* The `initialValueOrValueGetter` is optional. It can be an inital value or a function that yields the initial value (so if the behavior is never subscribed, then the function will never be called).
+
 Here's an all-lazy example:
 ```typescript
-type QueryResult = {
+type QueryResult = Readonly<{
   result: string[];
   resultQuery: string | null;
-};
+}>;
 
-const query = getBehaviorId<string>();
-const result = getBehaviorId<QueryResult>();
-const pending = getBehaviorId<boolean>();
+const query = getDerivedId<string>();
+const result = getDerivedId<QueryResult>();
+const pending = getDerivedId<boolean>();
 const setQuery = getEventId<string>();
 const setResult = getEventId<QueryResult>();
 
-store.addBehavior(query, store.getEventStream(setQuery), true, ''); // or addDerivedState
-store.addBehavior(result, store.getEventStream(setResult), true, {
+store.addDerivedState(query, store.getEventStream(setQuery), '');
+store.addDerivedState(result, store.getEventStream(setResult), {
   result: [],
   resultQuery: null,
 });
-store.addBehavior(
+store.addDerivedState(
   pending,
   combineLatest([store.getBehavior(query), store.getBehavior(result)]).pipe(
     map(([q, r]) => q !== r.resultQuery),
   ),
-  true,
 );
 store.addEventSource( // MockupQueryEffect
   setResult,
@@ -340,54 +377,14 @@ Here's a visual representation of the above setup:
 As all behaviors are lazy, dispatching a `setQuery` event will be a no-op, as long as none of the behaviors is subscribed.
 Subscribing to the `query` behavior only, would still not trigger the effect.
 But as soon as the `pending` and/or the `result` behavior is subscribed, the effect (event-source) will start operating.
-In other words, it would be no problem to define the `query` behavior as non-lazy behavior (though there's no good reason to do so in this example).
-In general, you should aim for as many lazy behaviors as possible.
-
-However, there are definitely behaviors that must be non-lazy.
-The rule is simple: If it would be a logical error that a behavior-source misses one of the events it depends on, then it must be non-lazy.
-(See the docstring for store.addBehavior to get some more guidance on when to use lazy vs. non-lazy!)
-
-So far, defining a behavior that depends on multiple different events would be a bit clumsy (you'd have to use `getTypedEventStream` instead of `getEventStream` to differentiate between the merged events).
-Instead, you should use the state-reducer API from the next section to setup root-state-behaviors (non-derived behaviors).
-
-#### State-Reducer API
-
-In addition to the general `addBehavior` method from the previous section, there are more idiomatic methods to add and reduce certain root-state.
-```typescript
-store.addState(identifier, initialValueOrValueGetter);
-```
-adds a non-lazy behavior-source (which so far would be equivalent to `store.addBehavior(identifier, NEVER, false, initialValueOrValueGetter)` or `store.addBehavior(identifier, of(initialValue), false)`).
-
-However, you can add as many reducers for this state as you like, one for each event that should be handled (trying to add a second reducer with the same stateId **and** eventId would result in an error):
-```typescript
-store.addReducer(
-  stateId: BehaviorId<T>,
-  eventId: EventId<E>,
-  stateReducer: (state: T, event: E) => T
-);
-```
-
-It's time for the counter-example that is found in the documentation of almost all state-management libs (though for better demonstration, we use increaseBy and decreaseBy instead of simple increase/decrease):
-```typescript
-const counter = getBehaviorId<number>();
-const increaseBy = getEventId<number>();
-const decreaseBy = getEventId<number>();
-
-store.addReducer(counter, increaseBy, (state, event) => state + event);
-store.addReducer(counter, decreaseBy, (state, event) => state - event);
-store.addState(counter, 0);
-```
-
-As you can see, it's no problem to add reducers **before** the state itself is added.
-This is possible, because all the wireing is done based on identifiers and not on the corresponding observables.
-Hence, decoupling is achieved by defining dependencies based on identifiers instead of concrete sources.
-This is the same approach as in classic dependency injection, just better, because it's reactive...
+In other words, it would be no problem to define the `query` behavior as non-lazy behavior.
+In fact you would likely do so in reality, using addState and a corresponding reducer.
 
 ### Reactive dependency injection <a name="reactive-di"></a>
 
 Classic DI is used to decouple usage and creation of dependencies.
 It thus allows for different concrete types without breaking dependencies, e.g. to allow for simple testability.
-But there's a problem with classic DI. All dependencies still need to be available at the time of object creation (class instantiation), because they are used in imperative instead of reactive code.
+But there's a problem with classic DI. All dependencies still need to be available at the time of object creation (e.g. class instantiation), because they are used in imperative instead of reactive code.
 Some DI-implementations even have problems with cyclic dependencies (which is no issue at all for our reactive DI).
 Again, remember that one feature of RP is to [abstract away the need to think about time](https://github.com/gneu77/rx-signals/blob/master/docs/rp_state_effects_start.md#abstract_away_time).
 
@@ -398,17 +395,17 @@ This will be detailed in the [Testing section](#testing)
 > You might say 'Wait, isn't this more like a reactive service locator?'.
 > Well yes, the store is some kind of service locator.
 > And also no, because you don't get the dependencies itself from the store, but you get them wrapped into an observable.
-> This makes a difference, because some arguments against classic service locators do not apply to the _rx-signals-store_.
+> This makes all the difference, because some arguments against classic service locators do not apply to the _rx-signals-store_.
 > Thus, I don't like to bring in this somehow biased term and instead keep calling it reactive DI.
-> In classic-DI, you e.g. define an injection-point via annotated-interface and the DI-lib takes care to create and inject the concrete dependency at that point.
-> In reactive-DI, your injection-point is a behavior you request from the store via an identifier that corresponds to the interface. The store then injects the concrete dependency as soon as it becomes available.
+> In classic-DI, you e.g. define an injection-point via annotated-interface and the DI-environment takes care to create and inject the concrete dependency on that point.
+> In reactive-DI, your injection-point is a `BehaviorId` that corresponds to the interface. The store then injects the concrete dependency (behavior) as soon as its source becomes available.
 > The only drawback compared to classic-DI is that the depending code needs to know the store. However, being some kind of reactive-runtime, the store is practically needed everywhere.
 
 ## Encapsulation via Signals-type <a name="signals-type"></a>
 
 In the previous section, we tallied that in _rx-signals_, decoupling is done by wireing dependencies based on identifiers.
 But of course, we still want to be able to somehow bundle certain behaviors and events that belong together, to achieve encapsulation and high cohesion.
-We also might want to hide certain signals from being used directly.
+E.g., we might want to hide certain signals from being used directly.
 We need something that can serve as a blackbox component with defined input and output.
 This leads to the following requirements:
 * The creation of `SignalId`s and the setup of the store (using the `SignalId`s) must be separated somehow.
@@ -446,10 +443,10 @@ type CounterInput = {
   decreaseBy: EventId<number>;
 };
 type CounterOutput = {
-  counterState: BehaviorId<number>;
+  counterState: BehaviorId<number>; // on purpose no StateId
 };
 const getCounterSignals: () => Signals<CounterInput, CounterOutput> = () => {
-  const counter = getBehaviorId<number>();
+  const counter = getStateId<number>();
   const increaseBy = getEventId<number>();
   const decreaseBy = getEventId<number>();
   return {
@@ -471,21 +468,25 @@ const getCounterSignals: () => Signals<CounterInput, CounterOutput> = () => {
 ```
 
 In more complex scenarios, we could have added many more signals to the store that we might use internally, but still just expose the counter signal as output.
+Also note, that we expose it as `BehaviorId` and not as `StateId`.
+This is on purpose to serve encapsulation, because a `BehaviorId` cannot be used to add additional reducers from outside.
+Alternatively we could have used an internalCounterId for the root-state and a counterId for a derived-state that we expose.
+
 We can use `getCounterSignals` to create as many counters as we like.
 
 Next, we encapsulate the creation of a signal that depends on two number-streams (calculating the sum of those numbers):
 ```typescript
 type SumInput = {
-  inputA: BehaviorId<number>;
-  inputB: BehaviorId<number>;
+  inputA: DerivedId<number>;
+  inputB: DerivedId<number>;
 };
 type SumOutput = {
-  counterSum: BehaviorId<number>;
+  counterSum: DerivedId<number>;
 };
 const getSumSignals: () => Signals<SumInput, SumOutput> = () => {
-  const inputA = getBehaviorId<number>();
-  const inputB = getBehaviorId<number>();
-  const counterSum = getBehaviorId<number>();
+  const inputA = getDerivedId<number>();
+  const inputB = getDerivedId<number>();
+  const counterSum = getDerivedId<number>();
   return {
     input: { inputA, inputB },
     output: { counterSum },
@@ -537,14 +538,14 @@ const getCounterWithSumSignals: () => Signals<ComposedInput, SumOutput> = () => 
 
 (Again, please note that the order in which the setup functions are called is irrelevant.)
 
-Also we learned about a new store method `connect` which is a shorter convenience method to connect an event or behavior to another event or behavior based on IDs (under the hood a corresponding event-source or behavior for the target id will be added to the store), hence to connect some output-signal to some input-signal.
+Also we learned about a new store method `connect` which is a shorter convenience method to connect an event or behavior to another event or behavior based on IDs (under the hood a corresponding event-source or behavior-source for the target id will be added to the store), hence to connect some output-signal to some input-signal.
 Connect can be used to easily transform event-streams to behaviors and vice-versa.
 
 The above way to compose a signals factory from two other factories might be OK in this trivial example.
 But as soon as things get more complex, this kind of 'manual' composition becomes inflexible, verbose and error-prone.
 E.g. it's easy to forget calling the setup function of one of the signals being composed.
 And even if you don't forget it, it's still boilerplate.
-The next sections present a signals factory type that allows for a much better, generalized composition.
+The next sections present a signals factory type that allows for a much better, generalized, declarative composition.
 
 ## Reusability via SignalsBuild <a name="signals-build-type"></a>
 
@@ -695,7 +696,7 @@ type ModelInput<T> = {
 type ModelOutput<T> = { model: BehaviorId<T> };
 type ModelConfig<T> = { defaultModel: T };
 const getModelSignals = <T>(config: ModelConfig<T>): Signals<ModelInput<T>, ModelOutput<T>> => {
-  const model = getBehaviorId<T>();
+  const model = getStateId<T>();
   const setModel = getEventId<T>();
   const updateModel = getEventId<Partial<T>>();
   const resetModel = getEventId<void>();
@@ -736,7 +737,7 @@ type SortingInput = {
 };
 type SortingOutput = { sorting: BehaviorId<SortParameter> };
 const getSortingSignals = (): Signals<SortingInput, SortingOutput> => {
-  const sorting = getBehaviorId<SortParameter>();
+  const sorting = getStateId<SortParameter>();
   const ascending = getEventId<string>();
   const descending = getEventId<string>();
   const none = getEventId<void>();
@@ -776,7 +777,7 @@ type PagingInput = {
 };
 type PagingOutput = { paging: BehaviorId<PagingParameter> };
 const getPagingSignals = (): Signals<PagingInput, PagingOutput> => {
-  const paging = getBehaviorId<PagingParameter>();
+  const paging = getStateId<PagingParameter>();
   const setPage = getEventId<number>();
   const setPageSize = getEventId<number>();
   return {
@@ -860,7 +861,6 @@ const getQueryWithResultFactory = <FilterType, ResultType>() =>
         ]),
       'input',
       false, // we don't want to keep 'input' in the composed factory
-      true, // as we're connecting behaviors, we can safely subscribe lazily
     )
     .mapConfig((config: QueryWithResultConfig<FilterType, ResultType>) => ({
       c1: {
@@ -985,12 +985,12 @@ type EffectSignalsFactory<InputType, ResultType> = SignalsFactory<
   EffectFactoryEffects<InputType, ResultType>
 >;
 type EffectInputSignals<InputType> = {
-  input: BehaviorId<InputType>;
+  input: DerivedId<InputType>;
   invalidate: EventId<void>;
   trigger: EventId<void>;
 };
 type EffectOutputSignals<InputType, ResultType> = {
-  combined: BehaviorId<CombinedEffectResult<InputType, ResultType>>;
+  combined: DerivedId<CombinedEffectResult<InputType, ResultType>>;
   errors: EventId<EffectError<InputType>>;
   successes: EventId<EffectSuccess<InputType, ResultType>>;
 };
@@ -1039,13 +1039,13 @@ E.g., if you have to validate a date for not being in the future, it's impure du
 I skip an example and instead show only the corresponding types:
 ```typescript
 type ValidatedInputWithResultInput<InputType> = {
-  input: BehaviorId<InputType>;
+  input: DerivedId<InputType>;
   validationInvalidate: EventId<void>;
   resultInvalidate: EventId<void>;
   resultTrigger: EventId<void>;
 };
 type ValidatedInputWithResultOutput<InputType, ValidationType, ResultType> = {
-  combined: BehaviorId<ValidatedInputWithResult<InputType, ValidationType, ResultType>>;
+  combined: DerivedId<ValidatedInputWithResult<InputType, ValidationType, ResultType>>;
   validationErrors: EventId<EffectError<InputType>>;
   validationSuccesses: EventId<EffectSuccess<InputType, ValidationType>>;
   resultErrors: EventId<EffectError<InputType>>;
@@ -1095,7 +1095,7 @@ type CounterOutput = {
   counter: BehaviorId<number>;
 };
 const counterFactory = new SignalsFactory<CounterInput, CounterOutput>(() => {
-  const counter = getBehaviorId<number>();
+  const counter = getStateId<number>();
   const inc = getEventId<void>();
   const dec = getEventId<void>();
   return {
@@ -1141,7 +1141,6 @@ const randomNumberSignals = counterFactory
       combineLatest([store.getBehavior(output.from), store.getBehavior(output.to)]),
     'input',
     false,
-    true,
   )
   .mapInput(input => ({ // mapping the resulting input signal-id-names
     incFrom: input.conflicts1.inc,

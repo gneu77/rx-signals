@@ -1,5 +1,5 @@
 import { Signals, SignalsFactory } from './signals-factory';
-import { EventId, getEventId, getStateId, StateId } from './store-utils';
+import { BehaviorId, EventId, getEventId, getStateId } from './store-utils';
 
 /**
  * Type specifying the input signal ids produced by a ModelSignalsFactory (the corresponding signal-sources
@@ -25,7 +25,7 @@ export type ModelInputSignals<T> = {
  * @property {StateId<T>} model - identifier for the model behavior
  */
 export type ModelOutputSignals<T> = {
-  model: StateId<T>;
+  model: BehaviorId<T>; // on purpose no StateId to keep encapsulation (BehaviorId cannot be used to add more reducers)
 };
 
 /**

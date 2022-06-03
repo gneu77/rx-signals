@@ -11,7 +11,7 @@
         <stop stop-opacity="0.8627" stop-color="rgb(255,255,255)" offset="0%"/>
         <stop stop-opacity="0.1255" stop-color="rgb(255,255,255)" offset="100%"/>
       </linearGradient>
-      <linearGradient x1="340.3" gradientUnits="userSpaceOnUse" x2="353.1163" y1="70.2471" y2="104.2027" id="linearGradient3" spreadMethod="pad">
+      <linearGradient x1="340.3" gradientUnits="userSpaceOnUse" x2="350.1999" y1="70.2471" y2="101.1915" id="linearGradient3" spreadMethod="pad">
         <stop stop-opacity="0.8627" stop-color="rgb(255,255,255)" offset="0%"/>
         <stop stop-opacity="0.1255" stop-color="rgb(255,255,255)" offset="100%"/>
       </linearGradient>
@@ -131,19 +131,19 @@
         <path d="M-320.3 -2.2471 L481.7 -2.2471 L481.7 402.7529 L-320.3 402.7529 L-320.3 -2.2471 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="clipPath22">
-        <path d="M-180.3 -62.9746 L621.7 -62.9746 L621.7 681.7526 L-180.3 681.7526 L-180.3 -62.9746 Z"/>
+        <path d="M-180.3 -96.1124 L621.7 -96.1124 L621.7 1040.4961 L-180.3 1040.4961 L-180.3 -96.1124 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="clipPath23">
-        <path d="M-320.3 -62.9746 L481.7 -62.9746 L481.7 681.7526 L-320.3 681.7526 L-320.3 -62.9746 Z"/>
+        <path d="M-320.3 -96.1124 L481.7 -96.1124 L481.7 1040.4961 L-320.3 1040.4961 L-320.3 -96.1124 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="clipPath24">
-        <path d="M-180.3 -51.6494 L621.7 -51.6494 L621.7 353.3506 L-180.3 353.3506 L-180.3 -51.6494 Z"/>
+        <path d="M-180.3 -45.6494 L621.7 -45.6494 L621.7 359.3506 L-180.3 359.3506 L-180.3 -45.6494 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="clipPath25">
-        <path d="M-62.9037 -51.6494 L174.7259 -51.6494 L174.7259 353.3506 L-62.9037 353.3506 L-62.9037 -51.6494 Z"/>
+        <path d="M-62.9037 -45.6494 L174.7259 -45.6494 L174.7259 359.3506 L-62.9037 359.3506 L-62.9037 -45.6494 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="clipPath26">
-        <path d="M-320.3 -51.6494 L481.7 -51.6494 L481.7 353.3506 L-320.3 353.3506 L-320.3 -51.6494 Z"/>
+        <path d="M-320.3 -45.6494 L481.7 -45.6494 L481.7 359.3506 L-320.3 359.3506 L-320.3 -45.6494 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="clipPath27">
         <path d="M-17.5 -3.4635 L784.5 -3.4635 L784.5 428.5365 L-17.5 428.5365 L-17.5 -3.4635 Z"/>
@@ -302,18 +302,17 @@
       <image x="0" y="0" clip-path="url(#clipPath19)" width="32" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAqklEQVR4Xu2SuwrC&#13;&#10;UBBEr2/UQjCoYJVCLdMIYiVYBAT//38yh5gP2DXlHDjtndndW4oxxhgzHpOkf8ED&#13;&#10;Uzn7OU+YhnBCF3Il13Ijt0FTDJMvSx+6k5U8yKM8BUxBAdZH+F6eZS0v8hY0BdOz&#13;&#10;diYn/CobeZePoCm4PTdn+rr04U/5ku+gKSjA+rk5a2dywlv5CZpiKMCH446skml4&#13;&#10;8Bs0hQu4gAu4gAuMVqADPS9GsZTTxjYAAAAASUVORK5CYII=" height="32" preserveAspectRatio="none"/>
       <image x="0" y="0" transform="matrix(3.375,0,0,1,32,0)" clip-path="url(#clipPath20)" width="32" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAUklEQVR4Xu3IsQ2A&#13;&#10;QBDEQCORUcB3QAnkZEj0388X4Hw3OUuTGKZpmqYJjjLOMq4yVhl3GU8ZbxlfGX+Z&#13;&#10;RppGmkaaRppGmkaaRppGmkaaRppG1AbG7ZIBO0NCHAAAAABJRU5ErkJggg==" height="32" preserveAspectRatio="none"/>
       <image x="0" y="0" transform="matrix(1,0,0,1,140,0)" clip-path="url(#clipPath21)" width="32" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAoklEQVR4Xu3ROQpC&#13;&#10;YQxF4es8geCsjYJTpYXiUAlPEBTd/348ElzAH18j5MLXHxIpFovFYjGp8INcVnYq&#13;&#10;oagcYloOTTRQk8V8Q1wbJRpigC7aspiKLMK1daIVFphhgo7sGp9LuK5wSnTEHlss&#13;&#10;MZZdoipnwDVRhgvO2GAqu0Jdzjc8Et1xk0XsMEdP9gZXwCvRUxaR4SB7Q18REAER&#13;&#10;EAER8K8Bb5OvSpGceNlAAAAAAElFTkSuQmCC" height="32" preserveAspectRatio="none"/>
-      <image x="0" y="0" transform="matrix(1,0,0,0.5438,0,32)" clip-path="url(#clipPath22)" width="32" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAARElEQVR4Xu3OsQkA&#13;&#10;IRQFQeGyK8ASLMH8MsH++/G1cB/DWdh8Wqv15Df3PPLMX155/7wUAAAAAAAAAAAA&#13;&#10;AAAAAADANcABDP6RgTI0q7QAAAAASUVORK5CYII=" height="32" preserveAspectRatio="none"/>
-      <image x="0" y="0" transform="matrix(1,0,0,0.5438,140,32)" clip-path="url(#clipPath23)" width="32" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAASUlEQVR4Xu3OsQkA&#13;&#10;IBQD0WBn7wiO4AB2H3T/fUxtI4rlBa7Ok6R52XDhumuuuuKyS3rYfnAKAAAAAAAA&#13;&#10;AAAAAAAAAAAAAPAVsACP6ZmBg2qKHgAAAABJRU5ErkJggg==" height="32" preserveAspectRatio="none"/>
-      <image x="0" y="0" transform="matrix(1,0,0,1,0,49.4023)" clip-path="url(#clipPath24)" width="32" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAArUlEQVR4Xu3SSwvB&#13;&#10;URCG8XG/LBShrJTbio2wU3+liO//fTxvJ3szNsq89ds/zTlmsTXQxxQbnHDBHU+n&#13;&#10;0DIgAzIgAzLgpwLWOKLCDQ+n0N4BYyyxxxlXKxEeoSmgixHm2Fl5BkVUTqHV0cEA&#13;&#10;M6ywtXKJg1NoNTStPMPQSoQusbASo3/xqfB0hRZ6Vi6hEP2JiVN4uoIidIm2lT+h&#13;&#10;GF3F4+u9Q0Sf0yuXy+Vyf74XwVBKjOYsHOYAAAAASUVORK5CYII=" height="32" preserveAspectRatio="none"/>
-      <image x="0" y="0" transform="matrix(3.375,0,0,1,32,49.4023)" clip-path="url(#clipPath25)" width="32" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAU0lEQVR4Xu3IoQ2A&#13;&#10;UBTF0CY4PCOwAQPgfgL778MA9fcKXpNjCvCWaaRppGmkaaRppGmkaaRppGmkaaRp&#13;&#10;pPGUscq4y7jKOMs4ytjL2MqmaZqmn/cB5OOaAcaws0wAAAAASUVORK5CYII=" height="32" preserveAspectRatio="none"/>
-      <image x="0" y="0" transform="matrix(1,0,0,1,140,49.4023)" clip-path="url(#clipPath26)" width="32" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAvElEQVR4Xu3SuQoC&#13;&#10;YRAD4HgfICgqWAlelY2idoKLhaK+//uYsNjYyMxaJvC1O5n5FwBeQU+6U0FHWtOE&#13;&#10;elRHIt8DfnEBF3ABF3CBvxfQByMedKMLHWiFigW0TYSGX+lMO1rQGBUKFEHaXMNP&#13;&#10;tKU5jaiDZAG9Y4TOvkc5XOef0YDaVEMimyD9dEuUm2v4EOX5m0gWmAbph9Ob6+za&#13;&#10;XMNbSJ5f6QdpoHRRnl2bp4crjQQNFJ08dXbHcRzH+eQNvmVOpu9k5ZkAAAAASUVO&#13;&#10;RK5CYII=" height="32" preserveAspectRatio="none"/>
-      <rect x="340.3" y="70.2471" transform="matrix(1,0,0,1,-327.3,-57.2471)" clip-path="url(#clipPath2)" fill="rgb(204,255,204)" width="140" image-rendering="auto" rx="1.5" ry="1.5" height="49.4023" stroke="none"/>
-      <path fill="url(#linearGradient3)" d="M341.05 73.2471 Q341.05 70.9971 343.3 70.9971 L428.3 70.9971 Q430.55 70.9971 430.55 73.2471 Q430.55 75.4971 388.05 92.258 Q345.55 109.0189 343.3 109.0189 Q341.05 109.0189 341.05 106.7689 Z" clip-path="url(#clipPath2)" transform="matrix(1,0,0,1,-327.3,-57.2471)" stroke="none" image-rendering="auto"/>
+      <image x="0" y="0" transform="matrix(1,0,0,0.3563,0,32)" clip-path="url(#clipPath22)" width="32" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAARElEQVR4Xu3OsQkA&#13;&#10;IRQFQeGyK8ASLMH8MsH++/G1cB/DWdh8Wqv15Df3PPLMX155/7wUAAAAAAAAAAAA&#13;&#10;AAAAAADANcABDP6RgTI0q7QAAAAASUVORK5CYII=" height="32" preserveAspectRatio="none"/>
+      <image x="0" y="0" transform="matrix(1,0,0,0.3563,140,32)" clip-path="url(#clipPath23)" width="32" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAASUlEQVR4Xu3OsQkA&#13;&#10;IBQD0WBn7wiO4AB2H3T/fUxtI4rlBa7Ok6R52XDhumuuuuKyS3rYfnAKAAAAAAAA&#13;&#10;AAAAAAAAAAAAAPAVsACP6ZmBg2qKHgAAAABJRU5ErkJggg==" height="32" preserveAspectRatio="none"/>
+      <image x="0" y="0" transform="matrix(1,0,0,1,0,43.4023)" clip-path="url(#clipPath24)" width="32" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAArUlEQVR4Xu3SSwvB&#13;&#10;URCG8XG/LBShrJTbio2wU3+liO//fTxvJ3szNsq89ds/zTlmsTXQxxQbnHDBHU+n&#13;&#10;0DIgAzIgAzLgpwLWOKLCDQ+n0N4BYyyxxxlXKxEeoSmgixHm2Fl5BkVUTqHV0cEA&#13;&#10;M6ywtXKJg1NoNTStPMPQSoQusbASo3/xqfB0hRZ6Vi6hEP2JiVN4uoIidIm2lT+h&#13;&#10;GF3F4+u9Q0Sf0yuXy+Vyf74XwVBKjOYsHOYAAAAASUVORK5CYII=" height="32" preserveAspectRatio="none"/>
+      <image x="0" y="0" transform="matrix(3.375,0,0,1,32,43.4023)" clip-path="url(#clipPath25)" width="32" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAU0lEQVR4Xu3IoQ2A&#13;&#10;UBTF0CY4PCOwAQPgfgL778MA9fcKXpNjCvCWaaRppGmkaaRppGmkaaRppGmkaaRp&#13;&#10;pPGUscq4y7jKOMs4ytjL2MqmaZqmn/cB5OOaAcaws0wAAAAASUVORK5CYII=" height="32" preserveAspectRatio="none"/>
+      <image x="0" y="0" transform="matrix(1,0,0,1,140,43.4023)" clip-path="url(#clipPath26)" width="32" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAvElEQVR4Xu3SuQoC&#13;&#10;YRAD4HgfICgqWAlelY2idoKLhaK+//uYsNjYyMxaJvC1O5n5FwBeQU+6U0FHWtOE&#13;&#10;elRHIt8DfnEBF3ABF3CBvxfQByMedKMLHWiFigW0TYSGX+lMO1rQGBUKFEHaXMNP&#13;&#10;tKU5jaiDZAG9Y4TOvkc5XOef0YDaVEMimyD9dEuUm2v4EOX5m0gWmAbph9Ob6+za&#13;&#10;XMNbSJ5f6QdpoHRRnl2bp4crjQQNFJ08dXbHcRzH+eQNvmVOpu9k5ZkAAAAASUVO&#13;&#10;RK5CYII=" height="32" preserveAspectRatio="none"/>
+      <rect x="340.3" y="70.2471" transform="matrix(1,0,0,1,-327.3,-57.2471)" clip-path="url(#clipPath2)" fill="rgb(204,255,204)" width="140" image-rendering="auto" rx="1.5" ry="1.5" height="43.4023" stroke="none"/>
+      <path fill="url(#linearGradient3)" d="M341.05 73.2471 Q341.05 70.9971 343.3 70.9971 L428.3 70.9971 Q430.55 70.9971 430.55 73.2471 Q430.55 75.4971 388.05 89.858 Q345.55 104.2189 343.3 104.2189 Q341.05 104.2189 341.05 101.9689 Z" clip-path="url(#clipPath2)" transform="matrix(1,0,0,1,-327.3,-57.2471)" stroke="none" image-rendering="auto"/>
     </g>
     <g stroke-linecap="butt" transform="matrix(1,0,0,1,-147,-55)" text-rendering="geometricPrecision" font-family="sans-serif" shape-rendering="geometricPrecision" font-style="italic" stroke-miterlimit="1.45">
-      <text x="365.6047" xml:space="preserve" y="84.9609" clip-path="url(#clipPath2)" stroke="none">addState</text>
-      <text x="365.6047" xml:space="preserve" y="99.6621" clip-path="url(#clipPath2)" stroke="none">addDerivedState</text>
-      <text x="365.6047" xml:space="preserve" y="114.3633" clip-path="url(#clipPath2)" stroke="none">addBehavior</text>
+      <text x="365.6047" xml:space="preserve" y="89.3115" clip-path="url(#clipPath2)" stroke="none">addState</text>
+      <text x="365.6047" xml:space="preserve" y="104.0127" clip-path="url(#clipPath2)" stroke="none">addDerivedState</text>
     </g>
     <g text-rendering="geometricPrecision" shape-rendering="geometricPrecision" transform="matrix(1,0,0,0.9375,17.5,3.2471)" image-rendering="optimizeQuality">
       <image x="0" y="0" clip-path="url(#clipPath27)" width="32" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAABACAYAAAB7jnWuAAABKUlEQVR4Xu2YuUoE&#13;&#10;QBAFez3WCxRvNHHxilwDL0yUFXZR9P//x1eMg6ndayD4Ciqdft0zSU+EMcYY83sM&#13;&#10;is4FByzIxS+XCpahOEWX5Ypck+tyI2mJ3vkwWtEtuSv35YE8TFiCAIyP4jvyWI7k&#13;&#10;ubxMWoLuGTudU/xCXstb+ZC0BHfPndP9KFrxR/ksX5KWIADj584ZO51TfCbfkpbo&#13;&#10;AXhw3COjpBsO/EhawgEcwAEcwAEcwAEcwAEcwAH+VADWsns5ka/yPWmJHmBPnskb&#13;&#10;+SSn0UJkLEGA1Wi74YkcR7sGQkySlujb8aY8irYfXkWbxF3SEoP4/h/YjhaCSZxG&#13;&#10;C8O7+KllmALfM6zpTIIgvAk25oxlmAIhmMQw2pvo/0QZ56YHQR5nVmOMMf+cTxda&#13;&#10;kTxtXhGuAAAAAElFTkSuQmCC" height="64" preserveAspectRatio="none"/>
@@ -459,8 +458,8 @@
       <text x="549.4193" xml:space="preserve" y="427.415" clip-path="url(#clipPath2)" stroke="none">getEffect</text>
     </g>
     <g text-rendering="geometricPrecision" stroke-miterlimit="1.45" shape-rendering="geometricPrecision" transform="matrix(1,0,0,1,-147,-55)" stroke-linecap="butt">
-      <path fill="none" d="M410.3 119.6157 L410.3 162.0267" clip-path="url(#clipPath2)"/>
-      <path d="M410.3 170.0267 L415.3 158.0267 L410.3 161.0267 L405.3 158.0267 Z" clip-path="url(#clipPath2)" stroke="none"/>
+      <path fill="none" d="M410.3 113.6209 L410.3 161.9783" clip-path="url(#clipPath2)"/>
+      <path d="M410.3 169.9783 L415.3 157.9783 L410.3 160.9783 L405.3 157.9783 Z" clip-path="url(#clipPath2)" stroke="none"/>
       <path fill="none" d="M743.1 113.6209 L743.1 161.9783" clip-path="url(#clipPath2)"/>
       <path d="M743.1 169.9783 L748.1 157.9783 L743.1 160.9783 L738.1 157.9783 Z" clip-path="url(#clipPath2)" stroke="none"/>
       <path fill="none" d="M743.1 199.9678 L743.1 237.0114" stroke-width="4" clip-path="url(#clipPath2)"/>

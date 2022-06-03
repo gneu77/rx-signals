@@ -11,7 +11,6 @@ import {
   getDerivedId,
   getEventId,
   getStateId,
-  StateId,
 } from './../src/store-utils';
 
 describe('signals factories documentation', () => {
@@ -26,7 +25,7 @@ describe('signals factories documentation', () => {
       decreaseBy: EventId<number>;
     };
     type CounterOutput = {
-      counter: StateId<number>;
+      counter: BehaviorId<number>;
     };
     const getCounterSignals: () => Signals<CounterInput, CounterOutput> = () => {
       const counter = getStateId<number>();
