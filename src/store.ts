@@ -80,20 +80,20 @@ export type LifecycleHandle = {
  * The previousInput argument can be used e.g. to decide whether the effect must perform
  * a computation/query/etc., or if maybe the previousResult can be returned directly.
  *
- * @typedef {function} Effect<InputType, ResultType> - function performing an effect and returning an observable with the result
- * @template InputType - specifies the input type for the effect
- * @template ResultType - specifies the result type for the effect
- * @property {InputType} input - the effect input
+ * @typedef {function} Effect<Input, Result> - function performing an effect and returning an observable with the result
+ * @template Input - specifies the input type for the effect
+ * @template Result - specifies the result type for the effect
+ * @property {Input} input - the effect input
  * @property {Store} store - the Store instance that will be passed to the function (e.g. to inject some other Effect).
- * @property {InputType | undefined} previousInput - the input of the previous function invocation, or undefined
- * @property {ResultType | undefined} previousResult - the result of the previous function invocation, or undefined
+ * @property {Input | undefined} previousInput - the input of the previous function invocation, or undefined
+ * @property {Result | undefined} previousResult - the result of the previous function invocation, or undefined
  */
-export type Effect<InputType, ResultType> = (
-  input: InputType,
+export type Effect<Input, Result> = (
+  input: Input,
   store: Store,
-  previousInput?: InputType,
-  previousResult?: ResultType,
-) => Observable<ResultType>;
+  previousInput?: Input,
+  previousResult?: Result,
+) => Observable<Result>;
 
 /**
  * The rx-signals Store provides RxJs-Observables for RP (reactive programming) BehaviorStreams

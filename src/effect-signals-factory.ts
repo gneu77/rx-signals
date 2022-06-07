@@ -16,50 +16,50 @@ import {
 /**
  * This specifies the type for the lazy behavior produced by EffectSignals.
  *
- * @typedef {object} CombinedEffectResult<InputType, ResultType> - type for the behavior produced by effect signal factories
- * @template InputType - specifies the input type for the effect
- * @template ResultType - specifies the result type of the effect
- * @property {InputType | undefined} currentInput - current input (which might differ from the resultInput)
- * @property {InputType | undefined} resultInput - the input that produced the current result (or undefined, if result is undefined)
- * @property {ResultType | undefined} result - the current result (or undefined, if no result was received yet)
+ * @typedef {object} CombinedEffectResult<Input, Result> - type for the behavior produced by effect signal factories
+ * @template Input - specifies the input type for the effect
+ * @template Result - specifies the result type of the effect
+ * @property {Input | undefined} currentInput - current input (which might differ from the resultInput)
+ * @property {Input | undefined} resultInput - the input that produced the current result (or undefined, if result is undefined)
+ * @property {Result | undefined} result - the current result (or undefined, if no result was received yet)
  * @property {boolean} resultPending - indicates whether the effect is currently running. (In case of a factory without trigger, this will be true whenever currentInput !== resultInput, or whenever an invalidation event has been sent)
  */
-export type CombinedEffectResult<InputType, ResultType> = {
-  currentInput?: InputType;
-  result?: ResultType;
-  resultInput?: InputType;
+export type CombinedEffectResult<Input, Result> = {
+  currentInput?: Input;
+  result?: Result;
+  resultInput?: Input;
   resultPending: boolean;
 };
 
 /**
  * Type for error events produced by an EffectSignals (unhandled effect errors).
  *
- * @typedef {object} EffectError<InputType> - type for error events produced by EffectSignals
- * @template InputType - specifies the input type for the effect
+ * @typedef {object} EffectError<Input> - type for error events produced by EffectSignals
+ * @template Input - specifies the input type for the effect
  * @property {any} error - the unhandled error thrown by an effect
- * @property {InputType} errorInput - the effect input that lead to the error
+ * @property {Input} errorInput - the effect input that lead to the error
  */
-export type EffectError<InputType> = {
+export type EffectError<Input> = {
   error: any;
-  errorInput: InputType;
+  errorInput: Input;
 };
 
 /**
  * Type for success events produced by EffectSignals.
  *
- * @typedef {object} EffectSuccess<InputType, ResultType> - type for success events produced by EffectSignals
- * @template InputType - specifies the input type for the effect
- * @template ResultType - specifies the result type of the effect
- * @property {ResultType} result - the effect result
- * @property {InputType} resultInput - the effect input that lead to the result
- * @property {InputType | undefined} previousInput - the input of the previous result, or undefined
- * @property {ResultType | undefined} previousResult - the previous result, or undefined
+ * @typedef {object} EffectSuccess<Input, Result> - type for success events produced by EffectSignals
+ * @template Input - specifies the input type for the effect
+ * @template Result - specifies the result type of the effect
+ * @property {Result} result - the effect result
+ * @property {Input} resultInput - the effect input that lead to the result
+ * @property {Input | undefined} previousInput - the input of the previous result, or undefined
+ * @property {Result | undefined} previousResult - the previous result, or undefined
  */
-export type EffectSuccess<InputType, ResultType> = {
-  result: ResultType;
-  resultInput: InputType;
-  previousInput?: InputType;
-  previousResult?: ResultType;
+export type EffectSuccess<Input, Result> = {
+  result: Result;
+  resultInput: Input;
+  previousInput?: Input;
+  previousResult?: Result;
 };
 
 /**
@@ -68,14 +68,14 @@ export type EffectSuccess<InputType, ResultType> = {
  * The EffectSignalsFactory gives you the guarantee, that invalidate-events are NOT missed, even while
  * the combined-behavior is not subscribed.
  *
- * @typedef {object} EffectInputSignals<InputType> - object holding the input signal identifiers for EffectSignals
- * @template InputType - specifies the input type for the effect
- * @property {DerivedId<InputType>} input - identifier for the behavior being consumed by EffectSignals as input
+ * @typedef {object} EffectInputSignals<Input> - object holding the input signal identifiers for EffectSignals
+ * @template Input - specifies the input type for the effect
+ * @property {DerivedId<Input>} input - identifier for the behavior being consumed by EffectSignals as input
  * @property {EventId<undefined>} invalidate - identifier for the invalidation event that can be dispatched to trigger re-evaluation of the current input under the given effect
  * @property {EventId<undefined>} trigger - identifier for the trigger event that can be dispatched to trigger the given effect. This event has only meaning, if withTrigger is configured (see EffectConfiguration)
  */
-export type EffectInputSignals<InputType> = {
-  input: DerivedId<InputType>;
+export type EffectInputSignals<Input> = {
+  input: DerivedId<Input>;
   invalidate: EventId<undefined>;
   trigger: EventId<undefined>;
 };
@@ -83,62 +83,62 @@ export type EffectInputSignals<InputType> = {
 /**
  * Type specifying the output EffectSignals (signals produced EffectSignals).
  *
- * @typedef {object} EffectOutputSignals<InputType, ResultType> - object holding the output signal identifiers
- * @template InputType - specifies the input type for the effect
- * @template ResultType - specifies the result type of the effect
- * @property {DerivedId<CombinedEffectResult<InputType, ResultType>>} combined - identifier for the produced combined effect result behavior
- * @property {EventId<EffectError<InputType>>} errors - identifier for the produced error events
- * @property {EventId<EffectSuccess<InputType, ResultType>>} successes - identifier for the produced success events
+ * @typedef {object} EffectOutputSignals<Input, Result> - object holding the output signal identifiers
+ * @template Input - specifies the input type for the effect
+ * @template Result - specifies the result type of the effect
+ * @property {DerivedId<CombinedEffectResult<Input, Result>>} combined - identifier for the produced combined effect result behavior
+ * @property {EventId<EffectError<Input>>} errors - identifier for the produced error events
+ * @property {EventId<EffectSuccess<Input, Result>>} successes - identifier for the produced success events
  */
-export type EffectOutputSignals<InputType, ResultType> = {
-  combined: DerivedId<CombinedEffectResult<InputType, ResultType>>;
-  errors: EventId<EffectError<InputType>>;
-  successes: EventId<EffectSuccess<InputType, ResultType>>;
+export type EffectOutputSignals<Input, Result> = {
+  combined: DerivedId<CombinedEffectResult<Input, Result>>;
+  errors: EventId<EffectError<Input>>;
+  successes: EventId<EffectSuccess<Input, Result>>;
 };
 
 /**
  * Type specifying the effects-type of EffectSignals (the corresponding effects are NOT added to the store
  * by the EffectSignals-setup, but by whoever uses the signals, e.g. by useExistingEffect or via extended configuration plus extendSetup).
  *
- * @typedef {object} EffectFactoryEffects<InputType> - object holding the effect identifiers for EffectSignals
- * @template InputType - specifies the input type for the effect
- * @template ResultType - specifies the result type of the effect
- * @property {EffectId<InputType, ResultType>} id - the id for the specific Effect function to be used
+ * @typedef {object} EffectFactoryEffects<Input> - object holding the effect identifiers for EffectSignals
+ * @template Input - specifies the input type for the effect
+ * @template Result - specifies the result type of the effect
+ * @property {EffectId<Input, Result>} id - the id for the specific Effect function to be used
  */
-export type EffectFactoryEffects<InputType, ResultType> = {
-  id: EffectId<InputType, ResultType>;
+export type EffectFactoryEffects<Input, Result> = {
+  id: EffectId<Input, Result>;
 };
 
 /**
  * This type specifies generic effect signals. EffectSignals generically handle side-effects (hence, are an abstraction over side-effects).
  * They fulfill the following requirements:
- * 1.) The produced CombinedEffectResult<InputType, ResultType> behavior must be lazy, hence, as long as it is not subscribed,
+ * 1.) The produced CombinedEffectResult<Input, Result> behavior must be lazy, hence, as long as it is not subscribed,
  *     no effect will be triggered.
- * 2.) Unhandled effect errors are caught and dispatched as EffectError<InputType>. A subscription of the corresponding
+ * 2.) Unhandled effect errors are caught and dispatched as EffectError<Input>. A subscription of the corresponding
  *     errors event stream will NOT subscribe the result behavior (see requirement 1).
- * 3.) In addition to the result behavior, also an event stream for EffectSuccess<InputType, ResultType> is provided. This is important
+ * 3.) In addition to the result behavior, also an event stream for EffectSuccess<Input, Result> is provided. This is important
  *     in cases where an effect success should be used to trigger something else (e.g. close a popup), but you cannot use the result
  *     behavior, because it would mean to always subscribe the result. In contrast, subscription of the success event stream will NOT
  *     subscribe the result behavior.
  *
- * See the documentation for EffectConfiguration<InputType, ResultType> for further configuration of EffectSignals<InputType, ResultType>.
+ * See the documentation for EffectConfiguration<Input, Result> for further configuration of EffectSignals<Input, Result>.
  *
- * @typedef {object} EffectSignals<InputType, ResultType>
- * @template InputType - specifies the input type for the effect
- * @template ResultType - specifies the result type of the effect
+ * @typedef {object} EffectSignals<Input, Result>
+ * @template Input - specifies the input type for the effect
+ * @template Result - specifies the result type of the effect
  */
-export type EffectSignals<InputType, ResultType> = Signals<
-  EffectInputSignals<InputType>,
-  EffectOutputSignals<InputType, ResultType>,
-  EffectFactoryEffects<InputType, ResultType>
+export type EffectSignals<Input, Result> = Signals<
+  EffectInputSignals<Input>,
+  EffectOutputSignals<Input, Result>,
+  EffectFactoryEffects<Input, Result>
 >;
 
 /**
  * This type specifies the type of the argument to EffectSignalsBuild, hence the configuration of EffectSignals.
  *
- * @typedef {object} EffectConfiguration<InputType, ResultType>
- * @template InputType - specifies the input type for the effect
- * @template ResultType - specifies the result type of the effect
+ * @typedef {object} EffectConfiguration<Input, Result>
+ * @template Input - specifies the input type for the effect
+ * @template Result - specifies the result type of the effect
  * @property {function | undefined} effectInputEquals - optional function used to determine whether a new input equals the previous one. Defaults to strict equals (a === b)
  * @property {boolean | undefined} withTrigger - optional bool that defaults to false. If true, the effect will only be performed in case a trigger event is received (else, whenever the input changes).
  * @property {function | undefined} initialResultGetter - optional function that defaults to undefined. If not undefined, it will be used to determine an initial result for the result behavior.
@@ -146,12 +146,12 @@ export type EffectSignals<InputType, ResultType> = Signals<
  * @property {function | undefined} wrapperEffectGetter - optional function to wrap the effect defined by effectId with a custom Effect
  * @property {string | undefined} nameExtension - optional string to be used as argument to calls of getBehaviorId and getEventId
  */
-export type EffectConfiguration<InputType, ResultType> = {
-  effectInputEquals?: (a: InputType, b: InputType) => boolean;
+export type EffectConfiguration<Input, Result> = {
+  effectInputEquals?: (a: Input, b: Input) => boolean;
   withTrigger?: boolean;
-  initialResultGetter?: () => ResultType;
+  initialResultGetter?: () => Result;
   effectDebounceTime?: number;
-  wrappedEffectGetter?: (effect: Effect<InputType, ResultType>) => Effect<InputType, ResultType>;
+  wrappedEffectGetter?: (effect: Effect<Input, Result>) => Effect<Input, Result>;
   nameExtension?: string;
 };
 
@@ -159,28 +159,26 @@ export type EffectConfiguration<InputType, ResultType> = {
  * Type specifying the SignalsBuild function for EffectSignals.
  *
  * @typedef {function} EffectSignalsBuild - function taking an EffectConfiguration and producing EffectSignals
- * @template InputType - specifies the input type for the effect
- * @template ResultType - specifies the result type of the effect
- * @param {EffectConfiguration<InputType, ResultType>} config - the configuration for the EffectSignals
+ * @template Input - specifies the input type for the effect
+ * @template Result - specifies the result type of the effect
+ * @param {EffectConfiguration<Input, Result>} config - the configuration for the EffectSignals
  */
-export type EffectSignalsBuild = <InputType, ResultType>(
-  config: EffectConfiguration<InputType, ResultType>,
-) => EffectSignals<InputType, ResultType>;
+export type EffectSignalsBuild = <Input, Result>(
+  config: EffectConfiguration<Input, Result>,
+) => EffectSignals<Input, Result>;
 
-const getInputSignalIds = <InputType>(nameExtension?: string): EffectInputSignals<InputType> => ({
-  input: getDerivedId<InputType>(`${nameExtension ?? ''}_input`),
+const getInputSignalIds = <Input>(nameExtension?: string): EffectInputSignals<Input> => ({
+  input: getDerivedId<Input>(`${nameExtension ?? ''}_input`),
   invalidate: getEventId<undefined>(`${nameExtension ?? ''}_invalidate`),
   trigger: getEventId<undefined>(`${nameExtension ?? ''}_trigger`),
 });
 
-const getOutputSignalIds = <InputType, ResultType>(
+const getOutputSignalIds = <Input, Result>(
   nameExtension?: string,
-): EffectOutputSignals<InputType, ResultType> => ({
-  combined: getDerivedId<CombinedEffectResult<InputType, ResultType>>(
-    `${nameExtension ?? ''}_combined`,
-  ),
-  errors: getEventId<EffectError<InputType>>(`${nameExtension ?? ''}_errors`),
-  successes: getEventId<EffectSuccess<InputType, ResultType>>(`${nameExtension ?? ''}_successes`),
+): EffectOutputSignals<Input, Result> => ({
+  combined: getDerivedId<CombinedEffectResult<Input, Result>>(`${nameExtension ?? ''}_combined`),
+  errors: getEventId<EffectError<Input>>(`${nameExtension ?? ''}_errors`),
+  successes: getEventId<EffectSuccess<Input, Result>>(`${nameExtension ?? ''}_successes`),
 });
 
 const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
@@ -365,31 +363,28 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
 /**
  * This type specifies a SignalsFactory wrapping EffectSignals.
  *
- * @typedef {object} EffectSignalsFactory<InputType, ResultType>
- * @template InputType - specifies the input type for the effect
- * @template ResultType - specifies the result type of the effect
+ * @typedef {object} EffectSignalsFactory<Input, Result>
+ * @template Input - specifies the input type for the effect
+ * @template Result - specifies the result type of the effect
  */
-export type EffectSignalsFactory<InputType, ResultType> = SignalsFactory<
-  EffectInputSignals<InputType>,
-  EffectOutputSignals<InputType, ResultType>,
-  EffectConfiguration<InputType, ResultType>,
-  EffectFactoryEffects<InputType, ResultType>
+export type EffectSignalsFactory<Input, Result> = SignalsFactory<
+  EffectInputSignals<Input>,
+  EffectOutputSignals<Input, Result>,
+  EffectConfiguration<Input, Result>,
+  EffectFactoryEffects<Input, Result>
 >;
 
 /**
- * This function creates an EffectSignalsFactory<InputType, ResultType>.
+ * This function creates an EffectSignalsFactory<Input, Result>.
  *
- * @template InputType - specifies the input type for the effect
- * @template ResultType - specifies the result type of the effect
- * @returns {EffectSignalsFactory<InputType, ResultType>}
+ * @template Input - specifies the input type for the effect
+ * @template Result - specifies the result type of the effect
+ * @returns {EffectSignalsFactory<Input, Result>}
  */
-export const getEffectSignalsFactory = <InputType, ResultType>(): EffectSignalsFactory<
-  InputType,
-  ResultType
-> =>
+export const getEffectSignalsFactory = <Input, Result>(): EffectSignalsFactory<Input, Result> =>
   new SignalsFactory<
-    EffectInputSignals<InputType>,
-    EffectOutputSignals<InputType, ResultType>,
-    EffectConfiguration<InputType, ResultType>,
-    EffectFactoryEffects<InputType, ResultType>
+    EffectInputSignals<Input>,
+    EffectOutputSignals<Input, Result>,
+    EffectConfiguration<Input, Result>,
+    EffectFactoryEffects<Input, Result>
   >(getEffectBuilder);

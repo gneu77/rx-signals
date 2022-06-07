@@ -471,7 +471,7 @@ export class SignalsFactory<
    * That is, even though you only use strings as arguments, this method is still type-safe and will not compile if you try to specify names of non-existing or incompatible ids.
    *
    * @param {KIN} inputName - a key of IN, where IN[toName] must be of type Signal<T>
-   * @param {KOUT} outputName - a key of OUT, where OUT[fromName] must be of type Signal<S extends T>
+   * @param {KOUT} outputName - a key of OUT, where OUT[outputName] must be of type Signal<S extends T>
    * @param {boolean} keepInputId - if set to false, the input-id corresponding to toName will be removed from the resulting factories' IN
    * @returns {SignalsFactory} - a new SignalsFactory with the concrete type depending on the keepInputId argument
    */

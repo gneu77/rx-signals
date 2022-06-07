@@ -15,34 +15,34 @@ import { Merged } from './type-utils';
 /**
  * This specifies the type for the lazy combined-behavior provided as output-signal of the ValidatedInputWithResultFactory.
  *
- * @typedef {object} ValidatedInputWithResult<InputType, ValidationType, ResultType> - type for the behavior produced by ValidatedInputWithResultFactory
- * @template InputType - specifies the input type for both, the validation-effect and the result-effect
- * @template ValidationType - specifies the result-type of the validation-effect
- * @template ResultType - specifies the result-type of the result-effect
- * @property {InputType | undefined} currentInput - current input (which might differ from the resultInput)
- * @property {InputType | undefined} validatedInput - the input that produced the current validationResult (or undefined, if validationResult is undefined)
- * @property {ValidationType | undefined} validationResult - the current validationResult (or undefined, if no validation-result was received yet)
+ * @typedef {object} ValidatedInputWithResult<Input, ValidationResult, Result> - type for the behavior produced by ValidatedInputWithResultFactory
+ * @template Input - specifies the input type for both, the validation-effect and the result-effect
+ * @template ValidationResult - specifies the result-type of the validation-effect
+ * @template Result - specifies the result-type of the result-effect
+ * @property {Input | undefined} currentInput - current input (which might differ from the resultInput)
+ * @property {Input | undefined} validatedInput - the input that produced the current validationResult (or undefined, if validationResult is undefined)
+ * @property {ValidationResult | undefined} validationResult - the current validationResult (or undefined, if no validation-result was received yet)
  * @property {boolean} validationPending - indicates whether the validation-effect is currently running.
- * @property {InputType | undefined} resultInput - the input that produced the current result (or undefined, if result is undefined)
- * @property {ResultType | undefined} result - the current result (or undefined, if no result was received yet)
+ * @property {Input | undefined} resultInput - the input that produced the current result (or undefined, if result is undefined)
+ * @property {Result | undefined} result - the current result (or undefined, if no result was received yet)
  * @property {boolean} resultPending - indicates whether the result-effect is currently running.
  */
-export type ValidatedInputWithResult<InputType, ValidationType, ResultType> = {
-  currentInput?: InputType;
+export type ValidatedInputWithResult<Input, ValidationResult, Result> = {
+  currentInput?: Input;
   validationPending: boolean;
-  validatedInput?: InputType;
-  validationResult?: ValidationType;
+  validatedInput?: Input;
+  validationResult?: ValidationResult;
   isValid: boolean;
   resultPending: boolean;
-  resultInput?: InputType;
-  result?: ResultType;
+  resultInput?: Input;
+  result?: Result;
 };
 
 /**
  * The analog to EffectInputSignals, just for ValidatedInputWithResultFactory.
  */
-export type ValidatedInputWithResultInput<InputType> = {
-  input: DerivedId<InputType>;
+export type ValidatedInputWithResultInput<Input> = {
+  input: DerivedId<Input>;
   validationInvalidate: EventId<undefined>;
   resultInvalidate: EventId<undefined>;
   resultTrigger: EventId<undefined>;
@@ -51,33 +51,33 @@ export type ValidatedInputWithResultInput<InputType> = {
 /**
  * The analog to EffectOutputSignals, just for ValidatedInputWithResultFactory.
  */
-export type ValidatedInputWithResultOutput<InputType, ValidationType, ResultType> = {
-  combined: DerivedId<ValidatedInputWithResult<InputType, ValidationType, ResultType>>;
-  validationErrors: EventId<EffectError<InputType>>;
-  validationSuccesses: EventId<EffectSuccess<InputType, ValidationType>>;
-  resultErrors: EventId<EffectError<InputType>>;
-  resultSuccesses: EventId<EffectSuccess<InputType, ResultType>>;
+export type ValidatedInputWithResultOutput<Input, ValidationResult, Result> = {
+  combined: DerivedId<ValidatedInputWithResult<Input, ValidationResult, Result>>;
+  validationErrors: EventId<EffectError<Input>>;
+  validationSuccesses: EventId<EffectSuccess<Input, ValidationResult>>;
+  resultErrors: EventId<EffectError<Input>>;
+  resultSuccesses: EventId<EffectSuccess<Input, Result>>;
 };
 
 /**
  * The analog to EffectConfiguration, just for ValidatedInputWithResultFactory.
  */
-export type ValidatedInputWithResultConfig<InputType, ValidationType, ResultType> = {
-  isValidationResultValid?: (validationResult: ValidationType) => boolean;
+export type ValidatedInputWithResultConfig<Input, ValidationResult, Result> = {
+  isValidationResultValid?: (validationResult: ValidationResult) => boolean;
   validationEffectDebounceTime?: number;
   resultEffectDebounceTime?: number;
-  initialResultGetter?: () => ResultType;
+  initialResultGetter?: () => Result;
   withResultTrigger?: boolean;
-  resultEffectInputEquals?: (a: InputType, b: InputType) => boolean;
+  resultEffectInputEquals?: (a: Input, b: Input) => boolean;
   nameExtension?: string;
 };
 
 /**
  * The analog to EffectFactoryEffects, just for ValidatedInputWithResultFactory.
  */
-export type ValidatedInputWithResultEffects<InputType, ValidationType, ResultType> = {
-  validation: EffectId<InputType, ValidationType>;
-  result: EffectId<InputType, ResultType>;
+export type ValidatedInputWithResultEffects<Input, ValidationResult, Result> = {
+  validation: EffectId<Input, ValidationResult>;
+  result: EffectId<Input, Result>;
 };
 
 /**
@@ -85,33 +85,30 @@ export type ValidatedInputWithResultEffects<InputType, ValidationType, ResultTyp
  * scenarios where you need to validate a certain input and run a result-effect only if the validation
  * has passed successfully.
  */
-export type ValidatedInputWithResultFactory<InputType, ValidationType, ResultType> = SignalsFactory<
-  ValidatedInputWithResultInput<InputType>,
-  ValidatedInputWithResultOutput<InputType, ValidationType, ResultType>,
-  ValidatedInputWithResultConfig<InputType, ValidationType, ResultType>,
-  ValidatedInputWithResultEffects<InputType, ValidationType, ResultType>
+export type ValidatedInputWithResultFactory<Input, ValidationResult, Result> = SignalsFactory<
+  ValidatedInputWithResultInput<Input>,
+  ValidatedInputWithResultOutput<Input, ValidationResult, Result>,
+  ValidatedInputWithResultConfig<Input, ValidationResult, Result>,
+  ValidatedInputWithResultEffects<Input, ValidationResult, Result>
 >;
 
-const resultInputGetter = <InputType, ValidationType>(
+const resultInputGetter = <Input, ValidationResult>(
   store: Store,
-  validationBehaviorId: BehaviorId<CombinedEffectResult<InputType, ValidationType>>,
-  isValidationResultValid: (validationResult: ValidationType) => boolean,
+  validationBehaviorId: BehaviorId<CombinedEffectResult<Input, ValidationResult>>,
+  isValidationResultValid: (validationResult: ValidationResult) => boolean,
 ) =>
   store.getBehavior(validationBehaviorId).pipe(
     filter(c => c.resultInput !== undefined && c.result !== undefined),
     filter(c => c.currentInput === c.resultInput),
-    filter(c => isValidationResultValid(c.result as ValidationType)), // cast is OK, cause we checked for undefined in the first filter
+    filter(c => isValidationResultValid(c.result as ValidationResult)), // cast is OK, cause we checked for undefined in the first filter
     map(c => c.resultInput),
     distinctUntilChanged(),
-    map(resultInput => resultInput as InputType), // cast is OK, cause we checked for undefined in the first filter
+    map(resultInput => resultInput as Input), // cast is OK, cause we checked for undefined in the first filter
   );
 
-const mapBehaviors = <InputType, ValidationType, ResultType>(
-  [v, r]: [
-    CombinedEffectResult<InputType, ValidationType>,
-    CombinedEffectResult<InputType, ResultType>,
-  ],
-  isValidationResultValid: (validationResult: ValidationType) => boolean,
+const mapBehaviors = <Input, ValidationResult, Result>(
+  [v, r]: [CombinedEffectResult<Input, ValidationResult>, CombinedEffectResult<Input, Result>],
+  isValidationResultValid: (validationResult: ValidationResult) => boolean,
 ) => ({
   currentInput: v.currentInput,
   validationPending: v.resultPending,
@@ -123,15 +120,12 @@ const mapBehaviors = <InputType, ValidationType, ResultType>(
   result: r.result,
 });
 
-const setupCombinedBehavior = <InputType, ValidationType, ResultType>(
+const setupCombinedBehavior = <Input, ValidationResult, Result>(
   store: Store,
-  outIds: Merged<
-    EffectOutputSignals<InputType, ValidationType>,
-    EffectOutputSignals<InputType, ResultType>
-  >,
-  id: DerivedId<ValidatedInputWithResult<InputType, ValidationType, ResultType>>,
-  isValidationResultValid: (validationResult: ValidationType) => boolean,
-  initialResultGetter?: () => ResultType,
+  outIds: Merged<EffectOutputSignals<Input, ValidationResult>, EffectOutputSignals<Input, Result>>,
+  id: DerivedId<ValidatedInputWithResult<Input, ValidationResult, Result>>,
+  isValidationResultValid: (validationResult: ValidationResult) => boolean,
+  initialResultGetter?: () => Result,
 ) => {
   store.addDerivedState(
     id,
@@ -173,15 +167,15 @@ const setupCombinedBehavior = <InputType, ValidationType, ResultType>(
  * Generic function to create a specific ValidatedInputWithResultFactory.
  */
 export const getValidatedInputWithResultSignalsFactory = <
-  InputType,
-  ValidationType,
-  ResultType,
->(): ValidatedInputWithResultFactory<InputType, ValidationType, ResultType> =>
-  getEffectSignalsFactory<InputType, ValidationType>()
+  Input,
+  ValidationResult,
+  Result,
+>(): ValidatedInputWithResultFactory<Input, ValidationResult, Result> =>
+  getEffectSignalsFactory<Input, ValidationResult>()
     .renameEffectId('id', 'validation')
-    .compose(getEffectSignalsFactory<InputType, ResultType>())
+    .compose(getEffectSignalsFactory<Input, Result>())
     .renameEffectId('id', 'result')
-    .mapConfig((config: ValidatedInputWithResultConfig<InputType, ValidationType, ResultType>) => ({
+    .mapConfig((config: ValidatedInputWithResultConfig<Input, ValidationResult, Result>) => ({
       c1: {
         effectDebounceTime: config.validationEffectDebounceTime,
         nameExtension: `${config.nameExtension ?? ''}_validation`,
@@ -205,7 +199,7 @@ export const getValidatedInputWithResultSignalsFactory = <
       );
     })
     .addOutputId('combined', config =>
-      getDerivedId<ValidatedInputWithResult<InputType, ValidationType, ResultType>>(
+      getDerivedId<ValidatedInputWithResult<Input, ValidationResult, Result>>(
         `${config.nameExtension ?? ''}_combined`,
       ),
     )

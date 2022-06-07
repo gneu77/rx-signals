@@ -927,12 +927,12 @@ If you need to change things, solve it by dispatching a corresponding event (or 
 The third category is something that we definitely need (for non-deterministic results like random numbers or HTTP-call results).
 In the section about events, I already mentioned that you could solve this on a low-level via event-sources. However, _rx-signals_ has another dedicated way to manage/isolate such result-effects via the `Effect` type:
 ```typescript
-type Effect<InputType, ResultType> = (
-  input: InputType,
+type Effect<Input, Result> = (
+  input: Input,
   store: Store,
-  previousInput?: InputType,
-  previousResult?: ResultType,
-) => Observable<ResultType>;
+  previousInput?: Input,
+  previousResult?: Result,
+) => Observable<Result>;
 ```
 
 This type represents a potentially impure function that can be added to the store via `addEffect`. A corresponding effect-observable can be retrieved reactively via `getEffect`.
@@ -972,48 +972,48 @@ Composition and all the mapping- an other `SignalsFactory` conveniance-methods a
 While you have to implement `Effect`s yourself, you will normally not use them directly.
 Instead, _rx-signals_ features `getEffectSignalsFactory` to create a generic `EffectSignalsFactory` that uses one `EffectId` (to get the corresponding `Effect` injected from the store):
 ```typescript
-const getEffectSignalsFactory = <InputType, ResultType>(): EffectSignalsFactory<
-  InputType,
-  ResultType
+const getEffectSignalsFactory = <Input, Result>(): EffectSignalsFactory<
+  Input,
+  Result
 > => ...;
 
 // with:
-type EffectSignalsFactory<InputType, ResultType> = SignalsFactory<
-  EffectInputSignals<InputType>,
-  EffectOutputSignals<InputType, ResultType>,
-  EffectConfiguration<InputType, ResultType>,
-  EffectFactoryEffects<InputType, ResultType>
+type EffectSignalsFactory<Input, Result> = SignalsFactory<
+  EffectInputSignals<Input>,
+  EffectOutputSignals<Input, Result>,
+  EffectConfiguration<Input, Result>,
+  EffectFactoryEffects<Input, Result>
 >;
-type EffectInputSignals<InputType> = {
-  input: DerivedId<InputType>;
+type EffectInputSignals<Input> = {
+  input: DerivedId<Input>;
   invalidate: EventId<void>;
   trigger: EventId<void>;
 };
-type EffectOutputSignals<InputType, ResultType> = {
-  combined: DerivedId<CombinedEffectResult<InputType, ResultType>>;
-  errors: EventId<EffectError<InputType>>;
-  successes: EventId<EffectSuccess<InputType, ResultType>>;
+type EffectOutputSignals<Input, Result> = {
+  combined: DerivedId<CombinedEffectResult<Input, Result>>;
+  errors: EventId<EffectError<Input>>;
+  successes: EventId<EffectSuccess<Input, Result>>;
 };
-type EffectConfiguration<InputType, ResultType> = {
-  effectInputEquals?: (a: InputType, b: InputType) => boolean;
+type EffectConfiguration<Input, Result> = {
+  effectInputEquals?: (a: Input, b: Input) => boolean;
   withTrigger?: boolean;
-  initialResultGetter?: () => ResultType;
+  initialResultGetter?: () => Result;
   effectDebounceTime?: number;
-  wrappedEffectGetter?: (effect: Effect<InputType, ResultType>) => Effect<InputType, ResultType>;
+  wrappedEffectGetter?: (effect: Effect<Input, Result>) => Effect<Input, Result>;
 };
-type EffectFactoryEffects<InputType, ResultType> = {
-  id: EffectId<InputType, ResultType>;
+type EffectFactoryEffects<Input, Result> = {
+  id: EffectId<Input, Result>;
 };
-type CombinedEffectResult<InputType, ResultType> = {
-  currentInput?: InputType;
-  result?: ResultType;
-  resultInput?: InputType;
+type CombinedEffectResult<Input, Result> = {
+  currentInput?: Input;
+  result?: Result;
+  resultInput?: Input;
   resultPending: boolean;
 };
 ```
 
 The `EffectSignalsFactory` gives you the following guarantees:
-* The `CombinedEffectResult<InputType, ResultType>` is lazy, hence, as long as it's not subscribed, the corresponding `Effect` will not be triggered (subscribed).
+* The `CombinedEffectResult<Input, Result>` is lazy, hence, as long as it's not subscribed, the corresponding `Effect` will not be triggered (subscribed).
   * If you don't specify `withTrigger`, or set it to false, the `Effect` corresponding to the given `EffectId` will be executed whenever the `currentInput` does not match the `resultInput` (the `effectInputEquals` defaults to strict equals).
   * If you set `withTrigger` to true, the `Effect` will be triggered only if `currentInput` does not match `resultInput` **AND** `trigger` event is received.
   * While `currentInput` does not match the `resultInput` and the `Effect` is triggered, `resultPending` will be true.
@@ -1021,10 +1021,10 @@ The `EffectSignalsFactory` gives you the following guarantees:
     * If the `CombinedEffectResult` is NOT subscribed and `invalidate` is dispatched, then the `Effect` will be triggered as soon as it becomes subscribed (so `invalidate` events are never missed).
   * If `result` has a value, it will always be the value produced by `resultInput`.
   * `currentInput` will always match the received `input` (so it's possible that `resultInput` differs from `currentInput` and consequently, `resultPending` is true at that time).
-* Unhandled errors in your `Effect` are caught and dispatched as `EffectError<InputType>` event.
+* Unhandled errors in your `Effect` are caught and dispatched as `EffectError<Input>` event.
   * Subscribing to this event stream will NOT subscribe the `Effect`.
   * Therefore, you can subscribe e.g. some generic error-handler without triggering the `Effect`.
-* In addition to the `CombinedEffectResult<InputType, ResultType>` behavior, also an event stream for `EffectSuccess<InputType, ResultType>` is provided.
+* In addition to the `CombinedEffectResult<Input, Result>` behavior, also an event stream for `EffectSuccess<Input, Result>` is provided.
   * In contrast to the combined behavior, subscribing to this event stream will NOT subscribe the `Effect`.
   * Thus, you can use this, if you have some subscriber that is interested in effect-successes, but should not trigger the `Effect`, because it's permanently subscribed (e.g. some listener to close a generic popup upon effect-success.)
 
@@ -1038,37 +1038,37 @@ E.g., if you have to validate a date for not being in the future, it's impure du
 
 I skip an example and instead show only the corresponding types:
 ```typescript
-type ValidatedInputWithResultInput<InputType> = {
-  input: DerivedId<InputType>;
+type ValidatedInputWithResultInput<Input> = {
+  input: DerivedId<Input>;
   validationInvalidate: EventId<void>;
   resultInvalidate: EventId<void>;
   resultTrigger: EventId<void>;
 };
-type ValidatedInputWithResultOutput<InputType, ValidationType, ResultType> = {
-  combined: DerivedId<ValidatedInputWithResult<InputType, ValidationType, ResultType>>;
-  validationErrors: EventId<EffectError<InputType>>;
-  validationSuccesses: EventId<EffectSuccess<InputType, ValidationType>>;
-  resultErrors: EventId<EffectError<InputType>>;
-  resultSuccesses: EventId<EffectSuccess<InputType, ResultType>>;
+type ValidatedInputWithResultOutput<Input, ValidationResult, Result> = {
+  combined: DerivedId<ValidatedInputWithResult<Input, ValidationResult, Result>>;
+  validationErrors: EventId<EffectError<Input>>;
+  validationSuccesses: EventId<EffectSuccess<Input, ValidationResult>>;
+  resultErrors: EventId<EffectError<Input>>;
+  resultSuccesses: EventId<EffectSuccess<Input, Result>>;
 };
-type ValidatedInputWithResultConfig<InputType, ValidationType, ResultType> = {
-  isValidationResultValid?: (validationResult: ValidationType) => boolean;
+type ValidatedInputWithResultConfig<Input, ValidationResult, Result> = {
+  isValidationResultValid?: (validationResult: ValidationResult) => boolean;
   validationEffectDebounceTime?: number;
   resultEffectDebounceTime?: number;
-  initialResultGetter?: () => ResultType;
+  initialResultGetter?: () => Result;
   withResultTrigger?: boolean;
-  resultEffectInputEquals?: (a: InputType, b: InputType) => boolean;
+  resultEffectInputEquals?: (a: Input, b: Input) => boolean;
   nameExtension?: string;
 };
-type ValidatedInputWithResultEffects<InputType, ValidationType, ResultType> = {
-  validation: EffectId<InputType, ValidationType>;
-  result: EffectId<InputType, ResultType>;
+type ValidatedInputWithResultEffects<Input, ValidationResult, Result> = {
+  validation: EffectId<Input, ValidationResult>;
+  result: EffectId<Input, Result>;
 };
-type ValidatedInputWithResultFactory<InputType, ValidationType, ResultType> = SignalsFactory<
-  ValidatedInputWithResultInput<InputType>,
-  ValidatedInputWithResultOutput<InputType, ValidationType, ResultType>,
-  ValidatedInputWithResultConfig<InputType, ValidationType, ResultType>,
-  ValidatedInputWithResultEffects<InputType, ValidationType, ResultType>
+type ValidatedInputWithResultFactory<Input, ValidationResult, Result> = SignalsFactory<
+  ValidatedInputWithResultInput<Input>,
+  ValidatedInputWithResultOutput<Input, ValidationResult, Result>,
+  ValidatedInputWithResultConfig<Input, ValidationResult, Result>,
+  ValidatedInputWithResultEffects<Input, ValidationResult, Result>
 >;
 ```
 
