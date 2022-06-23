@@ -69,6 +69,7 @@ export type ValidatedInputWithResultConfig<Input, ValidationResult, Result> = {
   initialResultGetter?: () => Result;
   withResultTrigger?: boolean;
   resultEffectInputEquals?: (a: Input, b: Input) => boolean;
+  eagerInputSubscription?: boolean;
   nameExtension?: string;
 };
 
@@ -178,6 +179,7 @@ export const getValidatedInputWithResultSignalsFactory = <
     .mapConfig((config: ValidatedInputWithResultConfig<Input, ValidationResult, Result>) => ({
       c1: {
         effectDebounceTime: config.validationEffectDebounceTime,
+        eagerInputSubscription: config.eagerInputSubscription,
         nameExtension: `${config.nameExtension ?? ''}_validation`,
       },
       c2: {

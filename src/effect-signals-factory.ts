@@ -144,6 +144,7 @@ export type EffectSignals<Input, Result> = Signals<
  * @property {function | undefined} initialResultGetter - optional function that defaults to undefined. If not undefined, it will be used to determine an initial result for the result behavior.
  * @property {number | undefined} effectDebounceTime - optional number that defaults to undefined. If a number > 0 is specified, then it will be used as milliseconds to debounce new input to the effect (please DON't debounce the input signal yourself, because that would debounce before trigger and/or input equals).
  * @property {function | undefined} wrapperEffectGetter - optional function to wrap the effect defined by effectId with a custom Effect
+ * @property {boolean | undefined} eagerInputSubscription - optional bool to specify whether the input behavior should be subscribed eagerly (defaults to false)
  * @property {string | undefined} nameExtension - optional string to be used as argument to calls of getBehaviorId and getEventId
  */
 export type EffectConfiguration<Input, Result> = {
@@ -152,6 +153,7 @@ export type EffectConfiguration<Input, Result> = {
   initialResultGetter?: () => Result;
   effectDebounceTime?: number;
   wrappedEffectGetter?: (effect: Effect<Input, Result>) => Effect<Input, Result>;
+  eagerInputSubscription?: boolean;
   nameExtension?: string;
 };
 
@@ -209,6 +211,11 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
     store.addState(invalidateTokenBehavior, null);
     store.addReducer(invalidateTokenBehavior, inIds.invalidate, () => ({}));
 
+    const internalInput = config.eagerInputSubscription === true ? getStateId<IT>() : inIds.input;
+    if (internalInput !== inIds.input) {
+      store.connect(inIds.input, internalInput);
+    }
+
     const resultEvent = getEventId<{
       result?: RT;
       resultInput: IT;
@@ -246,7 +253,7 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
     store.addDerivedState(
       combinedId,
       combineLatest([
-        store.getBehavior(inIds.input),
+        store.getBehavior(internalInput),
         store.getBehavior(resultBehavior),
         store.getBehavior(invalidateTokenBehavior),
         store.getBehavior(triggeredInputBehavior),

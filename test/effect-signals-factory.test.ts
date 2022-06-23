@@ -519,6 +519,91 @@ describe('effect signals factory', () => {
       });
     });
 
+    describe('with lazy/eager input subscription', () => {
+      let inIds: EffectInputSignals<InputModel>;
+      let outIds: EffectOutputSignals<InputModel, ResultModel>;
+      let observable: Observable<CombinedEffectResult<InputModel, ResultModel>>;
+
+      it('should have correct sequence for input with eager input subscription', async () => {
+        const factoryResult = factory.build({ eagerInputSubscription: true });
+        inIds = factoryResult.input;
+        outIds = factoryResult.output;
+        factoryResult.setup(store);
+        observable = store.getBehavior(outIds.combined);
+        store.addDerivedState(inIds.input, inputSubject.asObservable());
+        inputSubject.next({
+          searchString: 'test',
+          page: 2,
+        });
+        await expectSequence(observable, [
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            resultPending: true,
+          },
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            resultInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            result: {
+              results: [],
+              totalResults: 1,
+            },
+            resultPending: false,
+          },
+        ]);
+      });
+
+      it('should have correct sequence for input with lazy input subscription', async () => {
+        const factoryResult = factory.build({});
+        inIds = factoryResult.input;
+        outIds = factoryResult.output;
+        factoryResult.setup(store);
+        observable = store.getBehavior(outIds.combined);
+        store.addDerivedState(inIds.input, inputSubject.asObservable());
+        inputSubject.next({
+          searchString: 'test',
+          page: 1,
+        });
+        const sequence = expectSequence(observable, [
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            resultPending: true,
+          },
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            resultInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            result: {
+              results: [],
+              totalResults: 1,
+            },
+            resultPending: false,
+          },
+        ]);
+        inputSubject.next({
+          searchString: 'test',
+          page: 2,
+        });
+        await sequence;
+      });
+    });
+
     describe('with trigger', () => {
       let inIds: EffectInputSignals<InputModel>;
       let outIds: EffectOutputSignals<InputModel, ResultModel>;
