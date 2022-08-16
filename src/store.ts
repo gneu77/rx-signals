@@ -735,14 +735,24 @@ export class Store {
    * @param {EventId<any> | null} subscribeObservableOnlyIfEventIsSubscribed - defaults to null
    * @returns {smybol} - a symbol that can be used to remove the event-source from the store
    */
-  add5TypedEventSource<A, B, C, D, E>(
-    eventIdentifierA: EventId<A>,
-    eventIdentifierB: EventId<B>,
-    eventIdentifierC: EventId<C>,
-    eventIdentifierD: EventId<D>,
-    eventIdentifierE: EventId<E>,
+  add5TypedEventSource<
+    IDA extends EventId<any>,
+    IDB extends EventId<any>,
+    IDC extends EventId<any>,
+    IDD extends EventId<any>,
+    IDE extends EventId<any>,
+  >(
+    eventIdentifierA: IDA,
+    eventIdentifierB: IDB,
+    eventIdentifierC: IDC,
+    eventIdentifierD: IDD,
+    eventIdentifierE: IDE,
     observable: Observable<
-      TypedEvent<A> | TypedEvent<B> | TypedEvent<C> | TypedEvent<D> | TypedEvent<E>
+      | TypedEvent<ToEventIdValueType<IDA>>
+      | TypedEvent<ToEventIdValueType<IDB>>
+      | TypedEvent<ToEventIdValueType<IDC>>
+      | TypedEvent<ToEventIdValueType<IDD>>
+      | TypedEvent<ToEventIdValueType<IDE>>
     >,
     subscribeObservableOnlyIfEventIsSubscribed: EventId<any> | null = null,
   ): symbol {
@@ -751,11 +761,31 @@ export class Store {
       observable.pipe(delay(1, asyncScheduler), share()),
       subscribeObservableOnlyIfEventIsSubscribed,
     );
-    this.addTypedEventSource(sourceId, eventIdentifierA, sharedSource as Observable<TypedEvent<A>>);
-    this.addTypedEventSource(sourceId, eventIdentifierB, sharedSource as Observable<TypedEvent<B>>);
-    this.addTypedEventSource(sourceId, eventIdentifierC, sharedSource as Observable<TypedEvent<C>>);
-    this.addTypedEventSource(sourceId, eventIdentifierD, sharedSource as Observable<TypedEvent<D>>);
-    this.addTypedEventSource(sourceId, eventIdentifierE, sharedSource as Observable<TypedEvent<E>>);
+    this.addTypedEventSource(
+      sourceId,
+      eventIdentifierA,
+      sharedSource as Observable<TypedEvent<ToEventIdValueType<IDA>>>,
+    );
+    this.addTypedEventSource(
+      sourceId,
+      eventIdentifierB,
+      sharedSource as Observable<TypedEvent<ToEventIdValueType<IDB>>>,
+    );
+    this.addTypedEventSource(
+      sourceId,
+      eventIdentifierC,
+      sharedSource as Observable<TypedEvent<ToEventIdValueType<IDC>>>,
+    );
+    this.addTypedEventSource(
+      sourceId,
+      eventIdentifierD,
+      sharedSource as Observable<TypedEvent<ToEventIdValueType<IDD>>>,
+    );
+    this.addTypedEventSource(
+      sourceId,
+      eventIdentifierE,
+      sharedSource as Observable<TypedEvent<ToEventIdValueType<IDE>>>,
+    );
     if (this.currentLifecycleObjects !== null) {
       this.currentLifecycleObjects.events.push(sourceId);
     }
@@ -775,15 +805,27 @@ export class Store {
    * @param {EventId<any> | null} subscribeObservableOnlyIfEventIsSubscribed - defaults to null
    * @returns {smybol} - a symbol that can be used to remove the event-source from the store
    */
-  add6TypedEventSource<A, B, C, D, E, F>(
-    eventIdentifierA: EventId<A>,
-    eventIdentifierB: EventId<B>,
-    eventIdentifierC: EventId<C>,
-    eventIdentifierD: EventId<D>,
-    eventIdentifierE: EventId<E>,
-    eventIdentifierF: EventId<F>,
+  add6TypedEventSource<
+    IDA extends EventId<any>,
+    IDB extends EventId<any>,
+    IDC extends EventId<any>,
+    IDD extends EventId<any>,
+    IDE extends EventId<any>,
+    IDF extends EventId<any>,
+  >(
+    eventIdentifierA: IDA,
+    eventIdentifierB: IDB,
+    eventIdentifierC: IDC,
+    eventIdentifierD: IDD,
+    eventIdentifierE: IDE,
+    eventIdentifierF: IDF,
     observable: Observable<
-      TypedEvent<A> | TypedEvent<B> | TypedEvent<C> | TypedEvent<D> | TypedEvent<E> | TypedEvent<F>
+      | TypedEvent<ToEventIdValueType<IDA>>
+      | TypedEvent<ToEventIdValueType<IDB>>
+      | TypedEvent<ToEventIdValueType<IDC>>
+      | TypedEvent<ToEventIdValueType<IDD>>
+      | TypedEvent<ToEventIdValueType<IDE>>
+      | TypedEvent<ToEventIdValueType<IDF>>
     >,
     subscribeObservableOnlyIfEventIsSubscribed: EventId<any> | null = null,
   ): symbol {
@@ -792,12 +834,36 @@ export class Store {
       observable.pipe(delay(1, asyncScheduler), share()),
       subscribeObservableOnlyIfEventIsSubscribed,
     );
-    this.addTypedEventSource(sourceId, eventIdentifierA, sharedSource as Observable<TypedEvent<A>>);
-    this.addTypedEventSource(sourceId, eventIdentifierB, sharedSource as Observable<TypedEvent<B>>);
-    this.addTypedEventSource(sourceId, eventIdentifierC, sharedSource as Observable<TypedEvent<C>>);
-    this.addTypedEventSource(sourceId, eventIdentifierD, sharedSource as Observable<TypedEvent<D>>);
-    this.addTypedEventSource(sourceId, eventIdentifierE, sharedSource as Observable<TypedEvent<E>>);
-    this.addTypedEventSource(sourceId, eventIdentifierF, sharedSource as Observable<TypedEvent<F>>);
+    this.addTypedEventSource(
+      sourceId,
+      eventIdentifierA,
+      sharedSource as Observable<TypedEvent<ToEventIdValueType<IDA>>>,
+    );
+    this.addTypedEventSource(
+      sourceId,
+      eventIdentifierB,
+      sharedSource as Observable<TypedEvent<ToEventIdValueType<IDB>>>,
+    );
+    this.addTypedEventSource(
+      sourceId,
+      eventIdentifierC,
+      sharedSource as Observable<TypedEvent<ToEventIdValueType<IDC>>>,
+    );
+    this.addTypedEventSource(
+      sourceId,
+      eventIdentifierD,
+      sharedSource as Observable<TypedEvent<ToEventIdValueType<IDD>>>,
+    );
+    this.addTypedEventSource(
+      sourceId,
+      eventIdentifierE,
+      sharedSource as Observable<TypedEvent<ToEventIdValueType<IDE>>>,
+    );
+    this.addTypedEventSource(
+      sourceId,
+      eventIdentifierF,
+      sharedSource as Observable<TypedEvent<ToEventIdValueType<IDF>>>,
+    );
     if (this.currentLifecycleObjects !== null) {
       this.currentLifecycleObjects.events.push(sourceId);
     }
