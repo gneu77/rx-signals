@@ -1,139 +1,134 @@
 import { Observable } from 'rxjs';
 
 /**
- * The rx-signals Store uses this type to uniquely identify behaviors representing a root-state behavior.
- * A StateId<T> does not make any use of the generic T itself, but is given this
+ * The rx-signals {@link Store} uses this type to uniquely identify behaviors representing a root-state behavior.
+ * A StateId\<T\> does not make any use of the generic T itself, but is given this
  * parameter only as a trick to let Typescript infer and thus enforce the correct types.
- * Use the getStateId<T>() function to generate a corresponding ID.
+ * Use the {@link getStateId} function to generate a corresponding ID.
  *
- * @typedef {object} StateId<T> - type to uniquely identify a certain root-state behavior
- * @template T - specifies the type for the corresponding behavior observable
- * @property {symbol} symbol - a symbol, making the StateId unique
+ * @template T - specifies the value-type for the corresponding behavior observable (type of the state)
  */
 export type StateId<T> = symbol & {
   _rootStateType: T;
 };
 
 /**
- * The rx-signals Store uses this type to uniquely identify behaviors representing a derived-state behavior.
- * A StateId<T> does not make any use of the generic T itself, but is given this
+ * The rx-signals {@link Store} uses this type to uniquely identify behaviors representing a derived-state behavior.
+ * A StateId\<T\> does not make any use of the generic T itself, but is given this
  * parameter only as a trick to let Typescript infer and thus enforce the correct types.
- * Use the getDerivedId<T>() function to generate a corresponding ID.
+ * Use the {@link getDerivedId} function to generate a corresponding ID.
  *
- * @typedef {object} DerivedId<T> - type to uniquely identify a certain derived-state behavior
- * @template T - specifies the type for the corresponding behavior observable
- * @property {symbol} symbol - a symbol, making the DerivedId unique
+ * @template T - specifies the value-type for the corresponding behavior observable
  */
 export type DerivedId<T> = symbol & {
   _derivedStateType: T;
 };
 
 /**
- * The rx-signals Store uses this type for cases where either a StateId or a DerivedId is expected.
+ * The rx-signals {@link Store} uses this type for cases where either a {@link StateId} or a {@link DerivedId} is expected.
  *
- * @typedef {object} BehaviorId<T> - type to uniquely identify a certain behavior
- * @template T - specifies the type for the corresponding behavior observable
+ * @template T - specifies the value-type for the corresponding behavior observable
  */
 export type BehaviorId<T> = StateId<T> | DerivedId<T>;
 
 /**
- * The rx-signals Store uses this type to uniquely identify all of its events.
- * An EventId<T> does not make any use of the generic T itself, but is given this
+ * The rx-signals {@link Store} uses this type to uniquely identify all of its events.
+ * An EventId\<T\> does not make any use of the generic T itself, but is given this
  * parameter only as a trick to let Typescript infer and thus enforce the correct types.
- * Use the getEventId<T>() function to generate a corresponding ID.
+ * Use the {@link getEventId} function to generate a corresponding ID.
  *
- * @typedef {object} EventId<T> - type to uniquely identify a certain event
- * @template T - specifies the type for the corresponding event observable
- * @property {symbol} symbol - a symbol, making the EventId unique
+ * @template T - specifies the value-type for the corresponding event observable
  */
 export type EventId<T> = symbol & {
   _eventType: T;
 };
 
 /**
- * SignalId<T> is the union type of BehaviorId<T> and EventId<T>, hence it
+ * SignalId\<T\> is the union type of BehaviorId\<T\> and EventId\<T\>, hence it
  * represents an identifier that corresponds either to a behavior or to an event.
- * You can use the functions isBehaviorId or isEventId to check the concrete
+ * You can use the functions {@link isBehaviorId} or {@link isEventId} to check the concrete
  * type of a SignalId.
  *
- * @typedef {object} EventId<T> - type to uniquely identify a certain event
- * @template T - specifies the type for the corresponding event observable
+ * @template T - specifies the value-type for the corresponding observable
  */
 export type SignalId<T> = BehaviorId<T> | EventId<T>;
 
 /**
- * ToSignalId<S> is a utility type that equals Signal<T>, if S extends SignalId<T>, else never.
- * Examples:
- *    ToSignalId<BehaviorId<number>> would be SignalId<number>
- *    ToSignalId<EventId<string>> would be SignalId<string>
- *    ToSignalId<number> would be never
+ * ToSignalId\<S\> is a utility type that equals Signal\<T\>, if S extends SignalId\<T\>, else never.
  *
- * @typedef {object} SignalId<T> | never - the resulting type
+ * ```ts
+ *    ToSignalId<BehaviorId<number>> = SignalId<number>
+ *    ToSignalId<EventId<string>> = SignalId<string>
+ *    ToSignalId<number> = never
+ * ```
+ *
  * @template S - the generic argument to ToSignalId
- * @template T - the inferred generic parameter of S, if S extends SignalId<T>
+ * @template T - the inferred generic parameter of S, if S extends SignalId\<T\>
  */
 export type ToSignalId<S> = S extends SignalId<infer T> ? SignalId<T> : never;
 
 /**
- * ToBehaviorIdValueType<B> is a utility type that equals T, if B extends BehaviorId<T>, else never.
- * Examples:
- *    ToBehaviorIdValueType<BehaviorId<number>> would be number
- *    ToBehaviorIdValueType<EventId<string>> would be never
+ * ToBehaviorIdValueType\<B\> is a utility type that equals T, if B extends BehaviorId\<T\>, else never.
  *
- * @typedef {T | never} T | never - the resulting type
+ * ```ts
+ *    ToBehaviorIdValueType<BehaviorId<number>> = number
+ *    ToBehaviorIdValueType<EventId<string>> = never
+ * ```
+ *
  * @template B - the generic argument to ToBehaviorIdValueType
- * @template T - the inferred generic parameter of B, if B extends BehaviorId<T>
+ * @template T - the inferred generic parameter of B, if B extends BehaviorId\<T\>
  */
 export type ToBehaviorIdValueType<B> = B extends BehaviorId<infer T> ? T : never;
 
 /**
- * ToEventIdValueType<E> is a utility type that equals T, if E extends EventId<T>, else never.
- * Examples:
- *    ToEventIdValueType<EventId<number>> would be number
- *    ToEventIdValueType<BehaviorId<string>> would be never
+ * ToEventIdValueType\<E\> is a utility type that equals T, if E extends EventId\<T\>, else never.
  *
- * @typedef {T | never} T | never - the resulting type
+ * ```ts
+ *    ToEventIdValueType<EventId<number>> = number
+ *    ToEventIdValueType<BehaviorId<string>> = never
+ * ```
+ *
  * @template E - the generic argument to ToEventIdValueType
- * @template T - the inferred generic parameter of E, if E extends EventId<T>
+ * @template T - the inferred generic parameter of E, if E extends EventId\<T\>
  */
 export type ToEventIdValueType<E> = E extends EventId<infer T> ? T : never;
 
 /**
- * ToSignalIdValueType<S> is a utility type that equals T, if S extends SignalId<T>, else never.
- * Examples:
- *    ToSignalIdValueType<EventId<number>> would be number
- *    ToSignalIdValueType<EventId<string>> would be string
- *    ToSignalIdValueType<number> would be never
+ * ToSignalIdValueType\<S\> is a utility type that equals T, if S extends SignalId\<T\>, else never.
  *
- * @typedef {T | never} T | never - the resulting type
+ * ```ts
+ *    ToSignalIdValueType<EventId<number>> = number
+ *    ToSignalIdValueType<EventId<string>> = string
+ *    ToSignalIdValueType<number> = never
+ * ```
+ *
  * @template S - the generic argument to ToSignalIdValueType
- * @template T - the inferred generic parameter of S, if S extends SignalId<T>
+ * @template T - the inferred generic parameter of S, if S extends SignalId\<T\>
  */
 export type ToSignalIdValueType<S> = S extends SignalId<infer T> ? T : never;
 
 /**
- * ToObservableValueType<O> is a utility type that equals T, if O extends Observable<T>, else never.
- * Examples:
- *    ToObservableValueType<Observable<number>> would be number
- *    ToObservableValueType<Observable<string>> would be string
- *    ToObservableValueType<number> would be never
+ * ToObservableValueType\<O\> is a utility type that equals T, if O extends Observable\<T\>, else never.
  *
- * @typedef {T | never} T | never - the resulting type
+ * ```ts
+ *    ToObservableValueType<Observable<number>> = number
+ *    ToObservableValueType<Observable<string>> = string
+ *    ToObservableValueType<number> = never
+ * ```
+ *
  * @template O - the generic argument to ToObservableValueType
- * @template T - the inferred generic parameter of O, if O extends Observable<T>
+ * @template T - the inferred generic parameter of O, if O extends Observable\<T\>
  */
 export type ToObservableValueType<O> = O extends Observable<infer T> ? T : never;
 
 /**
  * The rx-signals Store uses this type to uniquely identify all of its result effects.
- * An EffectId<InputType, ResultType> does not make any use of the generic parameters itself,
+ * An EffectId\<InputType, ResultType\> does not make any use of the generic parameters itself,
  * but is given these parameters only as a trick to let Typescript infer and thus enforce the correct types.
- * Use the getEffectId<InputType, ResultType>() function to generate a corresponding ID.
+ * Use the {@link getEffectId} function to generate a corresponding ID.
  *
- * @typedef {object} EffectId<InputType, ResultType> - type to uniquely identify a certain result effect
  * @template InputType - specifies the type for the corresponding effects input
  * @template ResultType - specifies the type for the corresponding effects result
- * @property {symbol} symbol - a symbol, making the EffectId unique
  */
 export type EffectId<InputType, ResultType> = symbol & {
   _inputType: InputType;
@@ -148,8 +143,8 @@ let effectExtension = 1;
 /**
  * Function to get a new, unique StateId.
  *
- * @template T - specifies the type for the corresponding behavior
- * @param {string} nameExtension - an optional extension to the symbol name (so the string representation). Usually, you don't need this, cause even for debugging purposes, you should use store.setIdName/getIdName.
+ * @template T - specifies the value-type for the corresponding behavior
+ * @param {string} nameExtension - an optional extension to the symbol name (so the string representation). Usually, you don't need this, cause even for debugging purposes, you should use {@link Store.setIdName} and {@link Store.getIdName}.
  * @returns {StateId<T>}
  */
 export const getStateId = <T>(nameExtension?: string): StateId<T> =>
@@ -158,8 +153,8 @@ export const getStateId = <T>(nameExtension?: string): StateId<T> =>
 /**
  * Function to get a new, unique DerivedId.
  *
- * @template T - specifies the type for the corresponding behavior
- * @param {string} nameExtension - an optional extension to the symbol name (so the string representation). Usually, you don't need this, cause even for debugging purposes, you should use store.setIdName/getIdName.
+ * @template T - specifies the value-type for the corresponding behavior
+ * @param {string} nameExtension - an optional extension to the symbol name (so the string representation). Usually, you don't need this, cause even for debugging purposes, you should use {@link Store.setIdName} and {@link Store.getIdName}.
  * @returns {DerivedId<T>}
  */
 export const getDerivedId = <T>(nameExtension?: string): DerivedId<T> =>
@@ -168,8 +163,8 @@ export const getDerivedId = <T>(nameExtension?: string): DerivedId<T> =>
 /**
  * Function to get a new, unique EventId.
  *
- * @template T - specifies the type for the corresponding event
- * @param {string} nameExtension - an optional extension to the symbol name (so the string representation). Usually, you don't need this, cause even for debugging purposes, you should use store.setIdName/getIdName.
+ * @template T - specifies the value-type for the corresponding event
+ * @param {string} nameExtension - an optional extension to the symbol name (so the string representation). Usually, you don't need this, cause even for debugging purposes, you should use {@link Store.setIdName} and {@link Store.getIdName}.
  * @returns {EventId<T>}
  */
 export const getEventId = <T>(nameExtension?: string): EventId<T> =>

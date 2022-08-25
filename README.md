@@ -4,6 +4,7 @@
 
 :warning: This documentation is work in progress for the upcoming 3.0.0 version.
 There is however no good reason to use 2.x over 3.0.0-rc24, so please start with the rc-version (3.0.0 will be the first version I'm going to advertise publicly, so it's more like a 1.0 in reality.).
+2.x is deprecated and will NOT be maintained in any way.
 
 3.0.0-rc24 is better than 2.x in any aspect and the code is production-ready.
 It's mainly documentation that needs improvement for a final realease (though 2.x had no documentation at all, apart from doc-strings).
@@ -15,7 +16,7 @@ It is however possible that I will introduce minor breaking changes until 3.0.0 
 
 ## Dependencies
 
-**_RxJs_** is the one and only peer dependency. You need a version >6.4.0 (so 7.x is also perfectly fine) in your project.
+**_RxJs_** is the one and only dependency.
 
 ## License
 
@@ -26,7 +27,7 @@ It is however possible that I will introduce minor breaking changes until 3.0.0 
 _rx-signals_ is a library for the MVU (**M**odel-**V**iew-**U**pdate) pattern.
 
 It is however not limited to MVU, but can be used in all architectures that would benefit from its features:
-* State Management
+* Immutable State Management
   * Global and/or local
 * Reactive Programming
   * High-level abstractions over _RxJs_ (you can still go as low as you want)
@@ -54,6 +55,7 @@ This lib comes with a
   * Abstraction-layer over the SignalsBuilder-type for high-level composition and reusability (enabling DRY architecture)
 * EffectSignalsFactory as
   * SignalsFactory that covers side-effect-scenarios generically, encapsulating and abstracting away all the pitfalls and possibilities to shoot yourself in the foot.
+* Full type-safety everywhere
 
 See [**_rx-signals_ design goals**](https://github.com/gneu77/rx-signals/blob/master/docs/rx-signals_start.md#design) for more.
 
@@ -62,12 +64,12 @@ See [**_rx-signals_ design goals**](https://github.com/gneu77/rx-signals/blob/ma
 ### Terminology <a name="terminology"></a>
 
 What does _rx-signals_ mean anyway?
-Well the _rx_ stands for reactive extensions, so it's the same _rx_ as in _RxJs_.
+Well the _rx_ stands for reactive extensions, so it's the same _rx_ as in _RxJs_, giving tribute to this congenial lib that is the base of _rx-signals_.
 The term _signals_ is lent from the world of functional reactive programming (FRP), that knows two types of signals.
 The first type are _Events_ being a signal of values occurring at discrete points of time.
 The second type of _signals_ are _Behaviors_ that represent values that vary over time in response to _Events_.
 
-In RP (Reactive Programming), we can defined _Events_ and _Behaviors_ as follows:<a name="rp-signals-definition"></a>
+In RP (Reactive Programming), we can define _Events_ and _Behaviors_ as follows:<a name="rp-signals-definition"></a>
 * Event-streams:
   * Value-streams that have no current value
   * Publish values (events) to subscribers at discrete points of time

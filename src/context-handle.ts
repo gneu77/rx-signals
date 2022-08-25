@@ -1,3 +1,6 @@
+/**
+ * @internal
+ */
 export class ContextHandle {
   private active = false;
 

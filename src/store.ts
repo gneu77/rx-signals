@@ -1,14 +1,20 @@
-import { asyncScheduler, BehaviorSubject, merge, NEVER, Observable, of } from 'rxjs';
 import {
+  asyncScheduler,
+  BehaviorSubject,
   delay,
   distinctUntilChanged,
   filter,
+  firstValueFrom,
   map,
+  merge,
+  NEVER,
+  Observable,
+  of,
   share,
   switchMap,
   take,
   withLatestFrom,
-} from 'rxjs/operators';
+} from 'rxjs';
 import { ControlledSubject } from './controlled-subject';
 import { DelayedEventQueue } from './delayed-event-queue';
 import { SourceObservable } from './source-observable';
@@ -29,15 +35,12 @@ import {
 } from './store-utils';
 
 /**
- * The rx-signals Store uses the TypedEvent<T> to bundle certain events and their
- * corresponding EventId<T>. This is used for EventSources that can dispatch events
+ * The {@link Store} uses the TypedEvent\<T\> to bundle certain events and their
+ * corresponding EventId\<T\>. This is used for EventSources that can dispatch events
  * of different types (see addXTypedEventSource methods) or for cases where you want to
  * subscribe multiple events and need to differentiate between them at runtime.
  *
- * @typedef {object} TypedEvent<T> - type for an object bundling identifier and corresponding event.
- * @template T - specifies the type for the corresponding EventId<T>
- * @property {EventId<T>} type - the EventId for the event
- * @property {T} event - the event itself
+ * @template T - specifies the type for the corresponding event-values
  */
 export type TypedEvent<T> = Readonly<{
   type: EventId<T>;
@@ -45,59 +48,57 @@ export type TypedEvent<T> = Readonly<{
 }>;
 
 /**
- * The state reducer type specifies the signature for reducers used by the store.
+ * The state reducer type specifies the signature for reducers used by the {@link Store}.
  * StateReducers must be pure functions.
  *
- * @typedef {function} StateReducer<T, E> - type for a pure function that takes a state and an event and returns a new state
  * @template T - representing the type of the state
  * @template E - representing the type of the event
- * @property {T} state - the current state
- * @property {E} event - the event
- * @returns {T} - the new state
  */
 export type StateReducer<T, E> = (state: T, event: E) => T;
 
 /**
  * A LifecycleHandle can be used to control signals and signal-sources that
- * are added to the store by store.getLifecycleHandle
- *
- * @property {function} reset - reset all behaviors corresponding to this lifecycle
- * @property {function} end - remove all sources of this lifecycle and complete all corresponding behaviors (event-subscribers will NOT get a complete!)
+ * are added to the {@link Store} by store.getLifecycleHandle
  */
 export type LifecycleHandle = {
+  /** reset all behaviors corresponding to this lifecycle */
   reset: () => void;
+
+  /** reset all behaviors corresponding to this lifecycle */
   end: () => void;
 };
 
 /**
- * The Effect type specifies a potentially impure function that takes an input and the store as arguments
+ * The Effect type specifies a potentially impure function that takes an input and a {@link Store} as arguments
  * and returns an effectful result as Observable.
  * It is the low-level abstraction used by rx-signals for side-effect isolation.
- * The high-level abstraction EffectSignalsFactory takes an EffectId as configuration to access
+ * The high-level abstraction {@link EffectSignalsFactory} takes an EffectId as configuration to access
  * the corresponding Effect.
  * The store argument can be used to access additional input from the store (thus, the Effect itself could also
  * be pure and just use something impure that was put into the store, e.g. another Effect).
  * The previousInput argument can be used e.g. to decide whether the effect must perform
  * a computation/query/etc., or if maybe the previousResult can be returned directly.
  *
- * @typedef {function} Effect<Input, Result> - function performing an effect and returning an observable with the result
  * @template Input - specifies the input type for the effect
  * @template Result - specifies the result type for the effect
- * @property {Input} input - the effect input
- * @property {Store} store - the Store instance that will be passed to the function (e.g. to inject some other Effect).
- * @property {Input | undefined} previousInput - the input of the previous function invocation, or undefined
- * @property {Result | undefined} previousResult - the result of the previous function invocation, or undefined
  */
 export type Effect<Input, Result> = (
+  /** the effect input */
   input: Input,
+
+  /** the Store instance that will be passed to the function (e.g. to inject some other Effect) */
   store: Store,
+
+  /** the input of the previous function invocation, or undefined */
   previousInput?: Input,
+
+  /** the result of the previous function invocation, or undefined */
   previousResult?: Result,
 ) => Observable<Result>;
 
 /**
- * The rx-signals Store provides RxJs-Observables for RP (reactive programming) BehaviorStreams
- * and EventStreams (behaviors and events are the two different types of signals, where behaviors represent state).
+ * The rx-signals Store provides RxJs-Observables for RP (reactive programming) - BehaviorStreams
+ * and EventStreams (behaviors and events are the two different types of signals, where behaviors represent immutable state).
  * The Store separates the sources of these streams from the streams itself.
  *
  * @class Store
@@ -408,7 +409,7 @@ export class Store {
 
   /**
    * This method takes a callback that performs Store operations.
-   * It returns a LifecycleHandle that can be used to reset or end the lifecycle of signals
+   * It returns a {@link LifecycleHandle} that can be used to reset or end the lifecycle of signals
    * and signal-sources that are added to the store during the callback execution.
    *
    * @param {function} lifecycleRegistrationCallback - behaviors and event-sources added within this callback will be part of the lifecycle
@@ -495,8 +496,6 @@ export class Store {
    * This method resets all behaviors, effectively resetting the complete store to the state it
    * had before any event was dispatched.
    * Technically, this is done by first removing all sources and then adding them again.
-   *
-   * @returns {void} - the behavior observable (shared and distinct)
    */
   resetBehaviors(): void {
     const resetHandles = [...this.behaviors.values()].map(behavior => behavior.getResetHandle());
@@ -528,14 +527,14 @@ export class Store {
   ): Promise<boolean> {
     const controlledSubject = this.getEventStreamControlledSubject(identifier);
     if (controlledSubject.isObservableSubscribed()) {
-      const result: Promise<boolean> = this.getEventStream(identifier)
-        .pipe(
+      const result: Promise<boolean> = firstValueFrom(
+        this.getEventStream(identifier).pipe(
           filter(val => val === event),
           take(1),
           map(() => true),
           delay(1, asyncScheduler),
-        )
-        .toPromise() as Promise<boolean>;
+        ),
+      );
       controlledSubject.next(event);
       return result;
     }
@@ -543,7 +542,7 @@ export class Store {
   }
 
   /**
-   * This method adds an event source to the Store. There can be multiple sources
+   * This method adds an event source to the store. There can be multiple sources
    * for the same event type. However, each source must be identified by its own
    * symbol and adding two sources with the same symbol would result in an error.
    * Event sources are effects!
@@ -884,7 +883,7 @@ export class Store {
    * This method returns an observable for events of the specified type.
    * Please note, that all observables for the same identifier are already piped with delay(1, asyncScheduler)
    * and share(). So events will always be received asynchronously (expecting synchronous event dispatch would
-   * be a strong indicator of flawed design, because it could break MVU/reactivity).
+   * be a strong indicator of flawed design, because it could break reactivity).
    * If this store has a parent store, events from both, parent and child will be observed (merged).
    *
    * @param {EventId<T>} identifier - the unique identifier for the event

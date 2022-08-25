@@ -1,6 +1,10 @@
-import { Observable, Subject } from 'rxjs';
-import { map, mergeMap } from 'rxjs/operators';
+import { map, mergeMap, Observable, Subject } from 'rxjs';
 
+/**
+ * Used by the {@link Store}
+ *
+ * @internal
+ */
 export class DelayedEventQueue {
   private queueArray: Subject<void>[] = [];
 

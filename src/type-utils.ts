@@ -1,19 +1,34 @@
+/**
+ * @internal
+ */
 type ConflictKeys<T1 extends Record<string, any>, T2 extends Record<string, any>> = {
   [K in keyof T1]: K extends keyof T2 ? K : never;
 }[keyof T1];
 
+/**
+ * @internal
+ */
 type NoConflictKeys<T1 extends Record<string, any>, T2 extends Record<string, any>> = {
   [K in keyof T1]: K extends keyof T2 ? never : K;
 }[keyof T1];
 
+/**
+ * @internal
+ */
 type Conflicts<T1 extends Record<string, any>, T2 extends Record<string, any>> = {
   [K in ConflictKeys<T1, T2>]: T1[K];
 };
 
+/**
+ * @internal
+ */
 type NoConflicts<T1 extends Record<string, any>, T2 extends Record<string, any>> = {
   [K in NoConflictKeys<Omit<T1, 'conflicts1' | 'conflicts2'>, T2>]: T1[K];
 };
 
+/**
+ * @internal
+ */
 type MergeResult<T1 extends Record<string, any>, T2 extends Record<string, any>> = ConflictKeys<
   T1,
   T2
@@ -30,11 +45,12 @@ type MergeResult<T1 extends Record<string, any>, T2 extends Record<string, any>>
       };
 
 /**
- * This type represents the result of a merge of two Record<string, any> types T1 and T2, using the following rules:
- *  a) If there are no conflicts between T1 and T2, then Merged<T1, T2> equals T1 & T2
- *  b) If there's a conflict between T1 and T2, then Merged<T1, T2> equals { conflicts1: ConflictsFromT1; conflicts2: ConflictsFromT2 } & NoConflicts<T1, T2>
+ * This type represents the result of a merge of two Record\<string, any\> types T1 and T2, using the following rules:
+ *  a) If there are no conflicts between T1 and T2, then Merged\<T1, T2\> equals T1 & T2
+ *  b) If there's a conflict between T1 and T2, then Merged\<T1, T2\> equals \{ conflicts1: ConflictsFromT1; conflicts2: ConflictsFromT2 \} & NoConflicts\<T1, T2\>
  *
  * Here are some examples:
+ * ```ts
  *    Merged<{
  *      a: string;
  *    }, {
@@ -60,8 +76,9 @@ type MergeResult<T1 extends Record<string, any>, T2 extends Record<string, any>>
  *      };
  *      c: string;
  *    }
+ * ```
  *
- *
+ * ```ts
  *    Merged<{
  *      conflicts1: {
  *        a: string;
@@ -88,8 +105,7 @@ type MergeResult<T1 extends Record<string, any>, T2 extends Record<string, any>>
  *      };
  *      a: boolean;
  *    }
- *
- * @typedef {object} Merged<T1 extends Record<string, any>, T2 extends Record<string, any>> - result of merge for T1 and T2
+ * ```
  */
 export type Merged<T1 extends Record<string, any>, T2 extends Record<string, any>> = MergeResult<
   T1,
@@ -97,14 +113,13 @@ export type Merged<T1 extends Record<string, any>, T2 extends Record<string, any
 >;
 
 /**
- * This function merges two Record<string, any> T1 and T2, resulting in Merged<T1, T2>
+ * This function merges two Record\<string, any\> T1 and T2, resulting in Merged\<T1, T2\>
  *
- * @typedef {function} merge
  * @template T1 - type for the first argument
  * @template T2 - type for the second argument
- * @param {T1} t1 - first argument (extending Record<string, any>).
- * @param {T2} t2 - second argument (extending Record<string, any>).
- * @returns {Merged<T1, T2>}
+ * @param {T1} t1 - first argument (extending Record\<string, any\>).
+ * @param {T2} t2 - second argument (extending Record\<string, any\>).
+ * @returns {Merged}
  */
 export const merge = <T1 extends Record<string, any>, T2 extends Record<string, any>>(
   t1: T1,
@@ -170,18 +185,19 @@ export const merge = <T1 extends Record<string, any>, T2 extends Record<string, 
 };
 
 /**
- * Just a type alias for Record<string, any>
+ * Just a type alias for Record\<string, any\>
  */
 export type Configuration = Record<string, any>;
 
+/**
+ * @internal
+ */
 type NM<T1 extends Configuration, T2 extends Configuration> = T1 & T2;
 
 /**
  * This type represents the result of a merge of two Configuration types T1 and T2, using the following rules:
- *  a) If either T1 or T2 is an empty object, then MergedConfiguration<T1, T2> equals T1 & T2
- *  b) If both, T1 and T2, are non-empty then MergedConfiguration<T1, T2> equals { c1: T1; c2: T2 }
- *
- * @typedef {object} MergedConfiguration<T1 extends Configuration, T2 extends Configuration> - result of merge for T1 and T2
+ *  a) If either T1 or T2 is an empty object, then MergedConfiguration\<T1, T2\> equals T1 & T2
+ *  b) If both, T1 and T2, are non-empty then MergedConfiguration\<T1, T2\> equals \{ c1: T1; c2: T2 \}
  */
 export type MergedConfiguration<
   T1 extends Configuration,

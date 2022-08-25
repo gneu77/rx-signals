@@ -20,25 +20,20 @@ import {
 } from './type-utils';
 
 /**
- * This type defines an object that maps identifier names to signal ids or nested NameToSignalIds.
- *
- * @typedef {object} NameToSignalId - maps strings on SignalId<any> | NameToSignalId
+ * This type defines an object that maps identifier names to {@link SignalId}s or nested {@link NameToSignalId}s.
  */
 export type NameToSignalId = { [key: string]: SignalId<any> | NameToSignalId };
 
 /**
- * This type defines an object that maps identifier names to effect ids or nested NameToEffectIds.
- *
- * @typedef {object} NameToEffectId - maps strings on EffectId<any, any> | NameToSignalId
+ * This type defines an object that maps identifier names to {@link EffectId}s or nested {@link NameToEffectId}s.
  */
 export type NameToEffectId = { [key: string]: EffectId<any, any> | NameToEffectId };
 
 /**
- * This type defines an object that holds input and output signal-ids of a Signals type.
+ * This type defines an object that holds input and output {@link SignalId}s of a {@link Signals} type.
  *
- * @template IN - NameToSignalId defining input signals-ids
- * @template OUT - NameToSignalId defining output signals-ids
- * @typedef {object} SignalIds - holds input- and output- NameToSignalId objects
+ * @template IN - {@link NameToSignalId} defining input signals-ids
+ * @template OUT - {@link NameToSignalId} defining output signals-ids
  */
 export type SignalIds<IN extends NameToSignalId, OUT extends NameToSignalId> = {
   readonly input: IN;
@@ -46,37 +41,33 @@ export type SignalIds<IN extends NameToSignalId, OUT extends NameToSignalId> = {
 };
 
 /**
- * This type defines an object that holds effect-ids of a Signals type.
+ * This type defines an object that holds {@link EffectId}s of a {@link Signals} type.
  *
- * @template EFF - NameToEffectId defining effect-ids
- * @typedef {object} EffectIds - holds NameToEffectId object
+ * @template EFF - {@link NameToEffectId} defining effect-ids
  */
 export type EffectIds<EFF extends NameToEffectId> = {
   readonly effects: EFF;
 };
 
 /**
- * This type defines an object with a function 'setup' that takes a store instance
+ * This type defines an object with a function 'setup' that takes a {@link Store} instance
  * as argument and executes the required setup (wireing) to produce certain output signals.
- *
- * @typedef {object} SetupWithStore - has a function setup(store) => void
  */
 export type SetupWithStore = {
   readonly setup: (store: Store) => void;
 };
 
 /**
- * This type defines an immutable object that encapsulates SignalIds, SetupWithStore and EffectIds.
- * The setup method creates all the necessary wireing to configure the store for the SignalIds.
- * The Signals type represents the reactive counterpart to a class-instance (the IN/OUT-NameToSignalId
+ * This type defines an immutable object that encapsulates {@link SignalIds}, {@link SetupWithStore} and {@link EffectIds}.
+ * The setup method creates all the necessary wireing to configure the {@link Store} instance for the SignalIds.
+ * The Signals type represents the reactive counterpart to a class-instance (the IN/OUT-{@link NameToSignalId}
  * being the counterpart to a class-interface).
  * SetupWithStore must add sources to the store for all output-ids, but it must NOT add sources for
  * the input-ids and it must also NOT add effects for the effect-ids.
  *
- * @typedef {object} Signals<IN, OUT, EFF> - composition of SetupWithStore, SignalIds<IN, OUT> and EffectIds<EFF>
- * @template IN - concrete NameToSignalIds defining input signal-ids. SetupWithStore does NOT add corresponding signals to the store (hence this must be done by the user of this Signals object, e.g. via connect)
- * @template OUT - concrete NameToSignalIds defining output signal-ids. In contrast to the input signal-ids, the SetupWithStore method takes care of setting up corresponding signals in the store.
- * @template EFF - concrete NameToEffectIds defining effect-ids. SetupWithStore does NOT add corresponding effects to the store (hence this must be done by the user of this Signals object)
+ * @template IN - concrete {@link NameToSignalId} defining input signal-ids. SetupWithStore does NOT add corresponding signals to the store (hence this must be done by the user of this Signals object, e.g. via connect)
+ * @template OUT - concrete {@link NameToSignalId} defining output signal-ids. In contrast to the input signal-ids, the SetupWithStore method takes care of setting up corresponding signals in the store.
+ * @template EFF - concrete {@link NameToEffectId} defining effect-ids. SetupWithStore does NOT add corresponding effects to the store (hence this must be done by the user of this Signals object)
  */
 export type Signals<
   IN extends NameToSignalId,
@@ -85,20 +76,19 @@ export type Signals<
 > = SetupWithStore & SignalIds<IN, OUT> & EffectIds<EFF>;
 
 /**
- * This type defines a function taking some config-object as argument and returning a Signals object.
+ * This type defines a function taking some config-object as argument and returning a {@link Signals} object, hence the type being used as constructor argument for {@link SignalsFactory}.
  * It creates input- and output-ids, as well as effect-ids.
  * It is the reactive counterpart of a class/class-constructor.
  * However, the setup method of the returned Signals only adds signals to the store
  * for the output-ids. For the input-ids, corresponding signals must be setup somewhere else (e.g. via store.connect).
- * If you have a scenario, where setup needs a SignalId that is NOT created by SignalsBuild, then you can pass it via CONFIG.
+ * If you have a scenario, where setup needs a {@link SignalId} that is NOT created by {@link SignalsBuild}, then you can pass it via CONFIG.
  * The same holds true for effects (no effects for the generated effect-ids will be added to the store).
- * (see SignalsFactory::useExistingEffect on how to delegate from a generated effect-id to an existing effect)
+ * (see {@link SignalsFactory.useExistingEffect} on how to delegate from a generated effect-id to an existing effect)
  *
- * @typedef {function} SignalsBuild<IN, OUT, CONFIG, EFF> - constructor argument of SignalsFactories
- * @template IN - concrete NameToSignalIds defining input signal-ids of the resulting Signals object
- * @template OUT - concrete NameToSignalIds defining output signal-ids of the resulting Signals object
- * @template CONFIG - concrete Configuration for the given SignalsBuild
- * @template EFF - concrete NameToEffectIds defining effect-ids of the resulting Signals object
+ * @template IN - concrete {@link NameToSignalId} defining input signal-ids of the resulting Signals object
+ * @template OUT - concrete {@link NameToSignalId} defining output signal-ids of the resulting Signals object
+ * @template CONFIG - concrete {@link Configuration} for the given SignalsBuild
+ * @template EFF - concrete {@link NameToEffectId} defining effect-ids of the resulting Signals object
  */
 export type SignalsBuild<
   IN extends NameToSignalId,
@@ -108,18 +98,17 @@ export type SignalsBuild<
 > = (config: CONFIG) => Signals<IN, OUT, EFF>;
 
 /**
- * This type specifies a function mapping from SignalsBuild<IN1, OUT1, CONFIG1, EFF1> to a SignalsFactory<IN2, OUT2, CONFIG2, EFF2>,
- * hence the argument to the monadic-bind method of a SignalsFactory<IN1, OUT1, CONFIG1, EFF1>.
+ * This type specifies a function mapping from ```SignalsBuild<IN1, OUT1, CONFIG1, EFF1>``` to ```SignalsFactory<IN2, OUT2, CONFIG2, EFF2>```,
+ * hence the argument to the monadic-bind method of a {@link SignalsFactory}.
  *
- * @typedef {function} BindMapper<IN1, OUT1, CONFIG1, EFF1, IN2, OUT2, CONFIG2, EFF2> - function mapping from SignalsBuild<IN1, OUT1, CONFIG1, EFF1> to SignalsFactory<IN2, OUT2, CONFIG2, EFF2>
- * @template IN1 - concrete NameToSignalIds defining input-ids produced by the given SignalsBuild
- * @template OUT1 - concrete NameToSignalIds defining output-ids produced by the given SignalsBuild
- * @template CONFIG1 - concrete Configuration for the given SignalsBuild
- * @template EFF1 - concrete NameToEffectIds defining effect-ids produced by the given SignalsBuild
- * @template IN2 - concrete NameToSignalIds defining input signal-ids of the resulting SignalsFactory
- * @template OUT2 - concrete NameToSignalIds defining output signal-ids of the resulting SignalsFactory
- * @template CONFIG2 - concrete Configuration for the resulting SignalsFactory
- * @template EFF2 - concrete NameToEffectIds defining effect-ids of the resulting SignalsFactory
+ * @template IN1 - concrete {@link NameToSignalId} defining input-ids produced by the given SignalsBuild
+ * @template OUT1 - concrete {@link NameToSignalId} defining output-ids produced by the given SignalsBuild
+ * @template CONFIG1 - concrete {@link Configuration} for the given SignalsBuild
+ * @template EFF1 - concrete {@link NameToEffectId} defining effect-ids produced by the given SignalsBuild
+ * @template IN2 - concrete {@link NameToSignalId} defining input signal-ids of the resulting SignalsFactory
+ * @template OUT2 - concrete {@link NameToSignalId} defining output signal-ids of the resulting SignalsFactory
+ * @template CONFIG2 - concrete {@link Configuration} for the resulting SignalsFactory
+ * @template EFF2 - concrete {@link NameToEffectId} defining effect-ids of the resulting SignalsFactory
  */
 export type BindMapper<
   IN1 extends NameToSignalId,
@@ -135,18 +124,17 @@ export type BindMapper<
 ) => SignalsFactory<IN2, OUT2, CONFIG2, EFF2>;
 
 /**
- * This type specifies a function mapping from SignalsBuild<IN1, OUT1, CONFIG1, EFF1> to SignalsBuild<IN2, OUT2, CONFIG2, EFF2>,
- * hence the argument to the functor-map-method of a SignalsFactory<IN1, OUT1, CONFIG1, EFF1>.
+ * This type specifies a function mapping from ```SignalsBuild<IN1, OUT1, CONFIG1, EFF1>``` to ```SignalsBuild<IN2, OUT2, CONFIG2, EFF2>```,
+ * hence the argument to the functor-map-method of a {@link SignalsFactory}.
  *
- * @typedef {function} BuildMapper<IN1, OUT1, CONFIG1, EFF1, IN2, OUT2, CONFIG2, EFF2> - function mapping from SignalsBuild<IN1, OUT1, CONFIG1, EFF1> to SignalsBuild<IN2, OUT2, CONFIG2, EFF2>
- * @template IN1 - concrete NameToSignalIds defining input signal-ids produced by the given SignalsBuild<IN1, OUT1, CONFIG1, EFF1>
- * @template OUT1 - concrete NameToSignalIds defining output signal-ids produced by the given SignalsBuild<IN1, OUT1, CONFIG1, EFF1>
- * @template CONFIG1 - concrete Configuration for the given SignalsBuild<IN1, OUT1, CONFIG1, EFF1>
- * @template EFF1 - concrete NameToEffectIds produced by the given SignalsBuild<IN1, OUT1, CONFIG1, EFF1>
- * @template IN2 - concrete NameToSignalIds defining input signals-ids produced by the resulting SignalsBuild<IN2, OUT2, CONFIG2, EFF2>
- * @template OUT2 - concrete NameToSignalIds defining output signal-ids produced by the resulting SignalsBuild<IN2, OUT2, CONFIG2, EFF2>
- * @template CONFIG2 - concrete Configuration for the resulting SignalsBuild<IN2, OUT2, CONFIG2, EFF2>
- * @template EFF2 - concrete NameToEffectIds produced by the resulting SignalsBuild<IN2, OUT2, CONFIG2, EFF2>
+ * @template IN1 - concrete {@link NameToSignalId} defining input signal-ids produced by the given SignalsBuild
+ * @template OUT1 - concrete {@link NameToSignalId} defining output signal-ids produced by the given SignalsBuild
+ * @template CONFIG1 - concrete {@link Configuration} for the given SignalsBuild
+ * @template EFF1 - concrete {@link NameToEffectId} produced by the given SignalsBuild
+ * @template IN2 - concrete {@link NameToSignalId} defining input signals-ids produced by the resulting SignalsBuild
+ * @template OUT2 - concrete {@link NameToSignalId} defining output signal-ids produced by the resulting SignalsBuild
+ * @template CONFIG2 - concrete {@link Configuration} for the resulting SignalsBuild
+ * @template EFF2 - concrete {@link NameToEffectId} produced by the resulting SignalsBuild
  */
 export type BuildMapper<
   IN1 extends NameToSignalId,
@@ -162,17 +150,16 @@ export type BuildMapper<
 ) => SignalsBuild<IN2, OUT2, CONFIG2, EFF2>;
 
 /**
- * This type specifies the result of the SignalsFactory compose method.
+ * This type specifies the result of the {@link SignalsFactory.compose} method.
  *
- * @typedef {object} ComposedFactory<IN1, OUT1, CONFIG1, EFF1, IN2, OUT2, CONFIG2, EFF2> - result of the composition of SignalsFactory<IN1, OUT1, CONFIG1, EFF1> and SignalsFactory<IN2, OUT2, CONFIG2, EFF2>
- * @template IN1 - concrete NameToSignalIds defining input signal-ids of a SignalsFactory<IN1, OUT1, CONFIG1, EFF1>
- * @template OUT1 - concrete NameToSignalIds defining output signal-ids of a SignalsFactory<IN1, OUT1, CONFIG1, EFF1>
- * @template CONFIG1 - concrete Configuration of a SignalsFactory<IN1, OUT1, CONFIG1, EFF1>
- * @template EFF1 - concrete NameToEffectIds of a SignalsFactory<IN1, OUT1, CONFIG1, EFF1>
- * @template IN2 - concrete NameToSignalIds defining input signal-ids of a SignalsFactory<IN2, OUT2, CONFIG2, EFF2>
- * @template OUT2 - concrete NameToSignalIds defining output signal-ids of a SignalsFactory<IN2, OUT2, CONFIG2, EFF2>
- * @template CONFIG2 - concrete Configuration of a SignalsFactory<IN2, OUT2, CONFIG2, EFF2>
- * @template EFF1 - concrete NameToEffectIds of a SignalsFactory<IN2, OUT2, CONFIG2, EFF2>
+ * @template IN1 - concrete {@link NameToSignalId} defining input signal-ids of SignalsFactory1
+ * @template OUT1 - concrete {@link NameToSignalId} defining output signal-ids of SignalsFactory1
+ * @template CONFIG1 - concrete {@link Configuration} of SignalsFactory1
+ * @template EFF1 - concrete {@link NameToEffectId} of SignalsFactory1
+ * @template IN2 - concrete {@link NameToSignalId} defining input signal-ids of SignalsFactory2
+ * @template OUT2 - concrete {@link NameToSignalId} defining output signal-ids of SignalsFactory2
+ * @template CONFIG2 - concrete {@link Configuration} of SignalsFactory2
+ * @template EFF1 - concrete {@link NameToEffectId} of SignalsFactory2
  */
 export type ComposedFactory<
   IN1 extends NameToSignalId,
@@ -191,13 +178,12 @@ export type ComposedFactory<
 >;
 
 /**
- * This type specifies the argument to the extendSetup-method of SignalFactories.
+ * This type specifies the argument to the {@link SignalsFactory.extendSetup} method.
  *
- * @typedef {function} ExtendSetup<IN, OUT, CONFIG> - function consuming store, input, output and configuration of a SignalsFactory
- * @template IN - concrete NameToSignalIds defining input signal-ids of a SignalsFactory<IN, OUT, CONFIG, EFF>
- * @template OUT - concrete NameToSignalIds defining output signal-ids of a SignalsFactory<IN, OUT, CONFIG, EFF>
- * @template CONFIG - concrete Configuration of a SignalsFactory<IN, OUT, CONFIG, EFF>
- * @template EFF - concrete NameToEffectIds of a SignalsFactory<IN, OUT, CONFIG, EFF>
+ * @template IN - concrete {@link NameToSignalId} defining input signal-ids of a SignalsFactory
+ * @template OUT - concrete {@link NameToSignalId} defining output signal-ids of a SignalsFactory
+ * @template CONFIG - concrete {@link Configuration} of a SignalsFactory
+ * @template EFF - concrete {@link NameToEffectId} of a SignalsFactory
  */
 export type ExtendSetup<
   IN extends NameToSignalId,
@@ -214,7 +200,7 @@ export type MapConfig<CONFIG1 extends Configuration, CONFIG2 extends Configurati
 ) => CONFIG1;
 
 /**
- * Function mapping from one concrete NameToSignalId to another NameToSignalId
+ * Function mapping from one concrete {@link NameToSignalId} to another {@link NameToSignalId}
  */
 export type MapSignalIds<T1 extends NameToSignalId, T2 extends NameToSignalId, CONFIG> = (
   ids: T1,
@@ -222,7 +208,7 @@ export type MapSignalIds<T1 extends NameToSignalId, T2 extends NameToSignalId, C
 ) => T2;
 
 /**
- * Function mapping from one concrete NameToEffectId to another NameToEffectId
+ * Function mapping from one concrete {@link NameToEffectId} to another {@link NameToEffectId}
  */
 export type MapEffectIds<T1 extends NameToEffectId, T2 extends NameToEffectId, CONFIG> = (
   ids: T1,
@@ -230,9 +216,13 @@ export type MapEffectIds<T1 extends NameToEffectId, T2 extends NameToEffectId, C
 ) => T2;
 
 /**
- * AddSignalId is the result type of adding a key in a NameToSignalId.
+ * AddSignalId is the result type of adding a key in a {@link NameToSignalId} (also see the difference to {@link AddOrReplaceId}).
  *
- * @typedef {object} AddSignalId<T, N, ID> - the result of adding { [N]: ID; } on T
+ * ```ts
+ * AddSignalId<{ a: EventId<number> }, 'a', EventId<string> -> { a: EventId<never> }
+ * AddSignalId<{ a: EventId<number> }, 'b', EventId<string> -> { a: EventId<number>; b: EventId<string> }
+ * ```
+ *
  * @template T - concrete NameToSignalIds
  * @template N - string key
  * @template ID - concrete SignalId
@@ -246,9 +236,14 @@ export type AddSignalId<
 };
 
 /**
- * AddOrReplaceId is the result type of adding or replacing a key in a NameToSignalId.
+ * AddOrReplaceId is the result type of adding or replacing a key in a {@link NameToSignalId}.
  *
- * @typedef {object} AddOrReplaceId<T, N, ID> - the result of adding or replacing { [N]: ID; } on T
+ * ```ts
+ * AddOrReplaceId<{ a: EventId<number> }, 'a', EventId<string> -> { a: EventId<string> }
+ * AddOrReplaceId<{ a: EventId<number> }, 'b', EventId<string> -> { a: EventId<number>; b: EventId<string> }
+ * ```
+ *
+ * @typedef {object} AddOrReplaceId
  * @template T - concrete NameToSignalIds
  * @template N - string key
  * @template ID - concrete SignalId
@@ -262,9 +257,13 @@ export type AddOrReplaceId<
 };
 
 /**
- * AddEffectId is the result type of adding a key in a NameToEffectId.
+ * AddEffectId is the result type of adding a key in a {@link NameToEffectId}.
  *
- * @typedef {object} AddEffectId<T, N, ID> - the result of adding { [N]: ID; } on T
+ * ```ts
+ * AddEffectId<{ a: EffectId<number, string> }, N, ID> -> { a: EffectId<number, string>; [N]: ID }
+ * ```
+ *
+ * @typedef {object} AddEffectId
  * @template T - concrete NameToEffectIds
  * @template N - string key
  * @template ID - concrete EffectId
@@ -278,9 +277,13 @@ export type AddEffectId<
 };
 
 /**
- * RenameId is the result type of renaming a key in a NameToSignalId.
+ * RenameId is the result type of renaming a key in a {@link NameToSignalId}.
  *
- * @typedef {object} RenameId<T extends NameToSignalId, N1 extends keyof T, N2 extends string> - the result type of { [N1]: T[N1]; } -> { [N2]: T[N1]; }
+ * ```ts
+ * RenameId<{ [N1]: T[N1] }> -> { [N2]: T[N1] }
+ * ```
+ *
+ * @typedef {object} RenameId
  * @template T - concrete NameToSignalIds
  * @template N1 - string old key
  * @template N2 - string new key
@@ -293,9 +296,13 @@ export type RenameId<T extends NameToSignalId, N1 extends keyof T, N2 extends st
 };
 
 /**
- * RenameEffectId is the result type of renaming a key in a NameToEffectId.
+ * RenameEffectId is the result type of renaming a key in a {@link NameToEffectId}.
  *
- * @typedef {object} RenameEffectId<T extends NameToEffectId, N1 extends keyof T, N2 extends string> - the result type of { [N1]: T[N1]; } -> { [N2]: T[N1]; }
+ * ```ts
+ * RenameEffectId<{ [N1]: T[N1] }, N1, N2> -> { [N2]: T[N1] }
+ * ```
+ *
+ * @typedef {object} RenameEffectId
  * @template T - concrete NameToEffectIds
  * @template N1 - string old key
  * @template N2 - string new key
@@ -310,9 +317,9 @@ export type RenameEffectId<T extends NameToEffectId, N1 extends keyof T, N2 exte
 /**
  * AssertNonExistingKey is a helper type that returns K, if K does not extend keyof T.
  * If K does extend keyof T (K is a key of the object T), then never | Message will be the result type.
- * The latter would result in a TS-error, if a function expects an argument as AssertNonExistingKey<K, T, M>, saying "argument of type <K> is not assignable to parameter of type <Message>"
+ * The latter would result in a TS-error, if a function expects an argument as AssertNonExistingKey\<K, T, M\>, saying "argument of type \<K\> is not assignable to parameter of type \<Message\>"
  *
- * @typedef {object} AssertNonExistingKey<K, T, Message> - evaluates to K only if K is not in keyof T, else gives compile-time error including Message
+ * @typedef {object} AssertNonExistingKey - evaluates to K only if K is not in keyof T, else gives compile-time error including Message
  * @template K - string
  * @template T - object with string keys
  * @template Message - message to be used in assertion
@@ -324,16 +331,16 @@ export type AssertNonExistingKey<
 > = (K & (K extends keyof T ? never : K)) | Message;
 
 /**
- * The SignalsFactory wraps a SignalsBuild<IN, OUT, CONFIG, EFF> function, allowing for simple Signals composition
+ * A SignalsFactory wraps a {@link SignalsBuild} function, allowing for simple {@link Signals} composition
  * and manipulation.
  * Via the compose method, two SignalsFactories can be easily composed to a new one.
  * Several convenience methods simplify re-mapping of IN, OUT, CONFIG and EFF.
  * Monadic bind and fmap methods can be used for more complex cases (though 90% of use-cases should be covered by
  * compose, extendSetup, mapInput, mapOutput and mapConfig).
- * SignalsFactory instances are immutable, hence all methods return a new SignalsFactory instance.
+ * SignalsFactory instances are immutable (persistent data structures), hence all methods return a new SignalsFactory instance.
  * (The whole purpose of this class is to provide immutable SignalsBuild composition)
  *
- * @class SignalsFactory<IN extends NameToSignalId, OUT extends NameToSignalId, CONFIG extends Configuration = {}, EFF extends NameToEffectId = {}>
+ * @class SignalsFactory
  */
 export class SignalsFactory<
   IN extends NameToSignalId,
@@ -342,21 +349,21 @@ export class SignalsFactory<
   EFF extends NameToEffectId = {},
 > {
   /**
-   * The constructor takes a pure function implementing SignalsBuild<IN, OUT, CONFIG, EFF>.
+   * The constructor takes a pure function implementing SignalsBuild.
    *
-   * @param {SignalsBuild<IN, OUT, CONFIG, EFF>} build - a pure function mapping from CONFIG to Signals<IN, OUT, EFF>
+   * @param {SignalsBuild<IN, OUT, CONFIG, EFF>} build - a pure function mapping from CONFIG to Signals
    * @constructor
    */
   constructor(readonly build: SignalsBuild<IN, OUT, CONFIG, EFF>) {}
 
   /**
-   * The compose method takes a second SignalsFactory<IN2, OUT2, CONFIG2, EFF2> and returns a new SignalsFactory
-   * that represents the composition of this SignalsFactory and the argument SignalsFactory<IN2, OUT2, CONFIG2, EFF2>.
-   * You can re-map the input, output, configuration and effects of the resulting ComposedFactory<IN, OUT, CONFIG, EFF, IN2, OUT2, CONFIG2, EFF2>
+   * The compose method takes a second SignalsFactory2 and returns a new SignalsFactory
+   * that represents the composition of this SignalsFactory and the argument SignalsFactory2.
+   * You can re-map the input, output, configuration and effects of the resulting composed SignalsFactory
    * by using mapInput, mapOutput, mapConfig and mapEffects correspondingly (as well as the many other convenience methods).
    *
-   * @param {SignalsFactory<IN2, OUT2, CONFIG2, EFF2>} factory2 - a SignalsFactory<IN2, OUT2, CONFIG2, EFF2>
-   * @returns {ComposedFactory<IN, OUT, CONFIG, EFF, IN2, OUT2, CONFIG2, EFF2>} - the SignalsFactory resulting from the composition of SignalsFactory<IN, OUT, CONFIG, EFF> and SignalsFactory<IN2, OUT2, CONFIG2, EFF2>
+   * @param {SignalsFactory} factory2 - a SignalsFactory
+   * @returns {SignalsFactory} - the SignalsFactory resulting from the composition of this SignalsFactory and SignalsFactory2
    */
   compose<
     IN2 extends NameToSignalId,
@@ -394,13 +401,13 @@ export class SignalsFactory<
 
   /**
    * This method implements monadic-bind for the SignalsFactory.
-   * It takes as argument a pure function that implements SignalsMapToFactory<IN, OUT, CONFIG, EFF, IN2, OUT2, CONFIG2, EFF2>, hence
-   * a function taking SignalsBuild<IN, OUT, CONFIG, EFF> as argument and returning a SignalsFactory<IN2, OUT2, CONFIG2, EFF2>.
-   * The result of bind is a new SignalsFactory<IN2, OUT2, CONFIG2, EFF2> that uses the SignalsBuild<IN2, OUT2, CONFIG2, EFF2>::build
+   * It takes as argument a pure function that implements SignalsMapToFactory\<IN, OUT, CONFIG, EFF, IN2, OUT2, CONFIG2, EFF2\>, hence
+   * a function taking SignalsBuild\<IN, OUT, CONFIG, EFF\> as argument and returning a SignalsFactory\<IN2, OUT2, CONFIG2, EFF2\>.
+   * The result of bind is a new SignalsFactory that uses the SignalsBuild\<IN2, OUT2, CONFIG2, EFF2\>::build
    * of the factory returned from the mapper (hence the result of bind is not the same instance as returned by the mapper).
    *
-   * @param {BindMapper<IN, OUT, CONFIG, EFF, IN2, OUT2, CONFIG2, EFF2>} mapper - a pure function mapping from SignalsBuild<IN, OUT, CONFIG, EFF> to SignalsFactory<IN2, OUT2, CONFIG2, EFF2>
-   * @returns {SignalsFactory<IN2, OUT2, CONFIG2, EFF>} - a new SignalsFactory<IN2, OUT2, CONFIG2, EFF2>
+   * @param {BindMapper} mapper - a pure function mapping from SignalsBuild\<IN, OUT, CONFIG, EFF\> to SignalsFactory\<IN2, OUT2, CONFIG2, EFF2\>
+   * @returns {SignalsFactory} - a new SignalsFactory\<IN2, OUT2, CONFIG2, EFF2\>
    */
   bind<
     IN2 extends NameToSignalId,
@@ -416,13 +423,13 @@ export class SignalsFactory<
 
   /**
    * This method implements the functor-fmap for the SignalsFactory.
-   * It takes as argument a pure function that implements BuildMapper<IN, OUT, CONFIG, EFF, IN2, OUT2, CONFIG2, EFF2>, hence
-   * a function taking SignalsBuild<IN, OUT, CONFIG, EFF> as argument and returning a SignalsBuild<IN2, OUT2, CONFIG2, EFF2>.
-   * The result of fmap is a new SignalsFactory<IN2, OUT2, CONFIG2, EFF2> that uses the SignalsBuild<IN2, OUT2, CONFIG2, EFF2> returned
+   * It takes as argument a pure function that implements BuildMapper\<IN, OUT, CONFIG, EFF, IN2, OUT2, CONFIG2, EFF2\>, hence
+   * a function taking SignalsBuild\<IN, OUT, CONFIG, EFF\> as argument and returning a SignalsBuild\<IN2, OUT2, CONFIG2, EFF2\>.
+   * The result of fmap is a new SignalsFactory that uses the SignalsBuild\<IN2, OUT2, CONFIG2, EFF2\> returned
    * from the mapper.
    *
-   * @param {BuildMapper<IN, OUT, CONFIG, EFF, IN2, OUT2, CONFIG2, EFF2>} mapper - a pure function mapping from SignalsBuild<IN, OUT, CONFIG, EFF> to SignalsBuild<IN2, OUT2, CONFIG2, EFF2>
-   * @returns {SignalsFactory<IN2, OUT2, CONFIG2, EFF2>} - a new SignalsFactory<IN2, OUT2, CONFIG2, EFF2>
+   * @param {BuildMapper} mapper - a pure function mapping from SignalsBuild\<IN, OUT, CONFIG, EFF\> to SignalsBuild\<IN2, OUT2, CONFIG2, EFF2\>
+   * @returns {SignalsFactory} - a new SignalsFactory\<IN2, OUT2, CONFIG2, EFF2\>
    */
   fmap<
     IN2 extends NameToSignalId,
@@ -437,12 +444,12 @@ export class SignalsFactory<
   }
 
   /**
-   * The extendSetup method takes as argument a function that implements ExtendSetup<IN, OUT, CONFIG, EFF>.
+   * The extendSetup method takes as argument a function that implements ExtendSetup\<IN, OUT, CONFIG, EFF\>.
    * It returns a new SignalsFactory of the same type as this SignalsFactory, but with a wrapped SignalsBuild that
    * extends the code executed in the Signals setup method by the provided code.
    *
-   * @param {ExtendSetup<IN, OUT, CONFIG, EFF>} extend - a function extending the setup method of the Signals produced by the SignalsBuild of the resulting SignalsFactory
-   * @returns {SignalsFactory<IN, OUT, CONFIG, EFF>} - a new SignalsFactory with extended store setup
+   * @param {ExtendSetup} extend - a function extending the setup method of the Signals produced by the SignalsBuild of the resulting SignalsFactory
+   * @returns {SignalsFactory} - a new SignalsFactory with extended store setup
    */
   extendSetup(extend: ExtendSetup<IN, OUT, CONFIG, EFF>): SignalsFactory<IN, OUT, CONFIG, EFF> {
     return this.fmap<IN, OUT, CONFIG, EFF>(sb => config => {
@@ -461,17 +468,17 @@ export class SignalsFactory<
    * The connect method offers an easy way to connect an output signal to an input signal.
    * It takes the name of an output-id (a key of OUT) as first argument and the name of an input-id (a key of IN) as second argument.
    * If keepInputId is set to true, it returns a new SignalsFactory of the same type as this SignalsFactory,
-   * but with an extended setup logic, that connects the Signal<S extends T> that corresponds to the named output-id to a
-   * new Signal<T> corresponding to the named input-id.
+   * but with an extended setup logic, that connects the Signal\<S extends T\> that corresponds to the named output-id to a
+   * new Signal\<T\> corresponding to the named input-id.
    * If keepInputId is set to false, it also extends the setup logic to connect the corresponding signal-ids, but in addition
    * the specified input-id will be excluded from the IN-type of the resulting factory.
    * (also see store.connect documentation, as this is used under the hood)
-   * Typescript will enforce that both names (keys) map to compatible signal ids, hence if KIN corresponds to SignalId<T>,
-   * then KOUT must correspond to SignalId<S extends T> (though one might be an EventId and the other a BehaviorId).
+   * Typescript will enforce that both names (keys) map to compatible signal ids, hence if KIN corresponds to SignalId\<T\>,
+   * then KOUT must correspond to SignalId\<S extends T\> (though one might be an EventId and the other a BehaviorId).
    * That is, even though you only use strings as arguments, this method is still type-safe and will not compile if you try to specify names of non-existing or incompatible ids.
    *
-   * @param {KIN} inputName - a key of IN, where IN[toName] must be of type Signal<T>
-   * @param {KOUT} outputName - a key of OUT, where OUT[outputName] must be of type Signal<S extends T>
+   * @param {KIN} inputName - a key of IN, where IN\[toName\] must be of type Signal\<T\>
+   * @param {KOUT} outputName - a key of OUT, where OUT\[outputName\] must be of type Signal\<S extends T\>
    * @param {boolean} keepInputId - if set to false, the input-id corresponding to toName will be removed from the resulting factories' IN
    * @returns {SignalsFactory} - a new SignalsFactory with the concrete type depending on the keepInputId argument
    */
@@ -502,8 +509,8 @@ export class SignalsFactory<
    * of an OUT signal-id, but instead directly a signal-id (thus, some arbitrary signal-id can be used).
    * Everything else works like connect, so please see the corresponding documentation there.
    *
-   * @param {KIN} inputName - a key of IN, where IN[toName] must be of type Signal<T>
-   * @param {ID} fromId - a Signal<S extends T>
+   * @param {KIN} inputName - a key of IN, where IN\[toName\] must be of type Signal\<T\>
+   * @param {ID} fromId - a Signal\<S extends T\>
    * @param {boolean} keepInputId - if set to false, the input-id corresponding to toName will be removed from the resulting factories' IN
    * @returns {SignalsFactory} - a new SignalsFactory with the concrete type depending on the keepInputId argument
    */
@@ -529,8 +536,8 @@ export class SignalsFactory<
    * its first argument is a function that takes store, output and config as arguments and returns an observable.
    * For the other arguments, please see the documentation of the connect method.
    *
-   * @param {KIN} inputName - a key of IN, where IN[toName] must be of type Signal<T>
-   * @param {function} sourceGetter - a function returning an Observable<S extends T>
+   * @param {KIN} inputName - a key of IN, where IN\[toName\] must be of type Signal\<T\>
+   * @param {function} sourceGetter - a function returning an Observable\<S extends T\>
    * @param {boolean} keepInputId - if set to false, the input-id corresponding to toName will be removed from the resulting factories' IN
    * @returns {SignalsFactory} - a new SignalsFactory with the concrete type depending on the keepInputId argument
    */
@@ -557,11 +564,11 @@ export class SignalsFactory<
   }
 
   /**
-   * The mapConfig method takes as argument a pure function that implements MapConfig<CONFIG, CONFIG2>.
-   * It returns a new SignalsFactory<IN, OUT, CONFIG2, EFF>.
+   * The mapConfig method takes as argument a pure function that implements MapConfig\<CONFIG, CONFIG2\>.
+   * It returns a new SignalsFactory\<IN, OUT, CONFIG2, EFF\>.
    *
-   * @param {MapConfig<CONFIG, CONFIG2>} mapper - a pure function mapping CONFIG2 to CONFIG
-   * @returns {SignalsFactory<IN, OUT, CONFIG2, EFF>} - a new SignalsFactory with different Configuration type
+   * @param {MapConfig} mapper - a pure function mapping CONFIG2 to CONFIG
+   * @returns {SignalsFactory} - a new SignalsFactory with different Configuration type
    */
   mapConfig<CONFIG2 extends Configuration>(
     mapper: MapConfig<CONFIG, CONFIG2>,
@@ -571,11 +578,11 @@ export class SignalsFactory<
   }
 
   /**
-   * The mapInput method takes as argument a pure function that implements MapSignalIds<IN, IN2>.
-   * It returns a new SignalsFactory<IN2, OUT, CONFIG, EFF>.
+   * The mapInput method takes as argument a pure function that implements MapSignalIds\<IN, IN2\>.
+   * It returns a new SignalsFactory\<IN2, OUT, CONFIG, EFF\>.
    *
-   * @param {MapSignalIds<IN, IN2, CONFIG>} mapper - a pure function mapping from IN to IN2
-   * @returns {SignalsFactory<IN2, OUT, CONFIG, EFF>} - a new SignalsFactory with different input signals
+   * @param {MapSignalIds} mapper - a pure function mapping from IN to IN2
+   * @returns {SignalsFactory} - a new SignalsFactory with different input signals
    */
   mapInput<IN2 extends NameToSignalId>(
     mapper: MapSignalIds<IN, IN2, CONFIG>,
@@ -596,8 +603,8 @@ export class SignalsFactory<
    * @template K - a concrete string to be used as key for the new SignalId
    * @template ID - a concrete SignalId type
    * @param {K} name - the name of the new SignalId
-   * @param {() => ID} idGetter - a function returning the new SignalId
-   * @returns {SignalsFactory<AddSignalId<IN, K, ID>, OUT, CONFIG, EFF>} - a new SignalsFactory with modified input signals
+   * @param {function} idGetter - a function returning the new SignalId
+   * @returns {SignalsFactory} - a new SignalsFactory with modified input signals
    */
   addInputId<K extends string, ID extends SignalId<any>>(
     name: AssertNonExistingKey<K, IN, 'any name not in keyof IN'>,
@@ -614,10 +621,10 @@ export class SignalsFactory<
    * to change the name of a single SignalId in the input signal ids.
    *
    * @template K1 - a concrete key of IN
-   * @template K2 - the new name for IN[K1]
+   * @template K2 - the new name for IN\[K1\]
    * @param {K1} oldName - the old key
    * @param {K2} newName - the new key
-   * @returns {SignalsFactory<RenameId<IN, K1, K2>, OUT, CONFIG, EFF>} - a new SignalsFactory with modified input signals
+   * @returns {SignalsFactory} - a new SignalsFactory with modified input signals
    */
   renameInputId<K1 extends keyof IN, K2 extends string>(
     oldName: K1,
@@ -639,7 +646,7 @@ export class SignalsFactory<
    *
    * @template K - a concrete K of the input signals of this factory
    * @param {K} name - the name of the SignalId to be removed
-   * @returns {SignalsFactory<Omit<IN, K>, OUT, CONFIG, EFF>} - a new SignalsFactory with modified input signals
+   * @returns {SignalsFactory} - a new SignalsFactory with modified input signals
    */
   removeInputId<K extends keyof IN>(name: K): SignalsFactory<Omit<IN, K>, OUT, CONFIG, EFF> {
     return this.mapInput<Omit<IN, K>>(input => {
@@ -650,11 +657,11 @@ export class SignalsFactory<
   }
 
   /**
-   * The mapOutput method takes as argument a pure function that implements MapSignalIds<OUT, OUT2>.
-   * It returns a new SignalsFactory<IN, OUT2, CONFIG, EFF>.
+   * The mapOutput method takes as argument a pure function that implements MapSignalIds\<OUT, OUT2\>.
+   * It returns a new SignalsFactory\<IN, OUT2, CONFIG, EFF\>.
    *
-   * @param {MapSignalIds<OUT, OUT2>} mapper - a pure function mapping from OUT to OUT2
-   * @returns {SignalsFactory<IN, OUT2, CONFIG, EFF>} - a new SignalsFactory with different output signals
+   * @param {MapSignalIds} mapper - a pure function mapping from OUT to OUT2
+   * @returns {SignalsFactory} - a new SignalsFactory with different output signals
    */
   mapOutput<OUT2 extends NameToSignalId>(
     mapper: MapSignalIds<OUT, OUT2, CONFIG>,
@@ -675,8 +682,8 @@ export class SignalsFactory<
    * @template K - a concrete string to be used as key for the new SignalId
    * @template ID - a concrete SignalId type
    * @param {K} name - the name of the new SignalId
-   * @param {() => ID} idGetter - a function returning the new SignalId
-   * @returns {SignalsFactory<IN, AddOrReplaceId<OUT, K, ID>, CONFIG, EFF>} - a new SignalsFactory with modified output signals
+   * @param {function} idGetter - a function returning the new SignalId
+   * @returns {SignalsFactory} - a new SignalsFactory with modified output signals
    */
   addOutputId<K extends string, ID extends SignalId<any>>(
     name: AssertNonExistingKey<K, OUT, 'any name not in keyof OUT'>,
@@ -693,10 +700,10 @@ export class SignalsFactory<
    * to change the name of a single SignalId in the output signal ids.
    *
    * @template K1 - a concrete key of OUT
-   * @template K2 - the new name for OUT[K1]
+   * @template K2 - the new name for OUT\[K1\]
    * @param {K1} oldName - the old key
    * @param {K2} newName - the new key
-   * @returns {SignalsFactory<IN, RenameId<OUT, K1, K2>, CONFIG, EFF>} - a new SignalsFactory with modified output signals
+   * @returns {SignalsFactory} - a new SignalsFactory with modified output signals
    */
   renameOutputId<K1 extends keyof OUT, K2 extends string>(
     oldName: K1,
@@ -718,7 +725,7 @@ export class SignalsFactory<
    *
    * @template K - a concrete K of the output signals of this factory
    * @param {K} name - the name of the SignalId to be removed
-   * @returns {SignalsFactory<IN, Omit<OUT, K>, CONFIG, EFF>} - a new SignalsFactory with modified output signals
+   * @returns {SignalsFactory} - a new SignalsFactory with modified output signals
    */
   removeOutputId<K extends keyof OUT>(name: K): SignalsFactory<IN, Omit<OUT, K>, CONFIG, EFF> {
     return this.mapOutput<Omit<OUT, K>>(output => {
@@ -733,14 +740,14 @@ export class SignalsFactory<
    * keeping the output-id-name. Thus, this is a short form for adding a new behavior based on an existing
    * output-behavior, then removing the ID of the existing one from output and finally, putting the ID of the
    * new behavior into output under the removed name of the existing behavior.
-   * Hence, this transforms from SignalsFactory<IN, OUT, CONFIG> to SignalsFactory<IN, OUT2, CONFIG>
-   * with OUT2 having the same keys as OUT, but OUT2[KOUT] having type TNEW and OUT[KOUT] having type TOLD
+   * Hence, this transforms from SignalsFactory\<IN, OUT, CONFIG\> to SignalsFactory\<IN, OUT2, CONFIG\>
+   * with OUT2 having the same keys as OUT, but OUT2\[KOUT\] having type TNEW and OUT\[KOUT\] having type TOLD
    *
    * @template KOUT - a concrete output key mapping to a BehaviorId<any>
-   * @template TNEW - value-type of the OUT2[KOUT] BehaviorId after mapping
-   * @param {KOUT} outputName - the name of a BehaviorId<any> from OUT
-   * @param {function} mapper - a function returning Observable<TNEW>
-   * @returns {SignalsFactory<IN, AddOrReplaceId<OUT, KOUT, BehaviorId<TNEW>>, CONFIG, EFF>} - a new SignalsFactory with a modified output signal
+   * @template TNEW - value-type of the OUT2\[KOUT\] BehaviorId after mapping
+   * @param {KOUT} outputName - the name of a BehaviorId\<any\> from OUT
+   * @param {function} mapper - a function returning Observable\<TNEW\>
+   * @returns {SignalsFactory} - a new SignalsFactory with a modified output signal
    */
   mapOutputBehavior<TNEW, KOUT extends keyof WithValueType<OUT, BehaviorId<any>>>(
     outputName: KOUT,
@@ -774,11 +781,11 @@ export class SignalsFactory<
   }
 
   /**
-   * The mapEffects method takes as argument a pure function that implements MapEffectIds<EFF, EFF2, CONFIG>.
-   * It returns a new SignalsFactory<IN, OUT, CONFIG, EFF2>.
+   * The mapEffects method takes as argument a pure function that implements MapEffectIds\<EFF, EFF2, CONFIG\>.
+   * It returns a new SignalsFactory\<IN, OUT, CONFIG, EFF2\>.
    *
-   * @param {MapSignalIds<EFF, EFF2>} mapper - a pure function mapping from EFF to EFF2
-   * @returns {SignalsFactory<IN, OUT, CONFIG, EFF2>} - a new SignalsFactory with different effect-ids
+   * @param {MapSignalIds} mapper - a pure function mapping from EFF to EFF2
+   * @returns {SignalsFactory} - a new SignalsFactory with different effect-ids
    */
   mapEffects<EFF2 extends NameToEffectId>(
     mapper: MapEffectIds<EFF, EFF2, CONFIG>,
@@ -799,8 +806,8 @@ export class SignalsFactory<
    * @template K - a concrete string to be used as key for the new EffectId
    * @template ID - a concrete EffectId type
    * @param {K} name - the name of the new EffectId
-   * @param {() => ID} idGetter - a function returning the new EffectId
-   * @returns {SignalsFactory<IN, OUT, CONFIG, AddEffectId<EFF, K, ID>>} - a new SignalsFactory with modified effect-ids
+   * @param {function} idGetter - a function returning the new EffectId
+   * @returns {SignalsFactory} - a new SignalsFactory with modified effect-ids
    */
   addEffectId<K extends string, ID extends EffectId<any, any>>(
     name: AssertNonExistingKey<K, EFF, 'any name not in keyof EFF'>,
@@ -818,7 +825,7 @@ export class SignalsFactory<
    *
    * @template K - a concrete key of the effect-ids of this factory
    * @param {K} name - the name of in NameToEffectIds to be removed
-   * @returns {SignalsFactory<IN, OUT, CONFIG, Omit<EFF, K>>} - a new SignalsFactory with modified effect-ids
+   * @returns {SignalsFactory} - a new SignalsFactory with modified effect-ids
    */
   removeEffectId<K extends keyof EFF>(name: K): SignalsFactory<IN, OUT, CONFIG, Omit<EFF, K>> {
     return this.mapEffects<Omit<EFF, K>>(effects => {
@@ -871,7 +878,7 @@ export class SignalsFactory<
    * @template K2 - the new name for EFF[K1]
    * @param {K1} oldName - the old key
    * @param {K2} newName - the new key
-   * @returns {SignalsFactory<IN, OUT, CONFIG, RenameEffectId<EFF, K1, K2>>} - a new SignalsFactory with modified effect-ids
+   * @returns {SignalsFactory} - a new SignalsFactory with modified effect-ids
    */
   renameEffectId<K1 extends keyof EFF, K2 extends string>(
     oldName: K1,

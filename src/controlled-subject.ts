@@ -1,16 +1,33 @@
 /* eslint no-underscore-dangle: ["error", { "allow": ["_rxs_id"] }] */
-import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
-import { distinctUntilChanged, filter, share } from 'rxjs/operators';
+import {
+  BehaviorSubject,
+  distinctUntilChanged,
+  filter,
+  Observable,
+  share,
+  Subject,
+  Subscription,
+} from 'rxjs';
 import { ContextHandle } from './context-handle';
 import { DelayedEventQueue } from './delayed-event-queue';
 import { SourceObservable } from './source-observable';
 import { NO_VALUE } from './store-utils';
 
-export interface ResetHandle {
+/**
+ * Used by the {@link Store}
+ *
+ * @internal
+ */
+export type ResetHandle = {
   removeSources(): void;
   readdSources(): void;
-}
+};
 
+/**
+ * Used by the {@link Store}
+ *
+ * @internal
+ */
 export class ControlledSubject<T> {
   private subject!: Subject<T> | BehaviorSubject<T>;
 
