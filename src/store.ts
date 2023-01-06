@@ -1,14 +1,14 @@
 import {
-  asyncScheduler,
   BehaviorSubject,
+  NEVER,
+  Observable,
+  asyncScheduler,
   delay,
   distinctUntilChanged,
   filter,
   firstValueFrom,
   map,
   merge,
-  NEVER,
-  Observable,
   of,
   share,
   switchMap,
@@ -23,15 +23,16 @@ import {
   DerivedId,
   EffectId,
   EventId,
-  isBehaviorId,
-  isDerivedId,
-  isStateId,
   NO_VALUE,
+  NoValueType,
   SignalId,
   StateId,
   ToBehaviorIdValueType,
   ToEventIdValueType,
   ToSignalIdValueType,
+  isBehaviorId,
+  isDerivedId,
+  isStateId,
 } from './store-utils';
 
 /**
@@ -89,11 +90,11 @@ export type Effect<Input, Result> = (
   /** the Store instance that will be passed to the function (e.g. to inject some other Effect) */
   store: Store,
 
-  /** the input of the previous function invocation, or undefined */
-  previousInput?: Input,
+  /** the input of the previous function invocation, or NO_VALUE */
+  previousInput: Input | NoValueType,
 
-  /** the result of the previous function invocation, or undefined */
-  previousResult?: Result,
+  /** the result of the previous function invocation, or NO_VALUE */
+  previousResult: Result | NoValueType,
 ) => Observable<Result>;
 
 /**
@@ -176,7 +177,7 @@ export class Store {
     initialValueOrValueGetter:
       | ToBehaviorIdValueType<ID>
       | (() => ToBehaviorIdValueType<ID>)
-      | symbol = NO_VALUE,
+      | NoValueType = NO_VALUE,
   ): void {
     this.assertSourceExists(identifier, identifier);
     this.getBehaviorControlledSubject(identifier).addSource(
@@ -217,7 +218,7 @@ export class Store {
     initialValueOrValueGetter:
       | ToBehaviorIdValueType<ID>
       | (() => ToBehaviorIdValueType<ID>)
-      | symbol = NO_VALUE,
+      | NoValueType = NO_VALUE,
   ): void {
     this.addBehavior(identifier, observable, true, initialValueOrValueGetter);
   }

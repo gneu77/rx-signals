@@ -33,17 +33,16 @@ There is more however:
 
 ## Using the store <a name="store"></a>
 
-The _rx-signals_ store is a class to reactively manage state and effects.
-(It can also be used for local state and effects management via child stores.)
+The _rx-signals_ store is a class for observed (immutable) state management and effect management (isolation).
+(It can also be used for local state and effects management via child stores or lifecycle-handles.)
 
 * With respect to [state management](https://github.com/gneu77/rx-signals/blob/master/docs/rp_state_effects_start.md), the store is used
-  * to define dependencies explicitly
+  * to define dependencies explicitly (declaratively)
   * to hold root-state and sources for derived-state
 * With respect to [reactivity](https://github.com/gneu77/rx-signals/blob/master/docs/rp_state_effects_start.md), the store
   * propagates changes via behaviors and event-streams
   * performs reactive dependency injection
 * With respect to [effects management](https://github.com/gneu77/blob/master/rx-signals/docs/rp_state_effects_start.md), the store
-  * is the _world_ as pure function argument
   * is used to inject isolated side-effects
 
 The following diagram gives an overview for the _Store_ architecture and API.
@@ -57,9 +56,9 @@ Signal identifiers
 * are used to uniquely identify a behavior or event-stream of the store
 * provide type-safe access to behaviors and event-streams
 
-A signal identifier can be either an event- or behavior id: `type SignalId<T> = BehaviorId<T> | EventId<T>`
+A signal identifier can be either an event- or behavior-id: `type SignalId<T> = BehaviorId<T> | EventId<T>`
 
-There are also two different kinds of behavior ids, depending on whether it identifies a root-state or derived state: `type BehaviorId<T> = StateId<T> | DerivedId<T>`
+There are also two different kinds of behavior ids, depending on whether it identifies a root-state or derived-state: `type BehaviorId<T> = StateId<T> | DerivedId<T>`
 
 For a given event- or behavior-type `T`, you can obtain a new, unique id using `getEventId<T>()`, `getStateId<T>()` or `getDerivedId<T>()` (these are not store methods, but independent utility functions).
 
@@ -88,10 +87,10 @@ The return value of this method is an `Observable<T>` and TypeScript will infer 
 
 From now on:
 * the term _event-values-type_, always means the generic type of values
-* the term _event-type_, means a certain `EventId<T>`
+* the term _event-type_, means a distinct `EventId<T>`
 Thus, for `const luckyNumbers = getEventId<number>();`, the _event-type_ would be `luckyNumbers`, while the _event-values-type_ would be `number`,
 
-There can be multiple sources for a given _event-type_. One source that all event-streams have is a call to the dispatch function:
+There can be multiple sources for a given _event-type_. One source that all event-streams have is a call to the `dispatch` function:
 ```typescript
 store.dispatch(id: EventId<T>, value: T);
 ```
@@ -120,11 +119,12 @@ Of course, even if all added event-sources for a given _event-type_ complete, th
 
 There are some important **guarantees** concerning event-dispatch (whether manually or via event-sources):
 * The store always dispatches events asynchronously
-  * Relying on synchronous dispatch would break reactive design (remember that one purpose of RP is to [abstract away the need to think about time](https://github.com/gneu77/rx-signals/blob/master/docs/rp_state_effects_start.md#abstract_away_time)). The async dispatch also enables definition of cyclic dependencies (which are no problem in case of immutable architectures).
+  * Relying on synchronous dispatch would break reactive design (remember that one purpose of RP is to [abstract away the need to think about time](https://github.com/gneu77/rx-signals/blob/master/docs/rp_state_effects_start.md#abstract_away_time)). The async dispatch also enables definition of cyclic dependencies (which are no problem per se).
 * Though async, the order in which events are dispatched will always be preserved
   * So dispatching e.g. two events `A`, `B`, the `B` will be dispatched only after **all** subscribers got the `A`
+    * Also `B` will always be dispatched before all events that might be dispatched by `A`-subscribers
   * This holds true even for the dispatch-order between parent- and child-stores (cause they're using a shared dispatch-queue)
-  * (This is one aspect that is not trivial to get right when wireing-up complex dependencies using plain _RxJs_ on your own)
+  * (This is one aspect that is not trivial to get right on your own when wireing-up complex dependencies using plain _RxJs_)
 
 Let's see this in action:
 ```typescript
@@ -163,11 +163,11 @@ The output will be in order of the numbers:
 Please have in mind that dispatching an event is always a side-effect. That means
 * you should use `dispatch` only to translate non-store events (like browser events) to store events
 * event-sources are either effects or event-transformers (mapping from one _event-type_ to another)
-  * though on a low-level, all side-effects could be implemented via event-sources, the store has an additional, better way to describe input-output-effects via the `Effect` type. This will be described later in the [EffectSignalsFactory section](#effect-signals-factory).
+  * though on a low-level, all side-effects could be implemented via event-sources, the store has an additional, better way to describe input-output-effects via the `Effect` type which allows for clean isolation and trivial mockup for testing. This will be described later in the [EffectSignalsFactory section](#effect-signals-factory).
 
 The previous example was already a bit complicated and you should strive for a low number of event-sources that would lead to automatic dispatch->state->dispatch cycles.
 Nevertheless, it's important to fully understand how the dispatch-queue works.
-Say _N_ events are added to the dispatch-queue before the dispatch-queue-handler is invoked (asynchronously by the JS-event-loop), the handler will dispatch those _N_ events synchronously (in the order they were added).
+If _N_ events are added to the dispatch-queue before the dispatch-queue-handler is invoked (asynchronously by the JS-event-loop), the handler will dispatch those _N_ events synchronously (in the order they were added).
 Dispatching the _N_ events might lead to _M_ new events being added to the dispatch-queue.
 Those _M_ new events however, will not be dispatched immediately, but again asynchronously in one of the next cycles of the JS-event-loop.
 The following example illustrates this:
@@ -195,7 +195,8 @@ store.dispatch(myEvent, 2);
 
 ![dispatch queue example](./images/event-order2.svg)
 
-(So 1 and 2 are dispatched synchronously, then in one of the next JS-event-loop-cycles 6, 21, 7 and 22 are dispatched synchronously, etc.)
+So 1 and 2 are added to the dispatch-queue (via _store.dispatch()_) and in one of the next JS-event-loop-cycles the dispatch-queue-handler dispatches them synchronously. 
+Then, again in one of the next JS-event-loop-cycles 6, 21, 7 and 22 are dispatched synchronously, etc.
 
 #### Typed event-sources
 
@@ -251,7 +252,7 @@ If you don't know what a behavior in the sense of RP is, then head back to [Term
 In _rx-signals_, a behavior is an _RxJs_-observable that always has the current value when subscribed.
 Behaviors represent observed state, either being root-state or derived-state.
 In addition to this definition, _rx-signals_-behaviors
-1. root-state-behaviors are non-lazy and derived-state-behaviors are lazy
+1. are non-lazy in case of root-state-behaviors and are lazy in case of derived-state-behaviors
     1. Non-lazy behaviors are subscribed by the store itself as soon as you add a corresponding behavior-source to the store.
     1. Lazy behaviors will **not** be subscribed by the store itself, as long as there are no subscribers.
 1. <a name="distinct_pipe"></a> always behave as if piped with `distinctUntilChanged()` and `shareReplay(1)`. (However, internally they do **not** use `shareReplay(1)` and thus, there is **no** risk of the memory-leaks that are possible with `shareReplay` (or were possible at least in _RxJs < 7.0_).)
@@ -314,8 +315,7 @@ This is the same approach as in classic dependency injection, just better, becau
 
 It is important to know that as soon as you add a reducer to the store, the store will subscribe the corresponding event-stream.
 If you have an event-stream that should be subscribed lazily, but still need it in a reducer, this might indicate a flawed design.
-However, there are cases where this is a valid requirement.
-You can then either use an X-typed event source with the `subscribeObservableOnlyIfEventIsSubscribed` argument described in a previous section, or you can handle this manually by switchMapping the source-observable of your event-source by any other behavior and/or event.
+However, if you're really sure you need this, you can then either use an X-typed event source with the `subscribeObservableOnlyIfEventIsSubscribed` argument described in a previous section, or you can handle this manually by switchMapping the source-observable of your event-source by any other behavior and/or event.
 
 #### Derived-state behaviors
 
@@ -325,7 +325,7 @@ Adding a derived-state behavior source is done by:
 store.addDerivedState(
   identifier: DerivedId<T>,
   observable: Observable<T>,
-  initialValueOrValueGetter: T | (() => T) | symbol = NO_VALUE,
+  initialValueOrValueGetter: T | (() => T) | NoValueType = NO_VALUE,
 );
 ```
 
@@ -686,7 +686,7 @@ We will compose a corresponding `SignalsFactory` from smaller, generic and reusa
 So in the above diagram, the arrows show the direction of composition, hence dependencies are in the opposite direction.
 There are 4 low-level components and 2 composed ones.
 
-Here is a possible implementation for a generic `SignalsBuild<ModelInput<T>, ModelOutput<T>, ModelConfig<T>>` of a _ModelFactory_ that could be used for any form-controlled model (and will be used to model the filter of our query):
+Here is a possible implementation for a generic `SignalsBuild<ModelInput<T>, ModelOutput<T>, ModelConfig<T>>` of a _ModelFactory_ that could be used for any data model (and will be used to model the filter of our query):
 ```typescript
 type ModelInput<T> = {
   setModel: EventId<T>;
@@ -805,7 +805,7 @@ const getPagingSignals = (): Signals<PagingInput, PagingOutput> => {
 const pagingSignalsFactory = new SignalsFactory(getPagingSignals);
 ```
 
-Now we can compose a generic function producing a _QueryInputFactory_:
+Now we can implement a generic function that produces a _QueryInputFactory_:
 ```typescript
 type FilteredSortedPagedQueryInput<FilterType> = ModelInput<FilterType>
   & SortingInput
@@ -833,7 +833,7 @@ const getFilteredSortedPagedQuerySignalsFactory = <FilterType>(): SignalsFactory
           store.getEventStream(input.ascending),
           store.getEventStream(input.descending),
           store.getEventStream(input.none),
-        ).pipe(mapTo(0)),
+        ).pipe(map(() => 0)),
       );
     });
 ```
@@ -880,7 +880,6 @@ A concrete usage could be like this:
 type MyFilter = { firstName: string; lastName: string };
 const effectMock: Effect<[MyFilter, SortParameter, PagingParameter], string[]> = input =>
   of([`${input[0].firstName} ${input[0].lastName}`]);
-store.addEffect(resultEffectId, effectMock);
 const mySignals = getQueryWithResultFactory<MyFilter, string[]>().build({
   defaultFilter: {
     firstName: '',
@@ -930,8 +929,8 @@ In the section about events, I already mentioned that you could solve this on a 
 type Effect<Input, Result> = (
   input: Input,
   store: Store,
-  previousInput?: Input,
-  previousResult?: Result,
+  previousInput: Input | NoValueType,
+  previousResult: Result | NoValueType,
 ) => Observable<Result>;
 ```
 
@@ -1005,10 +1004,11 @@ type EffectFactoryEffects<Input, Result> = {
   id: EffectId<Input, Result>;
 };
 type CombinedEffectResult<Input, Result> = {
-  currentInput?: Input;
-  result?: Result;
-  resultInput?: Input;
+  currentInput: Input | NoValueType;
+  result: Result | NoValueType;
+  resultInput: Input | NoValueType;
   resultPending: boolean;
+  resultError?: any;
 };
 ```
 
@@ -1192,7 +1192,7 @@ it('should be testable with effect-mock', async () => {
       map(c => c.result),
       distinctUntilChanged(),
     ),
-    [undefined, 0, 10, 20, 21],
+    [NO_VALUE, 0, 10, 20, 21],
   );
   store.dispatch(randomNumberSignals.input.incTo);
   store.dispatch(randomNumberSignals.input.incTo);

@@ -15,32 +15,95 @@ import {
   DerivedId,
   EffectId,
   EventId,
+  NO_VALUE,
+  NoValueType,
   getDerivedId,
   getEffectId,
   getEventId,
   getStateId,
-  NO_VALUE,
+  isNoValueType,
+  isNotNoValueType,
 } from './store-utils';
 
 /**
- * Value-type for the derived behavior produced by {@link EffectSignals}.
+ * Value-type for the combined derived behavior produced by {@link EffectSignals}.
  *
  * @template Input - specifies the input type for the effect
  * @template Result - specifies the result type of the effect
  */
 export type CombinedEffectResult<Input, Result> = {
-  /** current input (which might differ from the resultInput) */
-  currentInput?: Input;
+  /**
+   * The current input (which might differ from the resultInput),
+   * or NO_VALUE, if no input was received yet
+   */
+  currentInput: Input | NoValueType;
 
-  /** the current result (or undefined, if no result was received yet) */
-  result?: Result;
+  /** The current result,
+   *  or NO_VALUE, if no result was received yet or input led to error
+   */
+  result: Result | NoValueType;
 
-  /** the input that produced the current result (or undefined, if result is undefined) */
-  resultInput?: Input;
+  /**
+   * The input that produced the current result,
+   * or NO_VALUE, initial result or no result received yet */
+  resultInput: Input | NoValueType;
 
-  /** indicates whether the effect is currently running. (In case of a factory without trigger, this will be true whenever currentInput !== resultInput, or whenever an invalidation event has been sent) */
+  /**
+   * In case the resultInput led to an error (result === NO_VALUE in that case) */
+  resultError?: any;
+
+  /**
+   * Indicates whether the effect is currently running.
+   * In case of a factory without trigger, this will be true whenever
+   * currentInput !== resultInput, or whenever an invalidation event has been sent
+   */
   resultPending: boolean;
 };
+
+/**
+ * Type representing a {@link CombinedEffectResult} in it's error state (non-pending)
+ *
+ * @template Input - specifies the input type for the effect
+ */
+export type CombinedEffectResultInErrorState<Input> = {
+  currentInput: Input;
+  result: NoValueType;
+  resultInput: Input;
+  resultError: any;
+  resultPending: false;
+};
+
+/**
+ * Typeguard to check if a {@link CombinedEffectResult} is a CombinedEffectResultInErrorState
+ */
+export const isCombinedEffectResultInErrorState = <Input, Result>(
+  cer: CombinedEffectResult<Input, Result>,
+): cer is CombinedEffectResultInErrorState<Input> =>
+  !!cer.resultError &&
+  !cer.resultPending &&
+  isNoValueType(cer.result) &&
+  isNotNoValueType(cer.resultInput);
+
+/**
+ * Type representing a {@link CombinedEffectResult} in it's success state (non-pending)
+ *
+ * @template Input - specifies the input type for the effect
+ * @template Result - specifies the result type of the effect
+ */
+export type CombinedEffectResultInSuccessState<Input, Result> = {
+  currentInput: Input | NoValueType;
+  result: Result;
+  resultInput: Input | NoValueType;
+  resultPending: false;
+};
+
+/**
+ * Typeguard to check if a {@link CombinedEffectResult} is a CombinedEffectResultInErrorState
+ */
+export const isCombinedEffectResultInSuccessState = <Input, Result>(
+  cer: CombinedEffectResult<Input, Result>,
+): cer is CombinedEffectResultInSuccessState<Input, Result> =>
+  !cer.resultError && !cer.resultPending && isNotNoValueType(cer.result);
 
 /**
  * Value-type for error events produced by an {@link EffectSignals} (unhandled effect errors).
@@ -68,11 +131,11 @@ export type EffectSuccess<Input, Result> = {
   /** the effect input that lead to the result */
   resultInput: Input;
 
-  /** the input of the previous result, or undefined */
-  previousInput?: Input;
+  /** the input of the previous result, or NO_VALUE */
+  previousInput: Input | NoValueType;
 
-  /** the previous result, or undefined */
-  previousResult?: Result;
+  /** the previous result, or NO_VALUE */
+  previousResult: Result | NoValueType;
 };
 
 /**
@@ -104,6 +167,12 @@ export type EffectInputSignals<Input> = {
 export type EffectOutputSignals<Input, Result> = {
   /** identifier for the produced combined effect result behavior */
   combined: DerivedId<CombinedEffectResult<Input, Result>>;
+
+  /** identifier for a convenience behavior derived from combined-behavior, representing only success states */
+  result: DerivedId<CombinedEffectResultInSuccessState<Input, Result>>;
+
+  /** identifier for a convenience behavior derived from combined-behavior, representing only pending state */
+  pending: DerivedId<boolean>;
 
   /** identifier for the produced error events */
   errors: EventId<EffectError<Input>>;
@@ -199,15 +268,34 @@ const getOutputSignalIds = <Input, Result>(
   nameExtension?: string,
 ): EffectOutputSignals<Input, Result> => ({
   combined: getDerivedId<CombinedEffectResult<Input, Result>>(`${nameExtension ?? ''}_combined`),
+  result: getDerivedId<CombinedEffectResultInSuccessState<Input, Result>>(
+    `${nameExtension ?? ''}_result`,
+  ),
+  pending: getDerivedId<boolean>(`${nameExtension ?? ''}_pending`),
   errors: getEventId<EffectError<Input>>(`${nameExtension ?? ''}_errors`),
   successes: getEventId<EffectSuccess<Input, Result>>(`${nameExtension ?? ''}_successes`),
 });
+
+const NO_VALUE_TRIGGERED_INPUT = '$INTERNAL_NV_TI$';
+type NoValueTriggeredInput = typeof NO_VALUE_TRIGGERED_INPUT;
+
+type InternalResultType<Input, Result> = {
+  result: Result | NoValueType;
+  resultInput: Input | NoValueType;
+  resultError?: any;
+  resultToken: object | null;
+};
 
 const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
   config: EffectConfiguration<IT, RT>,
 ): EffectSignals<IT, RT> => {
   const effectId = getEffectId<IT, RT>();
-  const internalResultEffect = (input: IT, store: Store, previousInput?: IT, previousResult?: RT) =>
+  const internalResultEffect = (
+    input: IT,
+    store: Store,
+    previousInput: IT | NoValueType,
+    previousResult: RT | NoValueType,
+  ) =>
     store.getEffect(effectId).pipe(
       take(1),
       switchMap(effect => {
@@ -236,40 +324,27 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
       store.connect(inIds.input, internalInput);
     }
 
-    const resultEvent = getEventId<{
-      result?: RT;
-      resultInput: IT;
-      resultToken: object | null;
-    }>();
-    const resultBehavior = getDerivedId<{
-      result?: RT;
-      resultInput?: IT;
-      resultToken: object | null;
-    }>();
-    const initialResult = config.initialResultGetter ? config.initialResultGetter() : undefined;
+    const resultEvent = getEventId<InternalResultType<IT, RT>>();
+    const resultBehavior = getDerivedId<InternalResultType<IT, RT>>();
+    const initialResult = config.initialResultGetter ? config.initialResultGetter() : NO_VALUE;
     store.addDerivedState(resultBehavior, store.getEventStream(resultEvent), {
       result: initialResult,
+      resultInput: NO_VALUE,
       resultToken: null,
     });
 
     const triggeredInputEvent = getEventId<IT>();
-    const triggeredInputBehavior = getDerivedId<IT | null>();
-    store.addDerivedState(triggeredInputBehavior, store.getEventStream(triggeredInputEvent), null);
+    const triggeredInputBehavior = getDerivedId<IT | NoValueTriggeredInput>();
+    store.addDerivedState(
+      triggeredInputBehavior,
+      store.getEventStream(triggeredInputEvent),
+      NO_VALUE_TRIGGERED_INPUT,
+    );
 
     // It is important to setup the combined observable as behavior,
     // because a simple shareReplay (even with refCount) could create a memory leak!!!
-    const combinedId = getDerivedId<
-      [
-        IT,
-        {
-          result?: RT;
-          resultInput?: IT;
-          resultToken: object | null;
-        },
-        object | null,
-        IT | null,
-      ]
-    >();
+    const combinedId =
+      getDerivedId<[IT, InternalResultType<IT, RT>, object | null, IT | NoValueTriggeredInput]>();
     store.addDerivedState(
       combinedId,
       combineLatest([
@@ -295,7 +370,7 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
         filter(
           ([input, resultState, token]) =>
             token !== resultState.resultToken ||
-            resultState.resultInput === undefined ||
+            resultState.resultInput === NO_VALUE ||
             !effectInputEquals(input, resultState.resultInput),
         ),
         switchMap(([input, resultState, token, triggeredInput]) =>
@@ -340,7 +415,9 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
                     {
                       type: resultEvent,
                       event: {
+                        result: NO_VALUE,
                         resultInput: input,
+                        resultError: error,
                         resultToken: token,
                       },
                     },
@@ -352,29 +429,66 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
       resultEvent,
     );
 
+    const getIsPending = config.withTrigger
+      ? ([input, resultState, token, triggeredInput]: [
+          IT,
+          InternalResultType<IT, RT>,
+          object | null,
+          IT | NoValueTriggeredInput,
+        ]) =>
+          input === triggeredInput &&
+          (token !== resultState.resultToken ||
+            resultState.resultInput === NO_VALUE ||
+            !effectInputEquals(input, resultState.resultInput))
+      : ([input, resultState, token]: [
+          IT,
+          InternalResultType<IT, RT>,
+          object | null,
+          IT | NoValueTriggeredInput,
+        ]) =>
+          token !== resultState.resultToken ||
+          resultState.resultInput === NO_VALUE ||
+          !effectInputEquals(input, resultState.resultInput);
+
     store.addDerivedState(
       outIds.combined,
       combined.pipe(
-        map(([input, resultState, token, triggeredInput]) => ({
-          currentInput: input,
-          result: resultState.result,
-          resultInput: resultState.resultInput,
-          resultPending: config.withTrigger
-            ? input === triggeredInput &&
-              (token !== resultState.resultToken ||
-                resultState.resultInput === undefined ||
-                !effectInputEquals(input, resultState.resultInput))
-            : token !== resultState.resultToken ||
-              resultState.resultInput === undefined ||
-              !effectInputEquals(input, resultState.resultInput),
-        })),
+        map(([input, resultState, token, triggeredInput]) =>
+          getIsPending([input, resultState, token, triggeredInput])
+            ? {
+                currentInput: input,
+                result: resultState.result,
+                resultInput: resultState.resultInput,
+                resultPending: true,
+              }
+            : {
+                currentInput: input,
+                result: resultState.result,
+                resultInput: resultState.resultInput,
+                resultError: resultState.resultError,
+                resultPending: false,
+                ...(resultState.resultError ? { resultError: resultState.resultError } : {}),
+              },
+        ),
       ),
       config.initialResultGetter
         ? {
+            currentInput: NO_VALUE,
             result: config.initialResultGetter(),
+            resultInput: NO_VALUE,
             resultPending: false,
           }
         : NO_VALUE,
+    );
+
+    store.addDerivedState(
+      outIds.result,
+      store.getBehavior(outIds.combined).pipe(filter(isCombinedEffectResultInSuccessState)),
+    );
+
+    store.addDerivedState(
+      outIds.pending,
+      store.getBehavior(outIds.combined).pipe(map(c => c.resultPending)),
     );
   };
   return {

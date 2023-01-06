@@ -1,6 +1,7 @@
-import { combineLatest, distinctUntilChanged, filter, map, startWith } from 'rxjs';
+import { Observable, combineLatest, distinctUntilChanged, filter, map, startWith } from 'rxjs';
 import {
   CombinedEffectResult,
+  CombinedEffectResultInSuccessState,
   EffectError,
   EffectOutputSignals,
   EffectSuccess,
@@ -8,7 +9,15 @@ import {
 } from './effect-signals-factory';
 import { SignalsFactory } from './signals-factory';
 import { Store } from './store';
-import { BehaviorId, DerivedId, EffectId, EventId, getDerivedId } from './store-utils';
+import {
+  BehaviorId,
+  DerivedId,
+  EffectId,
+  EventId,
+  NO_VALUE,
+  NoValueType,
+  getDerivedId,
+} from './store-utils';
 import { Merged } from './type-utils';
 
 /**
@@ -20,16 +29,16 @@ import { Merged } from './type-utils';
  */
 export type ValidatedInputWithResult<Input, ValidationResult, Result> = {
   /** current input (which might differ from the resultInput) */
-  currentInput?: Input;
+  currentInput: Input | NoValueType;
 
   /** indicates whether the validation-effect is currently running */
   validationPending: boolean;
 
   /** the input that produced the current validationResult (or undefined, if validationResult is undefined) */
-  validatedInput?: Input;
+  validatedInput: Input | NoValueType;
 
   /** the current validationResult (or undefined, if no validation-result was received yet) */
-  validationResult?: ValidationResult;
+  validationResult: ValidationResult | NoValueType;
 
   /** whether the current validationResult represents a valid state (false, if current validationResult is undefined) */
   isValid: boolean;
@@ -38,10 +47,13 @@ export type ValidatedInputWithResult<Input, ValidationResult, Result> = {
   resultPending: boolean;
 
   /** the input that produced the current result (or undefined, if result is undefined) */
-  resultInput?: Input;
+  resultInput: Input | NoValueType;
+
+  /* In case the resultInput led to an error (result === NO_VALUE in that case) */
+  resultError?: any;
 
   /** the current result (or undefined, if no result was received yet) */
-  result?: Result;
+  result: Result | NoValueType;
 };
 
 /**
@@ -59,6 +71,7 @@ export type ValidatedInputWithResultInput<Input> = {
  */
 export type ValidatedInputWithResultOutput<Input, ValidationResult, Result> = {
   combined: DerivedId<ValidatedInputWithResult<Input, ValidationResult, Result>>;
+  result: DerivedId<CombinedEffectResultInSuccessState<Input, Result>>;
   validationErrors: EventId<EffectError<Input>>;
   validationSuccesses: EventId<EffectSuccess<Input, ValidationResult>>;
   resultErrors: EventId<EffectError<Input>>;
@@ -99,18 +112,28 @@ export type ValidatedInputWithResultFactory<Input, ValidationResult, Result> = S
   ValidatedInputWithResultEffects<Input, ValidationResult, Result>
 >;
 
+type ResultInputGetterInput<Input, ValidationResult> = {
+  currentInput: Input;
+  resultInput: Input;
+  result: ValidationResult;
+  resultPending: boolean;
+};
+
+const isResultInputGetterInput = <Input, ValidationResult>(
+  c: CombinedEffectResult<Input, ValidationResult>,
+): c is ResultInputGetterInput<Input, ValidationResult> =>
+  c.resultInput !== NO_VALUE && c.result !== NO_VALUE && c.currentInput === c.resultInput;
+
 const resultInputGetter = <Input, ValidationResult>(
   store: Store,
   validationBehaviorId: BehaviorId<CombinedEffectResult<Input, ValidationResult>>,
   isValidationResultValid: (validationResult: ValidationResult) => boolean,
-) =>
+): Observable<Input> =>
   store.getBehavior(validationBehaviorId).pipe(
-    filter(c => c.resultInput !== undefined && c.result !== undefined),
-    filter(c => c.currentInput === c.resultInput),
-    filter(c => isValidationResultValid(c.result as ValidationResult)), // cast is OK, cause we checked for undefined in the first filter
+    filter(isResultInputGetterInput),
+    filter(c => isValidationResultValid(c.result)),
     map(c => c.resultInput),
     distinctUntilChanged(),
-    map(resultInput => resultInput as Input), // cast is OK, cause we checked for undefined in the first filter
   );
 
 const mapBehaviors = <Input, ValidationResult, Result>(
@@ -121,9 +144,10 @@ const mapBehaviors = <Input, ValidationResult, Result>(
   validationPending: v.resultPending,
   validatedInput: v.resultInput,
   validationResult: v.result,
-  isValid: v.result !== undefined ? isValidationResultValid(v.result) : false,
+  isValid: v.result !== NO_VALUE ? isValidationResultValid(v.result) : false,
   resultPending: r.resultPending,
   resultInput: r.resultInput,
+  ...(r.resultError ? { resultError: r.resultError } : {}),
   result: r.result,
 });
 
@@ -140,9 +164,9 @@ const setupCombinedBehavior = <Input, ValidationResult, Result>(
       store.getBehavior(outIds.conflicts1.combined),
       store.getBehavior(outIds.conflicts2.combined).pipe(
         startWith({
-          currentInput: undefined,
-          resultInput: undefined,
-          result: initialResultGetter ? initialResultGetter() : undefined,
+          currentInput: NO_VALUE,
+          resultInput: NO_VALUE,
+          result: initialResultGetter ? initialResultGetter() : NO_VALUE,
           resultPending: false,
         }),
       ),
@@ -151,7 +175,7 @@ const setupCombinedBehavior = <Input, ValidationResult, Result>(
         ([v, r]) =>
           v.resultPending ||
           r.currentInput === v.resultInput ||
-          v.result === undefined ||
+          v.result === NO_VALUE ||
           !isValidationResultValid(v.result),
       ),
       map(pair => mapBehaviors(pair, isValidationResultValid)),
@@ -162,6 +186,7 @@ const setupCombinedBehavior = <Input, ValidationResult, Result>(
           a.result === b.result &&
           a.resultInput === b.resultInput &&
           a.resultPending === b.resultPending &&
+          a.resultError === b.resultError &&
           a.validatedInput === b.validatedInput &&
           a.validationPending === b.validationPending &&
           a.validationResult === b.validationResult,
@@ -228,6 +253,7 @@ export const getValidatedInputWithResultSignalsFactory = <
     }))
     .mapOutput(output => ({
       combined: output.combined,
+      result: output.conflicts2.result,
       validationErrors: output.conflicts1.errors,
       validationSuccesses: output.conflicts1.successes,
       resultErrors: output.conflicts2.errors,

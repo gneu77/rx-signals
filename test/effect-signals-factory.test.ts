@@ -1,4 +1,4 @@
-import { map, Observable, of, Subject } from 'rxjs';
+import { Observable, Subject, map, of } from 'rxjs';
 import { delay, filter, take } from 'rxjs/operators';
 import {
   CombinedEffectResult,
@@ -8,8 +8,9 @@ import {
   getEffectSignalsFactory,
 } from '../src/effect-signals-factory';
 import { Effect, Store } from '../src/store';
-import { getStateId } from '../src/store-utils';
+import { NO_VALUE, getStateId, isNotNoValueType } from '../src/store-utils';
 import { expectSequence, withSubscription } from '../src/test-utils/test-utils';
+import { CombinedEffectResultInSuccessState } from './../src/effect-signals-factory';
 import { getEffectId } from './../src/store-utils';
 
 describe('effect signals factory', () => {
@@ -39,8 +40,12 @@ describe('effect signals factory', () => {
       throw 'unhandled';
     }
     let totalResults = 1;
-    if (prevInput?.searchString === 'addToNext') {
-      totalResults += prevResult?.totalResults ?? 0;
+    if (
+      isNotNoValueType(prevInput) &&
+      isNotNoValueType(prevResult) &&
+      prevInput.searchString === 'addToNext'
+    ) {
+      totalResults += prevResult.totalResults;
     }
     if (input.page > 0) {
       return of({
@@ -97,6 +102,8 @@ describe('effect signals factory', () => {
               page: 2,
             },
             resultPending: true,
+            resultInput: NO_VALUE,
+            result: NO_VALUE,
           },
           {
             currentInput: {
@@ -129,6 +136,8 @@ describe('effect signals factory', () => {
               page: 4,
             },
             resultPending: true,
+            resultInput: NO_VALUE,
+            result: NO_VALUE,
           },
           {
             currentInput: {
@@ -136,6 +145,8 @@ describe('effect signals factory', () => {
               page: 3,
             },
             resultPending: true,
+            resultInput: NO_VALUE,
+            result: NO_VALUE,
           },
           {
             currentInput: {
@@ -143,6 +154,8 @@ describe('effect signals factory', () => {
               page: 2,
             },
             resultPending: true,
+            resultInput: NO_VALUE,
+            result: NO_VALUE,
           },
           {
             currentInput: {
@@ -185,6 +198,8 @@ describe('effect signals factory', () => {
                 page: 2,
               },
               resultPending: true,
+              resultInput: NO_VALUE,
+              result: NO_VALUE,
             },
             {
               currentInput: {
@@ -196,6 +211,8 @@ describe('effect signals factory', () => {
                 searchString: 'throw',
                 page: 2,
               },
+              result: NO_VALUE,
+              resultError: 'unhandled',
             },
           ]);
           inputSubject.next({
@@ -214,6 +231,8 @@ describe('effect signals factory', () => {
                 searchString: 'throw',
                 page: 2,
               },
+              result: NO_VALUE,
+              resultError: 'unhandled',
             },
             {
               currentInput: {
@@ -225,6 +244,7 @@ describe('effect signals factory', () => {
                 searchString: 'throw',
                 page: 2,
               },
+              result: NO_VALUE,
             },
             {
               currentInput: {
@@ -306,6 +326,8 @@ describe('effect signals factory', () => {
               page: 4,
             },
             resultPending: true,
+            resultInput: NO_VALUE,
+            result: NO_VALUE,
           },
           {
             currentInput: {
@@ -317,6 +339,8 @@ describe('effect signals factory', () => {
               searchString: 'throw',
               page: 4,
             },
+            result: NO_VALUE,
+            resultError: 'unhandled',
           },
         ]);
         await sequence3;
@@ -334,6 +358,8 @@ describe('effect signals factory', () => {
               searchString: 'test',
               page: 4,
             },
+            previousInput: NO_VALUE,
+            previousResult: NO_VALUE,
           },
         ]);
         expect(store.isSubscribed(outIds.combined)).toBe(false);
@@ -356,6 +382,8 @@ describe('effect signals factory', () => {
               page: 4,
             },
             resultPending: true,
+            resultInput: NO_VALUE,
+            result: NO_VALUE,
           },
           {
             currentInput: {
@@ -388,6 +416,8 @@ describe('effect signals factory', () => {
               searchString: 'test',
               page: 0,
             },
+            previousInput: NO_VALUE,
+            previousResult: NO_VALUE,
           },
           {
             result: {
@@ -410,13 +440,18 @@ describe('effect signals factory', () => {
         ]);
         observable
           .pipe(
-            filter(c => c.resultInput?.page === 0 && !c.resultPending),
+            filter(
+              c => isNotNoValueType(c.resultInput) && c.resultInput.page === 0 && !c.resultPending,
+            ),
             take(1),
           )
           .subscribe(() => {
             observable
               .pipe(
-                filter(c => c.resultInput?.page === 1 && !c.resultPending),
+                filter(
+                  c =>
+                    isNotNoValueType(c.resultInput) && c.resultInput.page === 1 && !c.resultPending,
+                ),
                 take(1),
               )
               .subscribe();
@@ -440,6 +475,8 @@ describe('effect signals factory', () => {
               page: 2,
             },
             resultPending: true,
+            resultInput: NO_VALUE,
+            result: NO_VALUE,
           },
           {
             currentInput: {
@@ -542,6 +579,8 @@ describe('effect signals factory', () => {
               page: 2,
             },
             resultPending: true,
+            resultInput: NO_VALUE,
+            result: NO_VALUE,
           },
           {
             currentInput: {
@@ -579,6 +618,8 @@ describe('effect signals factory', () => {
               page: 2,
             },
             resultPending: true,
+            resultInput: NO_VALUE,
+            result: NO_VALUE,
           },
           {
             currentInput: {
@@ -627,6 +668,8 @@ describe('effect signals factory', () => {
               page: 2,
             },
             resultPending: false,
+            resultInput: NO_VALUE,
+            result: NO_VALUE,
           },
           {
             currentInput: {
@@ -634,6 +677,8 @@ describe('effect signals factory', () => {
               page: 3,
             },
             resultPending: false,
+            resultInput: NO_VALUE,
+            result: NO_VALUE,
           },
           {
             currentInput: {
@@ -641,6 +686,8 @@ describe('effect signals factory', () => {
               page: 4,
             },
             resultPending: false,
+            resultInput: NO_VALUE,
+            result: NO_VALUE,
           },
           {
             currentInput: {
@@ -648,6 +695,8 @@ describe('effect signals factory', () => {
               page: 4,
             },
             resultPending: true,
+            resultInput: NO_VALUE,
+            result: NO_VALUE,
           },
           {
             currentInput: {
@@ -703,11 +752,13 @@ describe('effect signals factory', () => {
       it('should have correct sequence for input', async () => {
         const sequence = expectSequence(observable, [
           {
+            currentInput: NO_VALUE,
             resultPending: false,
             result: {
               results: [],
               totalResults: 0,
             },
+            resultInput: NO_VALUE,
           },
           {
             currentInput: {
@@ -719,6 +770,7 @@ describe('effect signals factory', () => {
               results: [],
               totalResults: 0,
             },
+            resultInput: NO_VALUE,
           },
           {
             currentInput: {
@@ -767,6 +819,8 @@ describe('effect signals factory', () => {
               page: 4,
             },
             resultPending: true,
+            resultInput: NO_VALUE,
+            result: NO_VALUE,
           },
           {
             currentInput: {
@@ -774,6 +828,8 @@ describe('effect signals factory', () => {
               page: 3,
             },
             resultPending: true,
+            resultInput: NO_VALUE,
+            result: NO_VALUE,
           },
           {
             currentInput: {
@@ -781,6 +837,8 @@ describe('effect signals factory', () => {
               page: 2,
             },
             resultPending: true,
+            resultInput: NO_VALUE,
+            result: NO_VALUE,
           },
           {
             currentInput: {
@@ -838,6 +896,8 @@ describe('effect signals factory', () => {
               page: 2,
             },
             resultPending: true,
+            resultInput: NO_VALUE,
+            result: NO_VALUE,
           },
           {
             currentInput: {
@@ -951,6 +1011,8 @@ describe('effect signals factory', () => {
               searchString: 'test',
               page: 0,
             },
+            previousInput: NO_VALUE,
+            previousResult: NO_VALUE,
           },
           {
             result: {
@@ -973,13 +1035,18 @@ describe('effect signals factory', () => {
         ]);
         observable
           .pipe(
-            filter(c => c.resultInput?.page === 0 && !c.resultPending),
+            filter(
+              c => isNotNoValueType(c.resultInput) && c.resultInput.page === 0 && !c.resultPending,
+            ),
             take(1),
           )
           .subscribe(() => {
             observable
               .pipe(
-                filter(c => c.resultInput?.page === 1 && !c.resultPending),
+                filter(
+                  c =>
+                    isNotNoValueType(c.resultInput) && c.resultInput.page === 1 && !c.resultPending,
+                ),
                 take(1),
               )
               .subscribe();
@@ -993,6 +1060,83 @@ describe('effect signals factory', () => {
           page: 0,
         });
         await sequence;
+      });
+    });
+
+    describe('convenience behaviors: result and pending', () => {
+      let outIds: EffectOutputSignals<InputModel, ResultModel>;
+      let resultObservable: Observable<CombinedEffectResultInSuccessState<InputModel, ResultModel>>;
+      let pendingObservable: Observable<boolean>;
+
+      beforeEach(() => {
+        const factoryResult = factory
+          .extendSetup((store, inIds) => store.connect(inputStateId, inIds.input))
+          .build({});
+        outIds = factoryResult.output;
+        factoryResult.setup(store);
+        resultObservable = store.getBehavior(outIds.result);
+        pendingObservable = store.getBehavior(outIds.pending);
+      });
+
+      it('should have correct sequence for input', async () => {
+        const sequence = expectSequence(resultObservable, [
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            resultInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            result: {
+              results: [],
+              totalResults: 1,
+            },
+            resultPending: false,
+          },
+        ]);
+        const sequence2 = expectSequence(pendingObservable, [true, false]);
+
+        inputSubject.next({
+          searchString: 'test',
+          page: 2,
+        });
+        await sequence;
+        await sequence2;
+      });
+
+      it('should ignore error states for result behavior', async () => {
+        await withSubscription(resultObservable, async () => {
+          const sequence = expectSequence(pendingObservable, [true, false]);
+          const sequence2 = expectSequence(resultObservable, [
+            {
+              currentInput: {
+                searchString: 'test',
+                page: 2,
+              },
+              resultInput: {
+                searchString: 'test',
+                page: 2,
+              },
+              result: {
+                results: [],
+                totalResults: 1,
+              },
+              resultPending: false,
+            },
+          ]);
+          inputSubject.next({
+            searchString: 'throw',
+            page: 2,
+          });
+          inputSubject.next({
+            searchString: 'test',
+            page: 2,
+          });
+          await sequence;
+          await sequence2;
+        });
       });
     });
   });

@@ -1,6 +1,6 @@
 import { Observable, Subject, Subscription } from 'rxjs';
 import { ContextHandle } from './context-handle';
-import { NO_VALUE } from './store-utils';
+import { NO_VALUE, NoValueType } from './store-utils';
 
 /**
  * @internal
@@ -16,7 +16,7 @@ export class SourceObservable<T> {
     private readonly sourceId: symbol,
     private readonly sourceObservable: Observable<T>,
     private readonly lazySubscription: boolean,
-    private readonly initialValueOrValueGetter: T | (() => T) | symbol = NO_VALUE,
+    private readonly initialValueOrValueGetter: T | (() => T) | NoValueType = NO_VALUE,
   ) {}
 
   getId(): symbol {

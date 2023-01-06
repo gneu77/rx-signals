@@ -2,7 +2,7 @@ import { combineLatest, map, of } from 'rxjs';
 import { distinctUntilChanged } from 'rxjs/operators';
 import { getEffectSignalsFactory } from '../src/effect-signals-factory';
 import { Store } from '../src/store';
-import { BehaviorId, EventId, getEventId, getStateId } from '../src/store-utils';
+import { BehaviorId, EventId, NO_VALUE, getEventId, getStateId } from '../src/store-utils';
 import { expectSequence } from '../src/test-utils/test-utils';
 import { SignalsFactory } from './../src/signals-factory';
 
@@ -126,7 +126,7 @@ describe('testing documentation', () => {
         map(c => c.result),
         distinctUntilChanged(),
       ),
-      [undefined, 0, 10, 20, 21],
+      [NO_VALUE, 0, 10, 20, 21],
     );
     store.dispatch(randomNumberSignals.input.incTo);
     store.dispatch(randomNumberSignals.input.incTo);

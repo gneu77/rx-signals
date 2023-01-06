@@ -46,7 +46,7 @@ export type EventId<T> = symbol & {
 /**
  * SignalId\<T\> is the union type of BehaviorId\<T\> and EventId\<T\>, hence it
  * represents an identifier that corresponds either to a behavior or to an event.
- * You can use the functions {@link isBehaviorId} or {@link isEventId} to check the concrete
+ * You can use the typeguards {@link isBehaviorId} or {@link isEventId} to check the concrete
  * type of a SignalId.
  *
  * @template T - specifies the value-type for the corresponding observable
@@ -184,43 +184,62 @@ export const getEffectId = <InputType, ResultType>(
   Symbol(`Effect_${(nameExtension ?? '') + effectExtension++}`) as EffectId<InputType, ResultType>;
 
 /**
- * Function to check whether a given SignalId is a StateId.
+ * Typeguard to check whether a given SignalId is a StateId.
  *
  * @template T - specifies the type for the corresponding signal
  * @param {Signal<T>} id - a signal identifier.
  * @returns {boolean}
  */
-export const isStateId = <T>(id: SignalId<T>): boolean => id.toString().startsWith('Symbol(S');
+export const isStateId = <T>(id: SignalId<T>): id is StateId<T> =>
+  id.toString().startsWith('Symbol(S');
 
 /**
- * Function to check whether a given SignalId is a DerivedId.
+ * Typeguard to check whether a given SignalId is a DerivedId.
  *
  * @template T - specifies the type for the corresponding signal
  * @param {Signal<T>} id - a signal identifier.
  * @returns {boolean}
  */
-export const isDerivedId = <T>(id: SignalId<T>): boolean => id.toString().startsWith('Symbol(D');
+export const isDerivedId = <T>(id: SignalId<T>): id is DerivedId<T> =>
+  id.toString().startsWith('Symbol(D');
 
 /**
- * Function to check whether a given SignalId is a BehaviorId.
+ * Typeguard to check whether a given SignalId is a BehaviorId.
  *
  * @template T - specifies the type for the corresponding signal
  * @param {Signal<T>} id - a signal identifier.
  * @returns {boolean}
  */
-export const isBehaviorId = <T>(id: SignalId<T>): boolean => isStateId(id) || isDerivedId(id);
+export const isBehaviorId = <T>(id: SignalId<T>): id is BehaviorId<T> =>
+  isStateId(id) || isDerivedId(id);
 
 /**
- * Function to check whether a given SignalId is an EventId.
+ * Typeguard to check whether a given SignalId is an EventId.
  *
  * @template T - specifies the type for the corresponding signal
  * @param {Signal<T>} id - a signal identifier.
  * @returns {boolean}
  */
-export const isEventId = <T>(id: SignalId<T>): boolean => id.toString().startsWith('Symbol(E');
+export const isEventId = <T>(id: SignalId<T>): id is EventId<T> =>
+  id.toString().startsWith('Symbol(E');
 
 /**
- * A constant symbol representing the intentional absence of a value.
- * (even undefined and null are valid values, so these cannot be used to represent no-value).
+ * A constant representing the intentional absence of a value.
+ * Even undefined and null are valid values, so these cannot be used to represent no-value.
  */
-export const NO_VALUE: symbol = Symbol('NO_VALUE');
+export const NO_VALUE: '$RX-SIGNALS-NO-VALUE$' = '$RX-SIGNALS-NO-VALUE$';
+
+/**
+ * The corresponding type for {@link NO_VALUE}
+ */
+export type NoValueType = typeof NO_VALUE;
+
+/**
+ * Typeguard to check if a value is NOT {@link NO_VALUE}
+ */
+export const isNotNoValueType = <T>(v: T): v is Exclude<T, NoValueType> => v !== NO_VALUE;
+
+/**
+ * Typeguard to check if a value is {@link NO_VALUE}
+ */
+export const isNoValueType = (v: any): v is NoValueType => v === NO_VALUE;

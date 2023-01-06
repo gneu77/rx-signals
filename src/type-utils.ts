@@ -1,3 +1,5 @@
+import { NO_VALUE, NoValueType } from './store-utils';
+
 /**
  * @internal
  */
@@ -219,8 +221,39 @@ export type KeysOfValueType<T extends Record<string, any>, VT> = {
 }[keyof T];
 
 /**
- * This type represent a subset of Record T that contains only entries with a value that extends VT.
+ * This type represents a subset of Record T that contains only entries with a value that extends VT.
  */
 export type WithValueType<T extends Record<string, any>, VT> = {
   [K in KeysOfValueType<T, VT>]: T[K];
 };
+
+/**
+ * Type representing a result combined with the input that led to the result.
+ * Coupling input and result is important for the results of async processes.
+ *
+ * @template Input - specifies the input type
+ * @template Result - specifies the result type
+ */
+export type ResultWithInput<Input, Result> = {
+  /** the received result */
+  result: Result | NoValueType;
+
+  /** the input that produced the result */
+  resultInput: Input | NoValueType;
+};
+
+/**
+ * Type corresponding to ResultWithInput, but with potential NO_VALUE for result and/or resultInput
+ */
+export type MaybeResultWithInput<Input, Result> = {
+  /** the received result */
+  result: Result | NoValueType;
+
+  /** the input that produced the result */
+  resultInput: Input | NoValueType;
+};
+
+export const isResultWithInput = <Input, Result>(
+  mrwi: MaybeResultWithInput<Input, Result>,
+): mrwi is ResultWithInput<Input, Result> =>
+  mrwi.result !== NO_VALUE && mrwi.resultInput !== NO_VALUE;

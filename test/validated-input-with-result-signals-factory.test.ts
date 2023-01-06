@@ -1,15 +1,15 @@
-import { Observable, of, Subject } from 'rxjs';
+import { Observable, Subject, of } from 'rxjs';
 import { delay } from 'rxjs/operators';
 import { Signals } from '../src/signals-factory';
 import { Effect, Store } from '../src/store';
 import { expectSequence, withSubscription } from '../src/test-utils/test-utils';
-import { getEffectId, getStateId } from './../src/store-utils';
+import { NO_VALUE, getEffectId, getStateId } from './../src/store-utils';
 import {
-  getValidatedInputWithResultSignalsFactory,
   ValidatedInputWithResult,
   ValidatedInputWithResultFactory,
   ValidatedInputWithResultInput,
   ValidatedInputWithResultOutput,
+  getValidatedInputWithResultSignalsFactory,
 } from './../src/validated-input-with-result-signals-factory';
 
 describe('validated input with result signals factory', () => {
@@ -93,7 +93,11 @@ describe('validated input with result signals factory', () => {
           },
           validationPending: true,
           isValid: false,
+          validatedInput: NO_VALUE,
+          validationResult: NO_VALUE,
           resultPending: false,
+          resultInput: NO_VALUE,
+          result: NO_VALUE,
         },
         {
           currentInput: {
@@ -108,6 +112,8 @@ describe('validated input with result signals factory', () => {
           },
           validationResult: null,
           resultPending: true,
+          resultInput: NO_VALUE,
+          result: NO_VALUE,
         },
         {
           currentInput: {
@@ -147,8 +153,12 @@ describe('validated input with result signals factory', () => {
             page: 2,
           },
           validationPending: true,
+          validatedInput: NO_VALUE,
+          validationResult: NO_VALUE,
           isValid: false,
           resultPending: false,
+          resultInput: NO_VALUE,
+          result: NO_VALUE,
         },
         {
           currentInput: {
@@ -163,6 +173,8 @@ describe('validated input with result signals factory', () => {
           },
           validationResult: 'nope',
           resultPending: false,
+          resultInput: NO_VALUE,
+          result: NO_VALUE,
         },
       ]);
       inputSubject.next({
@@ -206,7 +218,11 @@ describe('validated input with result signals factory', () => {
           },
           validationPending: true,
           isValid: false,
+          validatedInput: NO_VALUE,
+          validationResult: NO_VALUE,
           resultPending: false,
+          resultInput: NO_VALUE,
+          result: NO_VALUE,
         },
         {
           currentInput: {
@@ -221,6 +237,8 @@ describe('validated input with result signals factory', () => {
           },
           validationResult: null,
           resultPending: false,
+          resultInput: NO_VALUE,
+          result: NO_VALUE,
         },
       ]);
       inputSubject.next({
@@ -243,6 +261,8 @@ describe('validated input with result signals factory', () => {
           },
           validationResult: null,
           resultPending: false,
+          resultInput: NO_VALUE,
+          result: NO_VALUE,
         },
         {
           currentInput: {
@@ -257,6 +277,8 @@ describe('validated input with result signals factory', () => {
           },
           validationResult: null,
           resultPending: false,
+          resultInput: NO_VALUE,
+          result: NO_VALUE,
         },
         {
           currentInput: {
@@ -271,6 +293,8 @@ describe('validated input with result signals factory', () => {
           },
           validationResult: null,
           resultPending: false,
+          resultInput: NO_VALUE,
+          result: NO_VALUE,
         },
       ]);
       inputSubject.next({
@@ -293,6 +317,8 @@ describe('validated input with result signals factory', () => {
           },
           validationResult: null,
           resultPending: false,
+          resultInput: NO_VALUE,
+          result: NO_VALUE,
         },
         {
           currentInput: {
@@ -307,6 +333,8 @@ describe('validated input with result signals factory', () => {
           },
           validationResult: null,
           resultPending: true,
+          resultInput: NO_VALUE,
+          result: NO_VALUE,
         },
         {
           currentInput: {
@@ -345,7 +373,11 @@ describe('validated input with result signals factory', () => {
             },
             validationPending: true,
             isValid: false,
+            validatedInput: NO_VALUE,
+            validationResult: NO_VALUE,
             resultPending: false,
+            resultInput: NO_VALUE,
+            result: NO_VALUE,
           },
           {
             currentInput: {
@@ -360,6 +392,8 @@ describe('validated input with result signals factory', () => {
             },
             validationResult: 'nope',
             resultPending: false,
+            resultInput: NO_VALUE,
+            result: NO_VALUE,
           },
         ]);
         inputSubject.next({
@@ -384,6 +418,8 @@ describe('validated input with result signals factory', () => {
             },
             validationResult: 'nope',
             resultPending: false,
+            resultInput: NO_VALUE,
+            result: NO_VALUE,
           },
           {
             currentInput: {
@@ -398,6 +434,8 @@ describe('validated input with result signals factory', () => {
             },
             validationResult: 'nope',
             resultPending: false,
+            resultInput: NO_VALUE,
+            result: NO_VALUE,
           },
           {
             currentInput: {
@@ -412,6 +450,8 @@ describe('validated input with result signals factory', () => {
             },
             validationResult: null,
             resultPending: false,
+            resultInput: NO_VALUE,
+            result: NO_VALUE,
           },
         ]);
         inputSubject.next({
@@ -454,8 +494,11 @@ describe('validated input with result signals factory', () => {
             page: 2,
           },
           validationPending: true,
+          validatedInput: NO_VALUE,
+          validationResult: NO_VALUE,
           isValid: false,
           resultPending: false,
+          resultInput: NO_VALUE,
           result: {
             results: [],
             totalResults: 0,
@@ -474,6 +517,7 @@ describe('validated input with result signals factory', () => {
           },
           validationResult: null,
           resultPending: true,
+          resultInput: NO_VALUE,
           result: {
             results: [],
             totalResults: 0,
@@ -539,7 +583,11 @@ describe('validated input with result signals factory', () => {
           },
           validationPending: true,
           isValid: false,
+          validatedInput: NO_VALUE,
+          validationResult: NO_VALUE,
           resultPending: false,
+          resultInput: NO_VALUE,
+          result: NO_VALUE,
         },
         {
           currentInput: {
@@ -554,6 +602,8 @@ describe('validated input with result signals factory', () => {
           },
           validationResult: null,
           resultPending: true,
+          resultInput: NO_VALUE,
+          result: NO_VALUE,
         },
         {
           currentInput: {
