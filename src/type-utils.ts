@@ -1,47 +1,48 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import { NO_VALUE, NoValueType } from './store-utils';
 
 /**
  * @internal
  */
-type ConflictKeys<T1 extends Record<string, any>, T2 extends Record<string, any>> = {
+export type _ConflictKeys<T1 extends Record<string, any>, T2 extends Record<string, any>> = {
   [K in keyof T1]: K extends keyof T2 ? K : never;
 }[keyof T1];
 
 /**
  * @internal
  */
-type NoConflictKeys<T1 extends Record<string, any>, T2 extends Record<string, any>> = {
+export type _NoConflictKeys<T1 extends Record<string, any>, T2 extends Record<string, any>> = {
   [K in keyof T1]: K extends keyof T2 ? never : K;
 }[keyof T1];
 
 /**
  * @internal
  */
-type Conflicts<T1 extends Record<string, any>, T2 extends Record<string, any>> = {
-  [K in ConflictKeys<T1, T2>]: T1[K];
+export type _Conflicts<T1 extends Record<string, any>, T2 extends Record<string, any>> = {
+  [K in _ConflictKeys<T1, T2>]: T1[K];
 };
 
 /**
  * @internal
  */
-type NoConflicts<T1 extends Record<string, any>, T2 extends Record<string, any>> = {
-  [K in NoConflictKeys<Omit<T1, 'conflicts1' | 'conflicts2'>, T2>]: T1[K];
+export type _NoConflicts<T1 extends Record<string, any>, T2 extends Record<string, any>> = {
+  [K in _NoConflictKeys<Omit<T1, 'conflicts1' | 'conflicts2'>, T2>]: T1[K];
 };
 
 /**
  * @internal
  */
-type MergeResult<T1 extends Record<string, any>, T2 extends Record<string, any>> = ConflictKeys<
-  T1,
-  T2
-> extends never
+export type _MergeResult<
+  T1 extends Record<string, any>,
+  T2 extends Record<string, any>,
+> = _ConflictKeys<T1, T2> extends never
   ? T1 & T2
-  : NoConflicts<T1, T2> &
-      NoConflicts<T2, T1> & {
-        conflicts1: Conflicts<T1, T2> &
+  : _NoConflicts<T1, T2> &
+      _NoConflicts<T2, T1> & {
+        conflicts1: _Conflicts<T1, T2> &
           ('conflicts1' extends keyof T1 ? { conflicts1: T1['conflicts1'] } : {}) &
           ('conflicts2' extends keyof T1 ? { conflicts2: T1['conflicts2'] } : {});
-        conflicts2: Conflicts<T2, T1> &
+        conflicts2: _Conflicts<T2, T1> &
           ('conflicts1' extends keyof T2 ? { conflicts1: T2['conflicts1'] } : {}) &
           ('conflicts2' extends keyof T2 ? { conflicts2: T2['conflicts2'] } : {});
       };
@@ -109,7 +110,7 @@ type MergeResult<T1 extends Record<string, any>, T2 extends Record<string, any>>
  *    }
  * ```
  */
-export type Merged<T1 extends Record<string, any>, T2 extends Record<string, any>> = MergeResult<
+export type Merged<T1 extends Record<string, any>, T2 extends Record<string, any>> = _MergeResult<
   T1,
   T2
 >;
@@ -194,7 +195,7 @@ export type Configuration = Record<string, any>;
 /**
  * @internal
  */
-type NM<T1 extends Configuration, T2 extends Configuration> = T1 & T2;
+export type _NM<T1 extends Configuration, T2 extends Configuration> = T1 & T2;
 
 /**
  * This type represents the result of a merge of two Configuration types T1 and T2, using the following rules:
@@ -205,9 +206,9 @@ export type MergedConfiguration<
   T1 extends Configuration,
   T2 extends Configuration,
 > = keyof T1 extends never
-  ? NM<T1, T2>
+  ? _NM<T1, T2>
   : keyof T2 extends never
-  ? NM<T1, T2>
+  ? _NM<T1, T2>
   : {
       c1: T1;
       c2: T2;

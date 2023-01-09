@@ -1046,6 +1046,7 @@ type ValidatedInputWithResultInput<Input> = {
 };
 type ValidatedInputWithResultOutput<Input, ValidationResult, Result> = {
   combined: DerivedId<ValidatedInputWithResult<Input, ValidationResult, Result>>;
+  result: DerivedId<CombinedEffectResultInSuccessState<Input, Result>>;
   validationErrors: EventId<EffectError<Input>>;
   validationSuccesses: EventId<EffectSuccess<Input, ValidationResult>>;
   resultErrors: EventId<EffectError<Input>>;
