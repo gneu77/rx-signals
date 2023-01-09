@@ -2,35 +2,35 @@
 import { NO_VALUE, NoValueType } from './store-utils';
 
 /**
- * @internal
+ * rx-signals internal helper type
  */
 export type _ConflictKeys<T1 extends Record<string, any>, T2 extends Record<string, any>> = {
   [K in keyof T1]: K extends keyof T2 ? K : never;
 }[keyof T1];
 
 /**
- * @internal
+ * rx-signals internal helper type
  */
 export type _NoConflictKeys<T1 extends Record<string, any>, T2 extends Record<string, any>> = {
   [K in keyof T1]: K extends keyof T2 ? never : K;
 }[keyof T1];
 
 /**
- * @internal
+ * rx-signals internal helper type
  */
 export type _Conflicts<T1 extends Record<string, any>, T2 extends Record<string, any>> = {
   [K in _ConflictKeys<T1, T2>]: T1[K];
 };
 
 /**
- * @internal
+ * rx-signals internal helper type
  */
 export type _NoConflicts<T1 extends Record<string, any>, T2 extends Record<string, any>> = {
   [K in _NoConflictKeys<Omit<T1, 'conflicts1' | 'conflicts2'>, T2>]: T1[K];
 };
 
 /**
- * @internal
+ * rx-signals internal helper type
  */
 export type _MergeResult<
   T1 extends Record<string, any>,
@@ -193,7 +193,7 @@ export const merge = <T1 extends Record<string, any>, T2 extends Record<string, 
 export type Configuration = Record<string, any>;
 
 /**
- * @internal
+ * rx-signals internal helper type
  */
 export type _NM<T1 extends Configuration, T2 extends Configuration> = T1 & T2;
 

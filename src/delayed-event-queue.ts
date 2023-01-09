@@ -1,9 +1,9 @@
 import { map, mergeMap, Observable, Subject } from 'rxjs';
 
 /**
- * Used by the {@link Store}
+ * rx-signals internal helper type used by the {@link Store}
  *
- * @internal
+ * @class DelayedEventQueue
  */
 export class DelayedEventQueue {
   private queueArray: Subject<void>[] = [];

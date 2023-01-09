@@ -1,12 +1,12 @@
 /* eslint no-underscore-dangle: ["error", { "allow": ["_rxs_id"] }] */
 import {
   BehaviorSubject,
-  distinctUntilChanged,
-  filter,
   Observable,
-  share,
   Subject,
   Subscription,
+  distinctUntilChanged,
+  filter,
+  share,
 } from 'rxjs';
 import { ContextHandle } from './context-handle';
 import { DelayedEventQueue } from './delayed-event-queue';
@@ -16,7 +16,7 @@ import { NO_VALUE } from './store-utils';
 /**
  * Used by the {@link Store}
  *
- * @internal
+ * rx-signals internal helper type
  */
 export type ResetHandle = {
   removeSources(): void;
@@ -24,9 +24,9 @@ export type ResetHandle = {
 };
 
 /**
- * Used by the {@link Store}
+ * rx-signals internal helper type used by the {@link Store}
  *
- * @internal
+ * @class ControlledSubject
  */
 export class ControlledSubject<T> {
   private subject!: Subject<T> | BehaviorSubject<T>;
