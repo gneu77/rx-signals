@@ -646,13 +646,13 @@ describe('effect signals factory', () => {
     });
 
     describe('with trigger', () => {
-      let inIds: EffectInputSignals<InputModel>;
+      let inIds: Omit<EffectInputSignals<InputModel>, 'input'>;
       let outIds: EffectOutputSignals<InputModel, ResultModel>;
       let observable: Observable<CombinedEffectResult<InputModel, ResultModel>>;
 
       beforeEach(() => {
         const factoryResult = factory
-          .extendSetup((store, inIds) => store.connect(inputStateId, inIds.input))
+          .connectId(inputStateId, 'input', false)
           .build({ withTrigger: true });
         inIds = factoryResult.input;
         outIds = factoryResult.output;

@@ -147,37 +147,37 @@ export type EffectSuccess<Input, Result> = {
  * @template Input - specifies the input type for the effect
  */
 export type EffectInputSignals<Input> = {
-  /** identifier for the behavior being consumed by EffectSignals as input (see {@link EffectConfiguration} on how to configure your factory to subscribe the corresponding behavior eagerly) */
+  /** Behavior being consumed by EffectSignals as input (see {@link EffectConfiguration} on how to configure your factory to subscribe the corresponding behavior eagerly) */
   input: DerivedId<Input>;
 
-  /** identifier for the invalidation event that can be dispatched to trigger re-evaluation of the current input under the given effect */
+  /** Event that can be dispatched to trigger re-evaluation of the current input under the given effect */
   invalidate: EventId<undefined>;
 
-  /** identifier for the trigger event that can be dispatched to trigger the given effect. This event has only meaning, if withTrigger is configured (see EffectConfiguration) */
+  /** Event that can be dispatched to trigger the given effect. This event has only meaning, if withTrigger is configured (see EffectConfiguration) */
   trigger: EventId<undefined>;
 };
 
 /**
- * Type specifying the output {@link EffectSignals} (signals produced EffectSignals).
+ * Type specifying the output {@link EffectSignals} (signals produced by EffectSignals).
  * The {@link EffectSignalsFactory} takes care that subscribing error- or success-events keeps the effect itself lazy (hence only subscribing the combined behavior will subscribe the effect itself).
  *
  * @template Input - specifies the input type for the effect
  * @template Result - specifies the result type of the effect
  */
 export type EffectOutputSignals<Input, Result> = {
-  /** identifier for the produced combined effect result behavior */
+  /** Produced combined effect result behavior */
   combined: DerivedId<CombinedEffectResult<Input, Result>>;
 
-  /** identifier for a convenience behavior derived from combined-behavior, representing only success states */
+  /** Convenience behavior derived from combined-behavior, representing only success states */
   result: DerivedId<CombinedEffectResultInSuccessState<Input, Result>>;
 
-  /** identifier for a convenience behavior derived from combined-behavior, representing only pending state */
+  /** Convenience behavior derived from combined-behavior, representing only pending state */
   pending: DerivedId<boolean>;
 
-  /** identifier for the produced error events */
+  /** Produced error events */
   errors: EventId<EffectError<Input>>;
 
-  /** identifier for the produced success events */
+  /** Produced success events */
   successes: EventId<EffectSuccess<Input, Result>>;
 };
 
@@ -189,7 +189,6 @@ export type EffectOutputSignals<Input, Result> = {
  * @template Result - specifies the result type of the effect
  */
 export type EffectFactoryEffects<Input, Result> = {
-  /** the id for the specific Effect function to be used */
   id: EffectId<Input, Result>;
 };
 
