@@ -725,7 +725,7 @@ const getModelSignals = <T>(config: ModelConfig<T>): Signals<ModelInput<T>, Mode
 
 This time, we also have a configuration object, to setup a default model.
 
-> An almost identical factory already comes with rx-signals as `getModelSignalsFactory`, so no need to implement such basic things yourself. It's added here only for demonstration purposes.
+> An advanced version of such a model factory already comes with rx-signals as `getModelSignalsFactory`, so no need to implement such basic things yourself. It's added here only for demonstration purposes.
 
 Next comes a possible implementation for our _SortParameterFactory_:
 ```typescript

@@ -233,7 +233,7 @@ export type EffectConfiguration<Input, Result> = {
   /** If defined, this function will be used to determine an initial result for the result behavior */
   initialResultGetter?: () => Result;
 
-  /** If defined and >0, then it will be used as milliseconds to debounce new input to the effect (please DON't debounce the input signal yourself, because that would debounce before trigger and/or input equals!) */
+  /** If defined and ```>0```, then it will be used as milliseconds to debounce new input to the effect (please DON't debounce the input signal yourself, because that would debounce before trigger and/or input equals!) */
   effectDebounceTime?: number;
 
   /** Function to wrap the effect defined by effectId with a custom Effect */

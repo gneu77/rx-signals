@@ -258,3 +258,7 @@ export const isResultWithInput = <Input, Result>(
   mrwi: MaybeResultWithInput<Input, Result>,
 ): mrwi is ResultWithInput<Input, Result> =>
   mrwi.result !== NO_VALUE && mrwi.resultInput !== NO_VALUE;
+
+export type DeepPartial<T extends Record<string, any>> = {
+  [P in keyof T]?: T[P] extends Record<string, any> ? DeepPartial<T[P]> : T[P];
+};
