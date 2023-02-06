@@ -2,6 +2,11 @@ import { Signals, SignalsFactory } from './signals-factory';
 import { BehaviorId, EventId, getEventId, getStateId } from './store-utils';
 import { DeepPartial } from './type-utils';
 
+/**
+ * The event-value-type for the updateBy event
+ *
+ * @template T - the type of the model to be handled
+ */
 export type ModelUpdateFunction<T extends Record<string, any>> = (model: T) => T;
 
 /**
