@@ -237,10 +237,10 @@ export type WithValueType<T extends Record<string, any>, VT> = {
  */
 export type ResultWithInput<Input, Result> = {
   /** the received result */
-  result: Result | NoValueType;
+  result: Result;
 
   /** the input that produced the result */
-  resultInput: Input | NoValueType;
+  resultInput: Input;
 };
 
 /**
@@ -254,11 +254,19 @@ export type MaybeResultWithInput<Input, Result> = {
   resultInput: Input | NoValueType;
 };
 
+/**
+ * Typeguard to check if a MaybeResultWithInput is ResultWithInput
+ */
 export const isResultWithInput = <Input, Result>(
   mrwi: MaybeResultWithInput<Input, Result>,
 ): mrwi is ResultWithInput<Input, Result> =>
   mrwi.result !== NO_VALUE && mrwi.resultInput !== NO_VALUE;
 
-export type DeepPartial<T extends Record<string, any>> = {
-  [P in keyof T]?: T[P] extends Record<string, any> ? DeepPartial<T[P]> : T[P];
-};
+/**
+ * A recursive Partial\<Record\<string, any\>\> type
+ */
+export type DeepPartial<T> = [T] extends [Record<string, any>]
+  ? {
+      [P in keyof T]?: DeepPartial<T[P]>;
+    }
+  : T;

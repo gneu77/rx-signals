@@ -3,11 +3,25 @@ import { BehaviorId, EventId, getEventId, getStateId } from './store-utils';
 import { DeepPartial } from './type-utils';
 
 /**
- * The event-value-type for the updateBy event
+ * The event-value-type for the model updateBy event
  *
  * @template T - the type of the model to be handled
  */
-export type ModelUpdateFunction<T extends Record<string, any>> = (model: T) => T;
+export type ModelUpdateFunction<T> = (model: T) => T;
+
+/**
+ * The event-value-type for the model update event
+ *
+ * @template T - the type of the model to be handled
+ */
+export type ModelUpdateEventType<T> = [T] extends [Record<string, any>] ? Partial<T> : T;
+
+/**
+ * The event-value-type for the model updateDeep event
+ *
+ * @template T - the type of the model to be handled
+ */
+export type ModelUpdateDeepEventType<T> = [T] extends [Record<string, any>] ? DeepPartial<T> : T;
 
 /**
  * Type specifying the input signal ids produced by a {@link ModelSignalsFactory} (the corresponding signal-sources
@@ -15,15 +29,15 @@ export type ModelUpdateFunction<T extends Record<string, any>> = (model: T) => T
  *
  * @template T - the type of the model to be handled
  */
-export type ModelInputSignals<T extends Record<string, any>> = {
+export type ModelInputSignals<T> = {
   /** identifier for the event to replace the complete model */
   set: EventId<T>;
 
-  /** identifier for the event to update the model by a given shallow-partial model */
-  update: EventId<Partial<T>>;
+  /** in case the model is a Record\<string, any\>, identifier for the event to update the model by a given shallow-partial model, else equals the set event  */
+  update: EventId<ModelUpdateEventType<T>>;
 
-  /** identifier for the event to update the model by a given deep-partial model */
-  updateDeep: EventId<DeepPartial<T>>;
+  /** in case the model is a Record\<string, any\>, identifier for the event to update the model by a given deep-partial model, else equals the set event */
+  updateDeep: EventId<ModelUpdateDeepEventType<T>>;
 
   /** identifier for the event to update the model by a given update function */
   updateBy: EventId<ModelUpdateFunction<T>>;
@@ -37,7 +51,7 @@ export type ModelInputSignals<T extends Record<string, any>> = {
  *
  * @template T - the type of the model to be handled
  */
-export type ModelOutputSignals<T extends Record<string, any>> = {
+export type ModelOutputSignals<T> = {
   /** identifier for the model behavior (on purpose no StateId to keep encapsulation, cause BehaviorId cannot be used to add more reducers) */
   model: BehaviorId<T>;
 };
@@ -47,7 +61,7 @@ export type ModelOutputSignals<T extends Record<string, any>> = {
  *
  * @template T - the type of the model to be handled
  */
-export type ModelConfig<T extends Record<string, any>> = {
+export type ModelConfig<T> = {
   /** the default model */
   defaultModel: T;
 
@@ -55,25 +69,29 @@ export type ModelConfig<T extends Record<string, any>> = {
   nameExtension?: string;
 };
 
-const deepUpdate = <T extends Record<string, any>>(model: T, patch: DeepPartial<T>): T =>
-  Object.entries(patch).reduce(
-    (acc, [key, value]) => ({
-      ...acc,
-      [key]:
-        value && typeof value === 'object' && !Array.isArray(value)
-          ? deepUpdate(acc[key], value)
-          : value,
-    }),
-    model,
-  );
+const isRecord = (value: any): value is Record<string, any> =>
+  value && typeof value === 'object' && !Array.isArray(value);
 
-const getModelSignals = <T extends Record<string, any>>(
+const deepUpdate = <T>(model: T, patch: ModelUpdateDeepEventType<T>): T =>
+  isRecord(model) && isRecord(patch)
+    ? Object.entries(patch).reduce(
+        (acc, [key, value]) => ({
+          ...acc,
+          [key]: isRecord(acc?.[key]) ? deepUpdate(acc[key], value) : value,
+        }),
+        model,
+      )
+    : (patch as T);
+
+const getModelSignals = <T>(
   config: ModelConfig<T>,
 ): Signals<ModelInputSignals<T>, ModelOutputSignals<T>> => {
   const model = getStateId<T>(`${config.nameExtension ?? ''}_model`);
   const setModel = getEventId<T>(`${config.nameExtension ?? ''}_set`);
-  const update = getEventId<Partial<T>>(`${config.nameExtension ?? ''}_update`);
-  const updateDeep = getEventId<DeepPartial<T>>(`${config.nameExtension ?? ''}_updateDeep`);
+  const update = getEventId<ModelUpdateEventType<T>>(`${config.nameExtension ?? ''}_update`);
+  const updateDeep = getEventId<ModelUpdateDeepEventType<T>>(
+    `${config.nameExtension ?? ''}_updateDeep`,
+  );
   const updateBy = getEventId<ModelUpdateFunction<T>>(`${config.nameExtension ?? ''}_updateBy`);
   const reset = getEventId<undefined>(`${config.nameExtension ?? ''}_reset`);
   return {
@@ -91,11 +109,19 @@ const getModelSignals = <T extends Record<string, any>>(
     setup: store => {
       store.addState(model, config.defaultModel);
       store.addReducer(model, setModel, (_, event) => event);
-      store.addReducer(model, update, (state, event) => ({
-        ...state,
-        ...event,
-      }));
-      store.addReducer(model, updateDeep, (state, event) => deepUpdate(state, event));
+      store.addReducer(model, update, (state, event) =>
+        isRecord(state) && isRecord(event)
+          ? {
+              ...state,
+              ...event,
+            }
+          : (event as T),
+      );
+      store.addReducer(model, updateDeep, (state, event) =>
+        isRecord(state) && isRecord(event)
+          ? deepUpdate(state, event as DeepPartial<T>)
+          : (event as T),
+      );
       store.addReducer(model, updateBy, (state, event) => event(state));
       store.addReducer(model, reset, () => config.defaultModel);
     },
@@ -107,7 +133,7 @@ const getModelSignals = <T extends Record<string, any>>(
  *
  * @template T - specifies the type of the model
  */
-export type ModelSignalsFactory<T extends Record<string, any>> = SignalsFactory<
+export type ModelSignalsFactory<T> = SignalsFactory<
   ModelInputSignals<T>,
   ModelOutputSignals<T>,
   ModelConfig<T>
@@ -119,5 +145,5 @@ export type ModelSignalsFactory<T extends Record<string, any>> = SignalsFactory<
  * @template T - specifies the type of the model
  * @returns {ModelSignalsFactory<T>}
  */
-export const getModelSignalsFactory = <T extends Record<string, any>>(): ModelSignalsFactory<T> =>
+export const getModelSignalsFactory = <T>(): ModelSignalsFactory<T> =>
   new SignalsFactory<ModelInputSignals<T>, ModelOutputSignals<T>, ModelConfig<T>>(getModelSignals);
