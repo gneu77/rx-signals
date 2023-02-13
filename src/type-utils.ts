@@ -267,6 +267,56 @@ export const isResultWithInput = <Input, Result>(
  */
 export type DeepPartial<T> = [T] extends [Record<string, any>]
   ? {
-      [P in keyof T]?: DeepPartial<T[P]>;
+      [K in keyof T]?: DeepPartial<T[K]>;
     }
   : T;
+
+/**
+ * Constructs a validation type for the model type T, where the validation
+ * type is a deep-partial model type where each key maps to null (representing passed validation)
+ * or V (representing an error).
+ */
+export type ModelValidationResult<T, V = string> = [T] extends [Record<string, any>]
+  ?
+      | null
+      | {
+          [K in keyof T]?: null | V | ModelValidationResult<T[K]>;
+        }
+  : null | V;
+
+const isRecord = (value: any): value is Record<string, any> =>
+  value && typeof value === 'object' && !Array.isArray(value);
+
+/**
+ * A helper function to patch an existing ModelValidationResult.
+ */
+export const patchModelValidationResult = <T, V>(
+  model: null | ModelValidationResult<T, V>,
+  patch: ModelValidationResult<T, V>,
+): ModelValidationResult<T, V> =>
+  isRecord(model) && isRecord(patch)
+    ? Object.entries(patch).reduce(
+        (acc, [key, value]) => ({
+          ...acc,
+          [key]: isRecord(acc?.[key]) ? patchModelValidationResult(acc[key], value) : value,
+        }),
+        model,
+      )
+    : patch;
+
+/**
+ * A helper function to check if a ModelValidationResult represents a valid state.
+ */
+export const isValidModelValidationResult = <T>(
+  modelValidationResult: ModelValidationResult<T, any>,
+): boolean => {
+  if (modelValidationResult) {
+    if (isRecord(modelValidationResult)) {
+      return !Object.values(modelValidationResult).find(
+        value => !isValidModelValidationResult(value),
+      );
+    }
+    return false;
+  }
+  return true;
+};

@@ -34,25 +34,25 @@ export type ValidatedInputWithResult<Input, ValidationResult, Result> = {
   /** indicates whether the validation-effect is currently running */
   validationPending: boolean;
 
-  /** the input that produced the current validationResult (or undefined, if validationResult is undefined) */
+  /** the input that produced the current validationResult (or NO_VALUE, if validationResult is NO_VALUE) */
   validatedInput: Input | NoValueType;
 
-  /** the current validationResult (or undefined, if no validation-result was received yet) */
+  /** the current validationResult (or NO_VALUE, if no validation-result was received yet) */
   validationResult: ValidationResult | NoValueType;
 
-  /** whether the current validationResult represents a valid state (false, if current validationResult is undefined) */
+  /** whether the current validationResult represents a valid state (false, if current validationResult is NO_VALUE) */
   isValid: boolean;
 
   /** indicates whether the result-effect is currently running */
   resultPending: boolean;
 
-  /** the input that produced the current result (or undefined, if result is undefined) */
+  /** the input that produced the current result (or NoValueType, if result is NO_VALUE) */
   resultInput: Input | NoValueType;
 
   /* In case the resultInput led to an error (result === NO_VALUE in that case) */
   resultError?: any;
 
-  /** the current result (or undefined, if no result was received yet) */
+  /** the current result (or NO_VALUE, if no result was received yet) */
   result: Result | NoValueType;
 };
 
