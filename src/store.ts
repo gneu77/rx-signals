@@ -98,6 +98,14 @@ export type Effect<Input, Result> = (
 ) => Observable<Result>;
 
 /**
+ * ToEffectType is a utility type to get the corresponding Effect type
+ * from a given EffectId type.
+ *
+ * @template ID - a concrete EffectId type
+ */
+export type ToEffectType<ID> = ID extends EffectId<infer I, infer O> ? Effect<I, O> : never;
+
+/**
  * The rx-signals Store provides RxJs-Observables for RP (reactive programming) - BehaviorStreams
  * and EventStreams (behaviors and events are the two different types of signals, where behaviors represent immutable state).
  * The Store separates the sources of these streams from the streams itself.
@@ -920,15 +928,12 @@ export class Store {
   /**
    * This method adds an Effect to the store.
    *
-   * @param {EffectId<InputType, ResultType>} id - the unique identifier for the effect
-   * @param {Effect<InputType, ResultType>} effect - the Effect function
+   * @param {ID} id - the unique identifier for the effect
+   * @param {ToEffectType<ID>} effect - the Effect function
    * @returns {void}
    */
-  addEffect<InputType, ResultType>(
-    id: EffectId<InputType, ResultType>,
-    effect: Effect<InputType, ResultType>,
-  ): void {
-    this.addState(id as unknown as StateId<Effect<InputType, ResultType>>, () => effect);
+  addEffect<ID extends EffectId<any, any>>(id: ID, effect: ToEffectType<ID>): void {
+    this.addState(id as unknown as StateId<ToEffectType<ID>>, () => effect);
   }
 
   /**
