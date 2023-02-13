@@ -1,5 +1,6 @@
+import { map } from 'rxjs';
 import { Signals, SignalsFactory } from './signals-factory';
-import { BehaviorId, EventId, getEventId, getStateId } from './store-utils';
+import { BehaviorId, EventId, getDerivedId, getEventId, getStateId } from './store-utils';
 import { DeepPartial } from './type-utils';
 
 /**
@@ -24,6 +25,19 @@ export type ModelUpdateEventType<T> = [T] extends [Record<string, any>] ? Partia
 export type ModelUpdateDeepEventType<T> = [T] extends [Record<string, any>] ? DeepPartial<T> : T;
 
 /**
+ * Output value type for a {@link ModelSignalsFactory}.
+ *
+ * @template T - the type of the model to be handled
+ */
+export type ModelWithDefault<T> = {
+  /** the current model */
+  model: T;
+
+  /** the default model (hence, either the initial default, or the last model given by the setAsDefault event) */
+  default: T;
+};
+
+/**
  * Type specifying the input signal ids produced by a {@link ModelSignalsFactory} (the corresponding signal-sources
  * are NOT added to the store by the signals-setup, but by whoever uses the signals, e.g. by extendSetup or fmap or just using dispatch).
  *
@@ -32,6 +46,9 @@ export type ModelUpdateDeepEventType<T> = [T] extends [Record<string, any>] ? De
 export type ModelInputSignals<T> = {
   /** identifier for the event to replace the complete model */
   set: EventId<T>;
+
+  /** like set, but also setting the new model as new default */
+  setAsDefault: EventId<T>;
 
   /** in case the model is a Record\<string, any\>, identifier for the event to update the model by a given shallow-partial model, else equals the set event  */
   update: EventId<ModelUpdateEventType<T>>;
@@ -42,7 +59,7 @@ export type ModelInputSignals<T> = {
   /** identifier for the event to update the model by a given update function */
   updateBy: EventId<ModelUpdateFunction<T>>;
 
-  /** identifier for the event to reset the model to the configured default */
+  /** identifier for the event to reset the model to the default state (configured or set by setAsDefault) */
   reset: EventId<undefined>;
 };
 
@@ -52,8 +69,11 @@ export type ModelInputSignals<T> = {
  * @template T - the type of the model to be handled
  */
 export type ModelOutputSignals<T> = {
-  /** identifier for the model behavior (on purpose no StateId to keep encapsulation, cause BehaviorId cannot be used to add more reducers) */
+  /** identifier for the current model behavior */
   model: BehaviorId<T>;
+
+  /** identifier for the behavior combining current model and default model (either the initial default, or the last model given by the setAsDefault event) */
+  modelWithDefault: BehaviorId<ModelWithDefault<T>>;
 };
 
 /**
@@ -86,8 +106,12 @@ const deepUpdate = <T>(model: T, patch: ModelUpdateDeepEventType<T>): T =>
 const getModelSignals = <T>(
   config: ModelConfig<T>,
 ): Signals<ModelInputSignals<T>, ModelOutputSignals<T>> => {
-  const model = getStateId<T>(`${config.nameExtension ?? ''}_model`);
+  const model = getDerivedId<T>(`${config.nameExtension ?? ''}_model`);
+  const modelWithDefault = getStateId<ModelWithDefault<T>>(
+    `${config.nameExtension ?? ''}_modelWithDefault`,
+  );
   const setModel = getEventId<T>(`${config.nameExtension ?? ''}_set`);
+  const setAsDefault = getEventId<T>(`${config.nameExtension ?? ''}_setAsDefault`);
   const update = getEventId<ModelUpdateEventType<T>>(`${config.nameExtension ?? ''}_update`);
   const updateDeep = getEventId<ModelUpdateDeepEventType<T>>(
     `${config.nameExtension ?? ''}_updateDeep`,
@@ -97,6 +121,7 @@ const getModelSignals = <T>(
   return {
     input: {
       set: setModel,
+      setAsDefault,
       update,
       updateDeep,
       updateBy,
@@ -104,26 +129,56 @@ const getModelSignals = <T>(
     },
     output: {
       model,
+      modelWithDefault,
     },
     effects: {},
     setup: store => {
-      store.addState(model, config.defaultModel);
-      store.addReducer(model, setModel, (_, event) => event);
-      store.addReducer(model, update, (state, event) =>
+      store.addState(modelWithDefault, {
+        model: config.defaultModel,
+        default: config.defaultModel,
+      });
+      store.addReducer(modelWithDefault, setModel, (state, event) => ({
+        ...state,
+        model: event,
+      }));
+      store.addReducer(modelWithDefault, setAsDefault, (_, event) => ({
+        default: event,
+        model: event,
+      }));
+      store.addReducer(modelWithDefault, update, (state, event) =>
         isRecord(state) && isRecord(event)
           ? {
               ...state,
-              ...event,
+              model: {
+                ...state.model,
+                ...event,
+              },
             }
-          : (event as T),
+          : {
+              ...state,
+              model: event as T,
+            },
       );
-      store.addReducer(model, updateDeep, (state, event) =>
+      store.addReducer(modelWithDefault, updateDeep, (state, event) =>
         isRecord(state) && isRecord(event)
-          ? deepUpdate(state, event as DeepPartial<T>)
-          : (event as T),
+          ? {
+              ...state,
+              model: deepUpdate(state.model, event),
+            }
+          : {
+              ...state,
+              model: event as T,
+            },
       );
-      store.addReducer(model, updateBy, (state, event) => event(state));
-      store.addReducer(model, reset, () => config.defaultModel);
+      store.addReducer(modelWithDefault, updateBy, (state, event) => ({
+        ...state,
+        model: event(state.model),
+      }));
+      store.addReducer(modelWithDefault, reset, state => ({
+        ...state,
+        model: state.default,
+      }));
+      store.addDerivedState(model, store.getBehavior(modelWithDefault).pipe(map(m => m.model)));
     },
   };
 };

@@ -70,12 +70,46 @@ describe('ModelSignalsFactory', () => {
       await sequence;
     });
 
+    it('should have correct combined state after setting a new model', async () => {
+      const newModel = {
+        a: 'NewModel',
+        b: 42,
+        c: {
+          d: {
+            e: false,
+          },
+          f: 17,
+        },
+      };
+      const sequence = expectSequence(store.getBehavior(outputSignals.modelWithDefault), [
+        { model: defaultModel, default: defaultModel },
+        { model: newModel, default: defaultModel },
+      ]);
+      store.dispatch(inputSignals.set, newModel);
+      await sequence;
+    });
+
     it('should shallow-update the model', async () => {
       const sequence = expectSequence(store.getBehavior(outputSignals.model), [
         defaultModel,
         {
           ...defaultModel,
           b: 42,
+        },
+      ]);
+      store.dispatch(inputSignals.update, { b: 42 });
+      await sequence;
+    });
+
+    it('should have correct combined state after shallow-updating the model', async () => {
+      const sequence = expectSequence(store.getBehavior(outputSignals.modelWithDefault), [
+        { model: defaultModel, default: defaultModel },
+        {
+          model: {
+            ...defaultModel,
+            b: 42,
+          },
+          default: defaultModel,
         },
       ]);
       store.dispatch(inputSignals.update, { b: 42 });
@@ -113,6 +147,26 @@ describe('ModelSignalsFactory', () => {
       await sequence;
     });
 
+    it('should have correct combined state after deep-updating the model', async () => {
+      const sequence = expectSequence(store.getBehavior(outputSignals.modelWithDefault), [
+        { model: defaultModel, default: defaultModel },
+        {
+          model: {
+            ...defaultModel,
+            c: {
+              d: {
+                e: true,
+              },
+              f: 9,
+            },
+          },
+          default: defaultModel,
+        },
+      ]);
+      store.dispatch(inputSignals.updateDeep, { c: { d: { e: true } } });
+      await sequence;
+    });
+
     it('should update by function', async () => {
       const sequence = expectSequence(store.getBehavior(outputSignals.model), [
         defaultModel,
@@ -125,7 +179,7 @@ describe('ModelSignalsFactory', () => {
       await sequence;
     });
 
-    it('should reset the model', async () => {
+    it('should reset the model to initial default', async () => {
       const newModel = {
         a: 'NewModel',
         b: 42,
@@ -139,6 +193,51 @@ describe('ModelSignalsFactory', () => {
         defaultModel,
       ]);
       store.dispatch(inputSignals.set, newModel);
+      store.dispatch(inputSignals.reset);
+      await sequence;
+    });
+
+    it('should set correct combined state on reset', async () => {
+      const newModel = {
+        a: 'NewModel',
+        b: 42,
+        c: {
+          f: 38,
+        },
+      };
+      const sequence = expectSequence(store.getBehavior(outputSignals.modelWithDefault), [
+        { model: defaultModel, default: defaultModel },
+        { model: newModel, default: defaultModel },
+        { model: defaultModel, default: defaultModel },
+      ]);
+      store.dispatch(inputSignals.set, newModel);
+      store.dispatch(inputSignals.reset);
+      await sequence;
+    });
+
+    it('should reset the model to a set default', async () => {
+      const newModel = {
+        a: 'NewModel',
+        b: 42,
+        c: {
+          f: 38,
+        },
+      };
+      const newModel2 = {
+        a: 'NewModel2',
+        b: 7,
+        c: {
+          f: 8,
+        },
+      };
+      const sequence = expectSequence(store.getBehavior(outputSignals.model), [
+        defaultModel,
+        newModel,
+        newModel2,
+        newModel,
+      ]);
+      store.dispatch(inputSignals.setAsDefault, newModel);
+      store.dispatch(inputSignals.set, newModel2);
       store.dispatch(inputSignals.reset);
       await sequence;
     });
