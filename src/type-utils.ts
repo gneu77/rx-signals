@@ -273,16 +273,18 @@ export type DeepPartial<T> = [T] extends [Record<string, any>]
 
 /**
  * Constructs a validation type for the model type T, where the validation
- * type is a deep-partial model type where each key maps to null (representing passed validation)
+ * type is a deep-partial model type where each key maps to null/undefined (representing valid state)
  * or V (representing an error).
  */
 export type ModelValidationResult<T, V = string> = [T] extends [Record<string, any>]
   ?
+      | V
       | null
+      | undefined
       | {
           [K in keyof T]?: null | V | ModelValidationResult<T[K]>;
         }
-  : null | V;
+  : V | null | undefined;
 
 const isRecord = (value: any): value is Record<string, any> =>
   value && typeof value === 'object' && !Array.isArray(value);
