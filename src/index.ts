@@ -1,4 +1,5 @@
 export * from './effect-signals-factory';
+export * from './entity-edit-signals-factory';
 export * from './model-signals-factory';
 export * from './signals-factory';
 export * from './store';
