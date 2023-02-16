@@ -1,4 +1,5 @@
-import { combineLatest, map } from 'rxjs';
+import { combineLatest, map, startWith } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import {
   CombinedEffectResult,
   EffectOutputSignals,
@@ -6,7 +7,14 @@ import {
 } from './effect-signals-factory';
 import { ModelInputSignals, getModelSignalsFactory } from './model-signals-factory';
 import { SignalsFactory } from './signals-factory';
-import { DerivedId, EffectId, EventId, getDerivedId, isNotNoValueType } from './store-utils';
+import {
+  DerivedId,
+  EffectId,
+  EventId,
+  NO_VALUE,
+  getDerivedId,
+  isNotNoValueType,
+} from './store-utils';
 import { ModelValidationResult, isValidModelValidationResult } from './type-utils';
 import {
   ValidatedInputWithResult,
@@ -49,7 +57,7 @@ export const shallowEquals = <T>(a: T, b: T): boolean => {
  * @template IdType - specifies the entity-id-type
  * @template ValidationErrorType - specifies the error-type for failed validations
  */
-export type EntityEditModel<Entity, IdType, ValidationErrorType> = {
+export type EntityEditModel<Entity, IdType = number, ValidationErrorType = string> = {
   /**
    * The {@link CombinedEffectResult} for the load effect
    */
@@ -101,7 +109,7 @@ export type EntityEditModel<Entity, IdType, ValidationErrorType> = {
  * Type specifying the input signals for entity edit signals, hence a combination of
  * {@link ModelInputSignals}, an id-behavior (load) and a save event.
  */
-export type EntityEditInput<Entity, IdType> = ModelInputSignals<Entity> & {
+export type EntityEditInput<Entity, IdType = number> = ModelInputSignals<Entity> & {
   /** input for the load effect */
   load: DerivedId<IdType | null>;
 
@@ -112,7 +120,7 @@ export type EntityEditInput<Entity, IdType> = ModelInputSignals<Entity> & {
 /**
  * Type specifying the output signals for entity edit signals,
  */
-export type EntityEditOutput<Entity, IdType, ValidationErrorType> = {
+export type EntityEditOutput<Entity, IdType = number, ValidationErrorType = string> = {
   /** {@link EffectOutputSignals} for the load effect */
   load: EffectOutputSignals<IdType | null, Entity>;
 
@@ -153,7 +161,7 @@ export type EntityEditConfiguration<Entity> = {
 /**
  * Type specifying the effects for {@link EntityEditFactory},
  */
-export type EntityEditEffects<Entity, IdType, ValidationErrorType> = {
+export type EntityEditEffects<Entity, IdType = number, ValidationErrorType = string> = {
   /** effect that takes entity id or null and returns a corresponding entity (which sets the default model) */
   load: EffectId<IdType | null, Entity>;
 
@@ -171,7 +179,11 @@ export type EntityEditEffects<Entity, IdType, ValidationErrorType> = {
  * @template IdType - specifies the entity-id-type
  * @template ValidationErrorType - specifies the error-type for failed validations
  */
-export type EntityEditFactory<Entity, IdType, ValidationErrorType> = SignalsFactory<
+export type EntityEditFactory<
+  Entity,
+  IdType = number,
+  ValidationErrorType = string,
+> = SignalsFactory<
   EntityEditInput<Entity, IdType>,
   EntityEditOutput<Entity, IdType, ValidationErrorType>,
   EntityEditConfiguration<Entity>,
@@ -226,21 +238,56 @@ export const getEntityEditSignalsFactory = <
       store.addDerivedState(
         output.combinedModel,
         combineLatest([
-          store.getBehavior(output.conflicts1.combined),
-          store.getBehavior(output.conflicts2.combined),
-          store.getBehavior(output.pending),
-          store.getBehavior(output.modelWithDefault),
+          store.getBehavior(output.conflicts1.combined).pipe(
+            startWith({
+              currentInput: NO_VALUE,
+              resultPending: false,
+              resultInput: NO_VALUE,
+              result: NO_VALUE,
+            }),
+          ),
+          combineLatest([
+            store.getBehavior(output.conflicts2.combined),
+            store.getBehavior(output.pending).pipe(startWith(false)),
+          ]).pipe(
+            map(
+              ([edit, pending]): [
+                ValidatedInputWithResult<
+                  Entity,
+                  ModelValidationResult<Entity, ValidationErrorType>,
+                  IdType
+                >,
+                boolean,
+                boolean,
+                ModelValidationResult<Entity, ValidationErrorType>,
+              ] => [
+                edit,
+                pending || edit.resultPending,
+                pending || edit.resultPending || edit.validationPending || !edit.isValid,
+                isNotNoValueType(edit.validationResult) ? edit.validationResult : null,
+              ],
+            ),
+          ),
+          store
+            .getBehavior(output.modelWithDefault)
+            .pipe(
+              map((modelWithDefault): [Entity, boolean] => [
+                modelWithDefault.model,
+                config.entityEquals
+                  ? !config.entityEquals(modelWithDefault.model, modelWithDefault.default)
+                  : !shallowEquals(modelWithDefault.model, modelWithDefault.default),
+              ]),
+            ),
         ]).pipe(
-          map(([load, edit, pending, modelWithDefault]) => ({
+          filter(([, [edit], [entity]]) => edit.currentInput === entity),
+          map(([load, [edit, loading, disabled, validation], [entity, changed]]) => ({
             load,
             edit,
-            entity: modelWithDefault.model,
-            validation: isNotNoValueType(edit.validationResult) ? edit.validationResult : null,
-            loading: pending || edit.resultPending,
-            disabled: pending || edit.resultPending || edit.validationPending || !edit.isValid,
-            changed: config.entityEquals
-              ? !config.entityEquals(modelWithDefault.model, modelWithDefault.default)
-              : !shallowEquals(modelWithDefault.model, modelWithDefault.default),
+            entity,
+            validation,
+            loading,
+            disabled,
+            changed,
           })),
         ),
       );

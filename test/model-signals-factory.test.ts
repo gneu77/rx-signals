@@ -397,4 +397,43 @@ describe('ModelSignalsFactory', () => {
       await sequence;
     });
   });
+
+  describe('object shape model with array', () => {
+    type ModelType = {
+      a: string;
+      b: number[];
+    };
+    const defaultModel: ModelType = {
+      a: 'Test',
+      b: [1, 2, 3],
+    };
+
+    const baseFactory = getModelSignalsFactory<ModelType>();
+
+    let inputSignals: ModelInputSignals<ModelType>;
+    let outputSignals: ModelOutputSignals<ModelType>;
+
+    beforeEach(() => {
+      const signals = baseFactory.build({
+        defaultModel,
+      });
+      signals.setup(store);
+      inputSignals = signals.input;
+      outputSignals = signals.output;
+    });
+
+    it('should give the default model', async () => {
+      const sequence = expectSequence(store.getBehavior(outputSignals.model), [defaultModel]);
+      await sequence;
+    });
+
+    it('should perform correct deep update', async () => {
+      const sequence = expectSequence(store.getBehavior(outputSignals.model), [
+        defaultModel,
+        { a: 'Test', b: [42] },
+      ]);
+      store.dispatch(inputSignals.updateDeep, { b: [42] });
+      await sequence;
+    });
+  });
 });
