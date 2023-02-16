@@ -15,8 +15,13 @@
 <li><a href="../modules.html">@rx-signals/store</a></li>
 <li><a href="EffectSuccess.html">EffectSuccess</a></li></ul>
 <h1>Type alias EffectSuccess&lt;Input, Result&gt;</h1></div>
-<div class="tsd-signature">Effect<wbr/>Success<span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">Input</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">Result</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span><br/><span>    </span>previousInput<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">Input</span><span class="tsd-signature-symbol"> | </span><a href="NoValueType.html" class="tsd-signature-type" data-tsd-kind="Type alias">NoValueType</a><span class="tsd-signature-symbol">; </span><br/><span>    </span>previousResult<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">Result</span><span class="tsd-signature-symbol"> | </span><a href="NoValueType.html" class="tsd-signature-type" data-tsd-kind="Type alias">NoValueType</a><span class="tsd-signature-symbol">; </span><br/><span>    </span>result<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">Result</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>resultInput<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">Input</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span></div>
-<div class="tsd-comment tsd-typography"><p>Value-type for success events produced by <a href="EffectSignals.html">EffectSignals</a>.</p>
+<div class="tsd-signature">Effect<wbr/>Success<span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">Input</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">Result</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span><br/><span>    </span>completed<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>previousInput<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">Input</span><span class="tsd-signature-symbol"> | </span><a href="NoValueType.html" class="tsd-signature-type" data-tsd-kind="Type alias">NoValueType</a><span class="tsd-signature-symbol">; </span><br/><span>    </span>previousResult<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">Result</span><span class="tsd-signature-symbol"> | </span><a href="NoValueType.html" class="tsd-signature-type" data-tsd-kind="Type alias">NoValueType</a><span class="tsd-signature-symbol">; </span><br/><span>    </span>result<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">Result</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>resultInput<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">Input</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span></div>
+<div class="tsd-comment tsd-typography"><p>Value-type for success events produced by <a href="EffectSignals.html">EffectSignals</a>.
+In case the effect completes after one result, two success events will
+be dispatched, one with completed false and one with completed true.
+This is to handle cases where the effect might send multiple results
+before completing. Thus, if an effect never completes, all success event
+will have completed false.</p>
 </div>
 <section class="tsd-panel tsd-type-parameters">
 <h4>Type Parameters</h4>
@@ -33,12 +38,16 @@
 <h4>Type declaration</h4>
 <ul class="tsd-parameters">
 <li class="tsd-parameter">
+<h5>completed<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></h5>
+<div class="tsd-comment tsd-typography"><p>has the effect for the given resultInput completed</p>
+</div></li>
+<li class="tsd-parameter">
 <h5>previous<wbr/>Input<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">Input</span><span class="tsd-signature-symbol"> | </span><a href="NoValueType.html" class="tsd-signature-type" data-tsd-kind="Type alias">NoValueType</a></h5>
-<div class="tsd-comment tsd-typography"><p>the input of the previous result, or NO_VALUE</p>
+<div class="tsd-comment tsd-typography"><p>the input of the previous completed result, or NO_VALUE</p>
 </div></li>
 <li class="tsd-parameter">
 <h5>previous<wbr/>Result<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">Result</span><span class="tsd-signature-symbol"> | </span><a href="NoValueType.html" class="tsd-signature-type" data-tsd-kind="Type alias">NoValueType</a></h5>
-<div class="tsd-comment tsd-typography"><p>the previous result, or NO_VALUE</p>
+<div class="tsd-comment tsd-typography"><p>the previous completed result, or NO_VALUE</p>
 </div></li>
 <li class="tsd-parameter">
 <h5>result<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">Result</span></h5>
@@ -49,7 +58,7 @@
 <div class="tsd-comment tsd-typography"><p>the effect input that lead to the result</p>
 </div></li></ul></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/2440e8e/src/effect-signals-factory.ts#L127">effect-signals-factory.ts:127</a></li></ul></aside></div>
+<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/ee21063/src/effect-signals-factory.ts#L140">effect-signals-factory.ts:140</a></li></ul></aside></div>
 <div class="col-4 col-menu menu-sticky-wrap menu-highlight">
 <div class="tsd-navigation settings">
 <details class="tsd-index-accordion"><summary class="tsd-accordion-summary">
@@ -90,6 +99,7 @@
 <li class="tsd-kind-type-alias"><a href="DeepPartial.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Deep<wbr/>Partial</a></li>
 <li class="tsd-kind-type-alias"><a href="DerivedId.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Derived<wbr/>Id</a></li>
 <li class="tsd-kind-type-alias"><a href="Effect.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Effect</a></li>
+<li class="tsd-kind-type-alias"><a href="EffectCompletedSuccess.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Effect<wbr/>Completed<wbr/>Success</a></li>
 <li class="tsd-kind-type-alias"><a href="EffectConfiguration.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Effect<wbr/>Configuration</a></li>
 <li class="tsd-kind-type-alias"><a href="EffectError.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Effect<wbr/>Error</a></li>
 <li class="tsd-kind-type-alias"><a href="EffectFactoryEffects.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Effect<wbr/>Factory<wbr/>Effects</a></li>
@@ -181,7 +191,8 @@
 <li class="tsd-kind-function"><a href="../functions/isStateId.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg>is<wbr/>State<wbr/>Id</a></li>
 <li class="tsd-kind-function"><a href="../functions/isValidModelValidationResult.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg>is<wbr/>Valid<wbr/>Model<wbr/>Validation<wbr/>Result</a></li>
 <li class="tsd-kind-function"><a href="../functions/merge.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg>merge</a></li>
-<li class="tsd-kind-function"><a href="../functions/patchModelValidationResult.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg>patch<wbr/>Model<wbr/>Validation<wbr/>Result</a></li></ul></nav></div></div>
+<li class="tsd-kind-function"><a href="../functions/patchModelValidationResult.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg>patch<wbr/>Model<wbr/>Validation<wbr/>Result</a></li>
+<li class="tsd-kind-function"><a href="../functions/shallowEquals.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg>shallow<wbr/>Equals</a></li></ul></nav></div></div>
 <div class="container tsd-generator">
 <p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></div>
 <div class="overlay"></div><script src="../assets/main.js"></script></body></html>
