@@ -104,6 +104,22 @@ describe('validated input with result signals factory', () => {
             searchString: 'test',
             page: 2,
           },
+          validationPending: true,
+          isValid: false, // cause validation is still pending
+          validatedInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          validationResult: null,
+          resultPending: false,
+          resultInput: NO_VALUE,
+          result: NO_VALUE,
+        },
+        {
+          currentInput: {
+            searchString: 'test',
+            page: 2,
+          },
           validationPending: false,
           isValid: true,
           validatedInput: {
@@ -114,6 +130,28 @@ describe('validated input with result signals factory', () => {
           resultPending: true,
           resultInput: NO_VALUE,
           result: NO_VALUE,
+        },
+        {
+          currentInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          validationPending: false,
+          isValid: true,
+          validatedInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          validationResult: null,
+          resultInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          result: {
+            results: [],
+            totalResults: 1,
+          },
+          resultPending: true,
         },
         {
           currentInput: {
@@ -156,6 +194,22 @@ describe('validated input with result signals factory', () => {
           validatedInput: NO_VALUE,
           validationResult: NO_VALUE,
           isValid: false,
+          resultPending: false,
+          resultInput: NO_VALUE,
+          result: NO_VALUE,
+        },
+        {
+          currentInput: {
+            searchString: 'invalid',
+            page: 2,
+          },
+          validationPending: true,
+          isValid: false,
+          validatedInput: {
+            searchString: 'invalid',
+            page: 2,
+          },
+          validationResult: 'nope',
           resultPending: false,
           resultInput: NO_VALUE,
           result: NO_VALUE,
@@ -229,6 +283,22 @@ describe('validated input with result signals factory', () => {
             searchString: 'test',
             page: 2,
           },
+          validationPending: true,
+          isValid: false,
+          validatedInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          validationResult: null,
+          resultPending: false,
+          resultInput: NO_VALUE,
+          result: NO_VALUE,
+        },
+        {
+          currentInput: {
+            searchString: 'test',
+            page: 2,
+          },
           validationPending: false,
           isValid: true,
           validatedInput: {
@@ -270,10 +340,26 @@ describe('validated input with result signals factory', () => {
             page: 1,
           },
           validationPending: true,
-          isValid: true,
+          isValid: false,
           validatedInput: {
             searchString: 'test',
             page: 2,
+          },
+          validationResult: null,
+          resultPending: false,
+          resultInput: NO_VALUE,
+          result: NO_VALUE,
+        },
+        {
+          currentInput: {
+            searchString: 'test',
+            page: 1,
+          },
+          validationPending: true,
+          isValid: false,
+          validatedInput: {
+            searchString: 'test',
+            page: 1,
           },
           validationResult: null,
           resultPending: false,
@@ -348,6 +434,28 @@ describe('validated input with result signals factory', () => {
             page: 1,
           },
           validationResult: null,
+          resultPending: true,
+          resultInput: {
+            searchString: 'test',
+            page: 1,
+          },
+          result: {
+            results: [],
+            totalResults: 1,
+          },
+        },
+        {
+          currentInput: {
+            searchString: 'test',
+            page: 1,
+          },
+          validationPending: false,
+          isValid: true,
+          validatedInput: {
+            searchString: 'test',
+            page: 1,
+          },
+          validationResult: null,
           resultPending: false,
           resultInput: {
             searchString: 'test',
@@ -375,6 +483,22 @@ describe('validated input with result signals factory', () => {
             isValid: false,
             validatedInput: NO_VALUE,
             validationResult: NO_VALUE,
+            resultPending: false,
+            resultInput: NO_VALUE,
+            result: NO_VALUE,
+          },
+          {
+            currentInput: {
+              searchString: 'invalid',
+              page: 2,
+            },
+            validationPending: true,
+            isValid: false,
+            validatedInput: {
+              searchString: 'invalid',
+              page: 2,
+            },
+            validationResult: 'nope',
             resultPending: false,
             resultInput: NO_VALUE,
             result: NO_VALUE,
@@ -433,6 +557,22 @@ describe('validated input with result signals factory', () => {
               page: 2,
             },
             validationResult: 'nope',
+            resultPending: false,
+            resultInput: NO_VALUE,
+            result: NO_VALUE,
+          },
+          {
+            currentInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            validationPending: true,
+            isValid: false,
+            validatedInput: {
+              searchString: 'test',
+              page: 2,
+            },
+            validationResult: null,
             resultPending: false,
             resultInput: NO_VALUE,
             result: NO_VALUE,
@@ -509,6 +649,25 @@ describe('validated input with result signals factory', () => {
             searchString: 'test',
             page: 2,
           },
+          validationPending: true,
+          isValid: false,
+          validatedInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          validationResult: null,
+          resultPending: false,
+          resultInput: NO_VALUE,
+          result: {
+            results: [],
+            totalResults: 0,
+          },
+        },
+        {
+          currentInput: {
+            searchString: 'test',
+            page: 2,
+          },
           validationPending: false,
           isValid: true,
           validatedInput: {
@@ -522,6 +681,28 @@ describe('validated input with result signals factory', () => {
             results: [],
             totalResults: 0,
           },
+        },
+        {
+          currentInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          validationPending: false,
+          isValid: true,
+          validatedInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          validationResult: null,
+          resultInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          result: {
+            results: [],
+            totalResults: 1,
+          },
+          resultPending: true,
         },
         {
           currentInput: {
@@ -594,6 +775,22 @@ describe('validated input with result signals factory', () => {
             searchString: 'test',
             page: 2,
           },
+          validationPending: true,
+          isValid: false,
+          validatedInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          validationResult: null,
+          resultPending: false,
+          resultInput: NO_VALUE,
+          result: NO_VALUE,
+        },
+        {
+          currentInput: {
+            searchString: 'test',
+            page: 2,
+          },
           validationPending: false,
           isValid: true,
           validatedInput: {
@@ -604,6 +801,28 @@ describe('validated input with result signals factory', () => {
           resultPending: true,
           resultInput: NO_VALUE,
           result: NO_VALUE,
+        },
+        {
+          currentInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          validationPending: false,
+          isValid: true,
+          validatedInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          validationResult: null,
+          resultInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          result: {
+            results: [],
+            totalResults: 1,
+          },
+          resultPending: true,
         },
         {
           currentInput: {
@@ -663,7 +882,7 @@ describe('validated input with result signals factory', () => {
             page: 3,
           },
           validationPending: true,
-          isValid: true,
+          isValid: false,
           validatedInput: {
             searchString: 'test',
             page: 2,
@@ -685,10 +904,32 @@ describe('validated input with result signals factory', () => {
             page: 4,
           },
           validationPending: true,
-          isValid: true,
+          isValid: false,
           validatedInput: {
             searchString: 'test',
             page: 2,
+          },
+          validationResult: null,
+          resultInput: {
+            searchString: 'test',
+            page: 2,
+          },
+          result: {
+            results: [],
+            totalResults: 1,
+          },
+          resultPending: false,
+        },
+        {
+          currentInput: {
+            searchString: 'test',
+            page: 4,
+          },
+          validationPending: true,
+          isValid: false,
+          validatedInput: {
+            searchString: 'test',
+            page: 4,
           },
           validationResult: null,
           resultInput: {

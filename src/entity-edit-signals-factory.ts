@@ -45,7 +45,7 @@ export type EntityEditOutput<Entity, IdType, ValidationErrorType> = {
 
 export type EntityEditConfiguration<Entity> = {
   defaultEntity: Entity;
-  onSaveSuccessEvent?: EventId<undefined>;
+  onSaveCompletedEvent?: EventId<undefined>;
   eagerLoadSubscription?: boolean;
 };
 
@@ -103,7 +103,7 @@ export const getEntityEditSignalsFactory = <
         isValidationResultValid: isValidModelValidationResult,
         withResultTrigger: true,
       },
-      onSaveSuccessEvent: config.onSaveSuccessEvent,
+      onSaveCompletedEvent: config.onSaveCompletedEvent,
     }))
     .extendSetup((store, _, output, config) => {
       store.addDerivedState(
@@ -125,11 +125,11 @@ export const getEntityEditSignalsFactory = <
           })),
         ),
       );
-      if (config.onSaveSuccessEvent) {
+      if (config.onSaveCompletedEvent) {
         console.log('connecting');
         store.connectObservable(
-          store.getEventStream(output.resultSuccesses).pipe(map(() => undefined)),
-          config.onSaveSuccessEvent,
+          store.getEventStream(output.resultCompletedSuccesses).pipe(map(() => undefined)),
+          config.onSaveCompletedEvent,
         );
       }
     })
@@ -152,14 +152,17 @@ export const getEntityEditSignalsFactory = <
           result: ids.conflicts1.result,
           pending: ids.pending,
           successes: ids.successes,
+          completedSuccesses: ids.completedSuccesses,
           errors: ids.errors,
         },
         edit: {
           combined: ids.conflicts2.combined,
           result: ids.conflicts2.result,
           validationSuccesses: ids.validationSuccesses,
+          validationCompletedSuccesses: ids.validationCompletedSuccesses,
           validationErrors: ids.validationErrors,
           resultSuccesses: ids.resultSuccesses,
+          resultCompletedSuccesses: ids.resultCompletedSuccesses,
           resultErrors: ids.resultErrors,
         },
         model: ids.combinedModel,

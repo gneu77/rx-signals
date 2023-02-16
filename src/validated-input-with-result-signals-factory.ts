@@ -2,6 +2,7 @@ import { Observable, combineLatest, distinctUntilChanged, filter, map, startWith
 import {
   CombinedEffectResult,
   CombinedEffectResultInSuccessState,
+  EffectCompletedSuccess,
   EffectError,
   EffectOutputSignals,
   EffectSuccess,
@@ -40,7 +41,7 @@ export type ValidatedInputWithResult<Input, ValidationResult, Result> = {
   /** the current validationResult (or NO_VALUE, if no validation-result was received yet) */
   validationResult: ValidationResult | NoValueType;
 
-  /** whether the current validationResult represents a valid state (false, if current validationResult is NO_VALUE) */
+  /** only true if validationResult represents a valid state AND validationPending is false */
   isValid: boolean;
 
   /** indicates whether the result-effect is currently running */
@@ -74,8 +75,10 @@ export type ValidatedInputWithResultOutput<Input, ValidationResult, Result> = {
   result: DerivedId<CombinedEffectResultInSuccessState<Input, Result>>;
   validationErrors: EventId<EffectError<Input>>;
   validationSuccesses: EventId<EffectSuccess<Input, ValidationResult>>;
+  validationCompletedSuccesses: EventId<EffectCompletedSuccess<Input, ValidationResult>>;
   resultErrors: EventId<EffectError<Input>>;
   resultSuccesses: EventId<EffectSuccess<Input, Result>>;
+  resultCompletedSuccesses: EventId<EffectCompletedSuccess<Input, Result>>;
 };
 
 /**
@@ -120,9 +123,12 @@ type ResultInputGetterInput<Input, ValidationResult> = {
 };
 
 const isResultInputGetterInput = <Input, ValidationResult>(
-  c: CombinedEffectResult<Input, ValidationResult>,
+  c: CombinedEffectResult<Input, ValidationResult>, // from the validation effect
 ): c is ResultInputGetterInput<Input, ValidationResult> =>
-  c.resultInput !== NO_VALUE && c.result !== NO_VALUE && c.currentInput === c.resultInput;
+  !c.resultPending &&
+  c.resultInput !== NO_VALUE &&
+  c.result !== NO_VALUE &&
+  c.currentInput === c.resultInput;
 
 const resultInputGetter = <Input, ValidationResult>(
   store: Store,
@@ -144,7 +150,7 @@ const mapBehaviors = <Input, ValidationResult, Result>(
   validationPending: v.resultPending,
   validatedInput: v.resultInput,
   validationResult: v.result,
-  isValid: v.result !== NO_VALUE ? isValidationResultValid(v.result) : false,
+  isValid: !v.resultPending && v.result !== NO_VALUE ? isValidationResultValid(v.result) : false,
   resultPending: r.resultPending,
   resultInput: r.resultInput,
   ...(r.resultError ? { resultError: r.resultError } : {}),
@@ -256,6 +262,8 @@ export const getValidatedInputWithResultSignalsFactory = <
       result: output.conflicts2.result,
       validationErrors: output.conflicts1.errors,
       validationSuccesses: output.conflicts1.successes,
+      validationCompletedSuccesses: output.conflicts1.completedSuccesses,
       resultErrors: output.conflicts2.errors,
       resultSuccesses: output.conflicts2.successes,
+      resultCompletedSuccesses: output.conflicts2.completedSuccesses,
     }));
