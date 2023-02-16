@@ -245,7 +245,6 @@ export const getEntityEditSignalsFactory = <
         ),
       );
       if (config.onSaveCompletedEvent) {
-        console.log('connecting');
         store.connectObservable(
           store.getEventStream(output.resultCompletedSuccesses).pipe(map(() => undefined)),
           config.onSaveCompletedEvent,
