@@ -239,8 +239,8 @@ export const getEntityEditSignalsFactory = <
             loading: pending || edit.resultPending,
             disabled: pending || edit.resultPending || edit.validationPending || !edit.isValid,
             changed: config.entityEquals
-              ? config.entityEquals(modelWithDefault.model, modelWithDefault.default)
-              : shallowEquals(modelWithDefault.model, modelWithDefault.default),
+              ? !config.entityEquals(modelWithDefault.model, modelWithDefault.default)
+              : !shallowEquals(modelWithDefault.model, modelWithDefault.default),
           })),
         ),
       );
