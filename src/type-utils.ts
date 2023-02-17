@@ -312,7 +312,7 @@ export const patchModelValidationResult = <T, V>(
 export const isValidModelValidationResult = <T>(
   modelValidationResult: ModelValidationResult<T, any>,
 ): boolean => {
-  if (modelValidationResult) {
+  if ((modelValidationResult ?? null) !== null) {
     if (isRecord(modelValidationResult)) {
       return !Object.values(modelValidationResult).find(
         value => !isValidModelValidationResult(value),
@@ -322,3 +322,26 @@ export const isValidModelValidationResult = <T>(
   }
   return true;
 };
+
+export type PickRecord<T> = T extends Record<string, any>
+  ? {
+      [K in keyof T]: T[K];
+    }
+  : never;
+
+export type ToPicked<T, K extends keyof PickRecord<T>> = PickRecord<T> extends never
+  ? undefined
+  : PickRecord<T>[K];
+
+export type PickResult<T> = {
+  v: () => T;
+  k: <K extends keyof PickRecord<T>>(key: K) => PickResult<ToPicked<T, K>>;
+};
+
+export const pick = <T>(model: T): PickResult<T> => ({
+  v: () => model,
+  k: <K extends keyof PickRecord<T>>(key: K): PickResult<ToPicked<T, K>> => {
+    const picked = (isRecord(model) ? (<PickRecord<T>>model)[key] : undefined) as ToPicked<T, K>;
+    return pick(picked);
+  },
+});
