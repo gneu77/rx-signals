@@ -9,7 +9,7 @@ import {
   EntityEditOutput,
   getEntityEditSignalsFactory,
 } from './../src/entity-edit-signals-factory';
-import { ModelValidationResult, patchModelValidationResult, pick } from './../src/type-utils';
+import { ModelValidationResult, patchModelValidationResult, toGetter } from './../src/type-utils';
 
 type MyEntity = {
   id: number;
@@ -198,10 +198,10 @@ describe('EntityEditSignalsFactory', () => {
           map(v => (!!input.b ? v : patchModelValidationResult(v, { b: 'mandatory' }))), // 'b' is mandatory
           switchMap(
             v =>
-              (pick(v).k('b').v() ?? null) !== null // is 'b' already validated as being missing?
+              (toGetter(v)('b').get() ?? null) !== null // is 'b' already validated as being missing?
                 ? of(v) // 'b' is missing, so validation is finished (it cannot have unique violation)
-                : pick(prevInput).k('b').v() === input.b // is current 'b' the same as in the previous input?
-                ? of(patchModelValidationResult(v, { b: pick(prevResult).k('b').v() })) // it's the same, so we can take it's previous validation result
+                : toGetter(prevInput)('b').get() === input.b // is current 'b' the same as in the previous input?
+                ? of(patchModelValidationResult(v, { b: toGetter(prevResult)('b').get() })) // it's the same, so we can take it's previous validation result
                 : of(
                     // it's not the same, so "we have to call our backend to validate uniqueness"
                     patchModelValidationResult(v, { b: input.b === 'exists' ? 'exists' : null }),

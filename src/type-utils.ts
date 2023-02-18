@@ -323,25 +323,41 @@ export const isValidModelValidationResult = <T>(
   return true;
 };
 
-export type PickRecord<T> = T extends Record<string, any>
+export type ToKeys<T> = T extends Array<any>
+  ? number
+  : T extends Record<any, any>
   ? {
-      [K in keyof T]: T[K];
-    }
+      [K in keyof T]: K;
+    }[keyof T]
   : never;
 
-export type ToPicked<T, K extends keyof PickRecord<T>> = PickRecord<T> extends never
-  ? undefined
-  : PickRecord<T>[K];
+export type PickReturn<T, K extends ToKeys<T>> = T extends Array<infer A>
+  ? A | undefined
+  : T extends Record<infer RK, any>
+  ? K extends RK
+    ? T[RK] | undefined
+    : never
+  : undefined;
 
-export type PickResult<T> = {
-  v: () => T;
-  k: <K extends keyof PickRecord<T>>(key: K) => PickResult<ToPicked<T, K>>;
+export const pick = <T, K extends ToKeys<T>>(value: T, key: K): PickReturn<T, K> => {
+  if (Array.isArray(value)) {
+    return value[key];
+  }
+  if (value !== null && typeof value === 'object') {
+    return (<Record<K, any>>value)[key] as PickReturn<T, K>;
+  }
+  return undefined as PickReturn<T, K>;
 };
 
-export const pick = <T>(model: T): PickResult<T> => ({
-  v: () => model,
-  k: <K extends keyof PickRecord<T>>(key: K): PickResult<ToPicked<T, K>> => {
-    const picked = (isRecord(model) ? (<PickRecord<T>>model)[key] : undefined) as ToPicked<T, K>;
-    return pick(picked);
-  },
-});
+export type Getter<T> = {
+  get: () => T;
+} & (<K extends ToKeys<T>>(key: K) => Getter<PickReturn<T, K>>);
+
+export const toGetter = <T>(value: T): Getter<T> => {
+  const result = (<K extends ToKeys<T>>(key: K): Getter<PickReturn<T, K>> => {
+    const picked = pick(value, key);
+    return toGetter(picked);
+  }) as Getter<T>;
+  result.get = () => value;
+  return result;
+};
