@@ -323,6 +323,11 @@ export const isValidModelValidationResult = <T>(
   return true;
 };
 
+/**
+ * Returns number in case T is an Array,
+ * else if T extends Record, it returns the keys of it,
+ * else it returns never.
+ */
 export type ToKeys<T> = T extends Array<any>
   ? number
   : T extends Record<any, any>
@@ -331,6 +336,9 @@ export type ToKeys<T> = T extends Array<any>
     }[keyof T]
   : never;
 
+/**
+ * Return type of the pick function.
+ */
 export type PickReturn<T, K extends ToKeys<T>> = T extends Array<infer A>
   ? A | undefined
   : T extends Record<infer RK, any>
@@ -339,6 +347,12 @@ export type PickReturn<T, K extends ToKeys<T>> = T extends Array<infer A>
     : never
   : undefined;
 
+/**
+ * Takes a value T and a key K.
+ * If value is an `Array<A>` (K is enforced as number in this case), it returns `value[key]` as `A | undefined`.
+ * If value is a `Record<RK, any>` (K is enforced as RK in this case), it returns `value[key]` as `T[RK] | undefined`.
+ * Else it returns undefined.
+ */
 export const pick = <T, K extends ToKeys<T>>(value: T, key: K): PickReturn<T, K> => {
   if (Array.isArray(value)) {
     return value[key];
@@ -349,10 +363,49 @@ export const pick = <T, K extends ToKeys<T>>(value: T, key: K): PickReturn<T, K>
   return undefined as PickReturn<T, K>;
 };
 
+/**
+ * Return type of the toGetter function.
+ * A `Getter<T>` can be used for optional chaining on arbitrary union types
+ * (see toGetter() for detailed information).
+ */
 export type Getter<T> = {
   get: () => T;
 } & (<K extends ToKeys<T>>(key: K) => Getter<PickReturn<T, K>>);
 
+/**
+ * Wraps the given value of type T in a `Getter<T>`
+ *
+ * Given the following type and values:
+ * ```ts
+ * type Test =
+ *   | number
+ *   | {
+ *       x: Array<number>;
+ *       a: {
+ *         b: number;
+ *       };
+ *   | {
+ *       a: {
+ *         b: string;
+ *       }
+ *     }
+ * };
+ *
+ * let t1: Test = 42;
+ * let t2: Test = { x: [1, 2, 3] };
+ * let t3: Test = { a: { b: 'Test' } };
+ * ```
+ *
+ * you could get the following results with toGetter:
+ * ```ts
+ * const b1 = toGetter(t1)('a')('b').get(); // => undefined (inferred as number | string | undefined)
+ * const b2 = toGetter(t2)('a')('b').get(); // => undefined (inferred as number | string | undefined)
+ * const b3 = toGetter(t3)('a')('b').get(); // => 'Test' (inferred as number | string | undefined)
+ * const x1 = toGetter(t1)('x')(1).get(); // => undefined (inferred as number | undefined)
+ * const x2 = toGetter(t2)('x')(1).get(); // => 2 (inferred as number | undefined)
+ * const x3 = toGetter(t3)('x')(1).get(); // => undefined (inferred as number | undefined)
+ * ```
+ */
 export const toGetter = <T>(value: T): Getter<T> => {
   const result = (<K extends ToKeys<T>>(key: K): Getter<PickReturn<T, K>> => {
     const picked = pick(value, key);

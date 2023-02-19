@@ -193,7 +193,10 @@ export type EntityEditFactory<
 
 /**
  * Generic function to create a specific {@link EntityEditFactory}.
- * CAVE: This factory is work in progress and unit tests are still missing!
+ * This is another example for factory composition, composing
+ * (a) EffectSignalsFactory for entity loading
+ * (b) ModelSignalsFactory for entity changing
+ * (c) ValidatedInputWithResultSignalsFactory for validation and persiting
  */
 export const getEntityEditSignalsFactory = <
   Entity,

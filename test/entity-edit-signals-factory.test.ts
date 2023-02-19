@@ -1,4 +1,4 @@
-import { Subject, of, startWith } from 'rxjs';
+import { Subject, distinctUntilChanged, filter, of, startWith } from 'rxjs';
 import { delay, map, switchMap } from 'rxjs/operators';
 import { Effect, Store } from '../src/store';
 import { NO_VALUE } from '../src/store-utils';
@@ -8,6 +8,7 @@ import {
   EntityEditInput,
   EntityEditOutput,
   getEntityEditSignalsFactory,
+  shallowEquals,
 } from './../src/entity-edit-signals-factory';
 import { ModelValidationResult, patchModelValidationResult, toGetter } from './../src/type-utils';
 
@@ -478,6 +479,242 @@ describe('EntityEditSignalsFactory', () => {
         ]);
         inputSubject.next(3);
         await sequence;
+      });
+
+      it('should give correct two-phase validation', async () => {
+        const sequence = expectSequence(
+          store.getBehavior(outputSignals.model).pipe(
+            map(m => m.edit),
+            distinctUntilChanged(shallowEquals),
+            filter(e => e.currentInput === e.validatedInput),
+          ),
+          [
+            {
+              currentInput: defaultEntity,
+              validationPending: true,
+              isValid: false,
+              validatedInput: defaultEntity,
+              validationResult: null,
+              resultPending: false,
+              resultInput: NO_VALUE,
+              result: NO_VALUE,
+            },
+            {
+              currentInput: defaultEntity,
+              validationPending: true,
+              isValid: false,
+              validatedInput: defaultEntity,
+              validationResult: { b: null },
+              resultPending: false,
+              resultInput: NO_VALUE,
+              result: NO_VALUE,
+            },
+            {
+              currentInput: defaultEntity,
+              validationPending: false,
+              isValid: true,
+              validatedInput: defaultEntity,
+              validationResult: { b: null },
+              resultPending: false,
+              resultInput: NO_VALUE,
+              result: NO_VALUE,
+            },
+            {
+              currentInput: { id: 3, b: 'loaded', d: [3] },
+              validationPending: true,
+              isValid: false,
+              validatedInput: { id: 3, b: 'loaded', d: [3] },
+              validationResult: null,
+              resultPending: false,
+              resultInput: NO_VALUE,
+              result: NO_VALUE,
+            },
+            {
+              currentInput: { id: 3, b: 'loaded', d: [3] },
+              validationPending: true,
+              isValid: false,
+              validatedInput: { id: 3, b: 'loaded', d: [3] },
+              validationResult: { b: null },
+              resultPending: false,
+              resultInput: NO_VALUE,
+              result: NO_VALUE,
+            },
+            {
+              currentInput: { id: 3, b: 'loaded', d: [3] },
+              validationPending: false,
+              isValid: true,
+              validatedInput: { id: 3, b: 'loaded', d: [3] },
+              validationResult: { b: null },
+              resultPending: false,
+              resultInput: NO_VALUE,
+              result: NO_VALUE,
+            },
+          ],
+        );
+        inputSubject.next(3);
+        await sequence;
+
+        const sequence2 = expectSequence(
+          store.getBehavior(outputSignals.model).pipe(
+            map(m => m.edit),
+            distinctUntilChanged(shallowEquals),
+            filter(e => e.currentInput === e.validatedInput),
+          ),
+          [
+            {
+              currentInput: { id: 3, b: 'loaded', d: [3] },
+              validationPending: false,
+              isValid: true,
+              validatedInput: { id: 3, b: 'loaded', d: [3] },
+              validationResult: { b: null },
+              resultPending: false,
+              resultInput: NO_VALUE,
+              result: NO_VALUE,
+            },
+            {
+              currentInput: { id: 3, b: 'exists', d: [3] },
+              validationPending: true,
+              isValid: false,
+              validatedInput: { id: 3, b: 'exists', d: [3] },
+              validationResult: null,
+              resultPending: false,
+              resultInput: NO_VALUE,
+              result: NO_VALUE,
+            },
+            {
+              currentInput: { id: 3, b: 'exists', d: [3] },
+              validationPending: true,
+              isValid: false,
+              validatedInput: { id: 3, b: 'exists', d: [3] },
+              validationResult: { b: 'exists' },
+              resultPending: false,
+              resultInput: NO_VALUE,
+              result: NO_VALUE,
+            },
+            {
+              currentInput: { id: 3, b: 'exists', d: [3] },
+              validationPending: false,
+              isValid: false,
+              validatedInput: { id: 3, b: 'exists', d: [3] },
+              validationResult: { b: 'exists' },
+              resultPending: false,
+              resultInput: NO_VALUE,
+              result: NO_VALUE,
+            },
+          ],
+        );
+        store.dispatch(inputSignals.update, { b: 'exists' });
+        await sequence2;
+      });
+
+      it('should give correct result', async () => {
+        const sequence = expectSequence(
+          store.getBehavior(outputSignals.model).pipe(filter(m => m.disabled === false)),
+          [
+            {
+              load: {
+                currentInput: 3,
+                resultPending: false,
+                resultInput: 3,
+                result: { id: 3, b: 'loaded', d: [3] },
+              },
+              edit: {
+                currentInput: defaultEntity,
+                validationPending: false,
+                isValid: true,
+                validatedInput: defaultEntity,
+                validationResult: { b: null },
+                resultPending: false,
+                resultInput: NO_VALUE,
+                result: NO_VALUE,
+              },
+              entity: defaultEntity,
+              validation: { b: null },
+              loading: false,
+              disabled: false,
+              changed: false,
+            },
+            {
+              load: {
+                currentInput: 3,
+                resultPending: false,
+                resultInput: 3,
+                result: { id: 3, b: 'loaded', d: [3] },
+              },
+              edit: {
+                currentInput: { id: 3, b: 'loaded', d: [3] },
+                validationPending: false,
+                isValid: true,
+                validatedInput: { id: 3, b: 'loaded', d: [3] },
+                validationResult: { b: null },
+                resultPending: false,
+                resultInput: NO_VALUE,
+                result: NO_VALUE,
+              },
+              entity: { id: 3, b: 'loaded', d: [3] },
+              validation: { b: null },
+              loading: false,
+              disabled: false,
+              changed: false,
+            },
+          ],
+        );
+        inputSubject.next(3);
+        await sequence;
+
+        const sequence2 = expectSequence(
+          store.getBehavior(outputSignals.model).pipe(filter(m => m.disabled === false)),
+          [
+            {
+              load: {
+                currentInput: 3,
+                resultPending: false,
+                resultInput: 3,
+                result: { id: 3, b: 'loaded', d: [3] },
+              },
+              edit: {
+                currentInput: { id: 3, b: 'loaded', d: [3] },
+                validationPending: false,
+                isValid: true,
+                validatedInput: { id: 3, b: 'loaded', d: [3] },
+                validationResult: { b: null },
+                resultPending: false,
+                resultInput: NO_VALUE,
+                result: NO_VALUE,
+              },
+              entity: { id: 3, b: 'loaded', d: [3] },
+              validation: { b: null },
+              loading: false,
+              disabled: false,
+              changed: false,
+            },
+            {
+              load: {
+                currentInput: 3,
+                resultPending: false,
+                resultInput: 3,
+                result: { id: 3, b: 'loaded', d: [3] },
+              },
+              edit: {
+                currentInput: { id: 3, b: 'loaded', d: [3] },
+                validationPending: false,
+                isValid: true,
+                validatedInput: { id: 3, b: 'loaded', d: [3] },
+                validationResult: { b: null },
+                resultPending: false,
+                resultInput: { id: 3, b: 'loaded', d: [3] },
+                result: 3,
+              },
+              entity: { id: 3, b: 'loaded', d: [3] },
+              validation: { b: null },
+              loading: false,
+              disabled: false,
+              changed: false,
+            },
+          ],
+        );
+        store.dispatch(inputSignals.save);
+        await sequence2;
       });
     });
   });

@@ -97,5 +97,67 @@ describe('type utiles', () => {
       expect(toGetter(t4)('b')('c')(2).get()).toBe(3);
       expect(toGetter(t4)('b')('c')(3).get()).toBe(undefined);
     });
+
+    describe('union of two different records', () => {
+      type Test2 =
+        | number
+        | {
+            a: {
+              b: number;
+            };
+          }
+        | {
+            a: {
+              b: boolean;
+            };
+            x: string;
+          };
+      let t21: Test2;
+      let t22: Test2;
+      let t23: Test2;
+
+      beforeEach(() => {
+        t21 = 42;
+        t22 = {
+          a: {
+            b: 7,
+          },
+        };
+        t23 = {
+          a: {
+            b: true,
+          },
+          x: 'Test23',
+        };
+      });
+
+      it('should get the base value', () => {
+        expect(toGetter(t21).get()).toBe(t21);
+        expect(toGetter(t22).get()).toBe(t22);
+        expect(toGetter(t23).get()).toBe(t23);
+      });
+
+      it('should get correct a', () => {
+        expect(toGetter(t21)('a').get()).toBe(undefined);
+        expect(toGetter(t22)('a').get()).toEqual({
+          b: 7,
+        });
+        expect(toGetter(t23)('a').get()).toEqual({
+          b: true,
+        });
+      });
+
+      it('should get correct a.b', () => {
+        expect(toGetter(t21)('a')('b').get()).toBe(undefined);
+        expect(toGetter(t22)('a')('b').get()).toBe(7);
+        expect(toGetter(t23)('a')('b').get()).toBe(true);
+      });
+
+      it('should get correct x', () => {
+        expect(toGetter(t21)('x').get()).toBe(undefined);
+        expect(toGetter(t22)('x').get()).toBe(undefined);
+        expect(toGetter(t23)('x').get()).toBe('Test23');
+      });
+    });
   });
 });
