@@ -198,9 +198,9 @@ export type Configuration = Record<string, any>;
 export type _NM<T1 extends Configuration, T2 extends Configuration> = T1 & T2;
 
 /**
- * This type represents the result of a merge of two Configuration types T1 and T2, using the following rules:
- *  a) If either T1 or T2 is an empty object, then `MergedConfiguration<T1, T2>` equals `T1 & T2`
- *  b) If both, T1 and T2, are non-empty then `MergedConfiguration<T1, T2>` equals `{ c1: T1; c2: T2 }`
+ * This type represents the result of a merge of two `Configuration` types `T1` and `T2`, using the following rules:
+ *  a) If either `T1` or `T2` is an empty object, then `MergedConfiguration<T1, T2>` equals `T1 & T2`
+ *  b) If both, `T1` and `T2`, are non-empty then `MergedConfiguration<T1, T2>` equals `{ c1: T1; c2: T2 }`
  */
 export type MergedConfiguration<
   T1 extends Configuration,
@@ -215,14 +215,14 @@ export type MergedConfiguration<
     };
 
 /**
- * This type gives all keys of a Record T that map on a type VT.
+ * This type gives all keys of a Record T that map on a type `VT`.
  */
 export type KeysOfValueType<T extends Record<string, any>, VT> = {
   [K in keyof T]: T[K] extends VT ? K : never;
 }[keyof T];
 
 /**
- * This type represents a subset of Record T that contains only entries with a value that extends VT.
+ * This type represents a subset of Record T that contains only entries with a value that extends `VT`.
  */
 export type WithValueType<T extends Record<string, any>, VT> = {
   [K in KeysOfValueType<T, VT>]: T[K];
@@ -244,7 +244,7 @@ export type ResultWithInput<Input, Result> = {
 };
 
 /**
- * Type corresponding to ResultWithInput, but with potential NO_VALUE for result and/or resultInput
+ * Type corresponding to `ResultWithInput`, but with potential `NO_VALUE` for result and/or resultInput
  */
 export type MaybeResultWithInput<Input, Result> = {
   /** the received result */
@@ -255,7 +255,7 @@ export type MaybeResultWithInput<Input, Result> = {
 };
 
 /**
- * Typeguard to check if a MaybeResultWithInput is ResultWithInput
+ * Typeguard to check if a `MaybeResultWithInput` is `ResultWithInput`
  */
 export const isResultWithInput = <Input, Result>(
   mrwi: MaybeResultWithInput<Input, Result>,
@@ -272,9 +272,9 @@ export type DeepPartial<T> = [T] extends [Record<string, any>]
   : T;
 
 /**
- * Constructs a validation type for the model type T, where the validation
+ * Constructs a validation type for the model type `T`, where the validation
  * type is a deep-partial model type where each key maps to null/undefined (representing valid state)
- * or V (representing an error).
+ * or `V` (representing an error).
  */
 export type ModelValidationResult<T, V = string> = [T] extends [Record<string, any>]
   ?
@@ -290,7 +290,7 @@ const isRecord = (value: any): value is Record<string, any> =>
   value && typeof value === 'object' && !Array.isArray(value);
 
 /**
- * A helper function to patch an existing ModelValidationResult.
+ * A helper function to patch an existing `ModelValidationResult`.
  */
 export const patchModelValidationResult = <T, V>(
   model: null | ModelValidationResult<T, V>,
@@ -307,7 +307,7 @@ export const patchModelValidationResult = <T, V>(
     : patch;
 
 /**
- * A helper function to check if a ModelValidationResult represents a valid state.
+ * A helper function to check if a `ModelValidationResult` represents a valid state.
  */
 export const isValidModelValidationResult = <T>(
   modelValidationResult: ModelValidationResult<T, any>,
@@ -324,8 +324,8 @@ export const isValidModelValidationResult = <T>(
 };
 
 /**
- * Returns number in case T is an Array,
- * else if T extends Record, it returns the keys of it,
+ * Returns number in case `T` is an `Array`,
+ * else if `T extends Record<any, any>`, it returns the keys of it,
  * else it returns never.
  */
 export type ToKeys<T> = T extends Array<any>
@@ -341,16 +341,16 @@ export type ToKeys<T> = T extends Array<any>
  */
 export type PickReturn<T, K extends ToKeys<T>> = T extends Array<infer A>
   ? A | undefined
-  : T extends Record<infer RK, any>
-  ? K extends RK
-    ? T[RK] | undefined
+  : T extends Record<any, any>
+  ? K extends keyof T
+    ? T[K] | undefined
     : never
   : undefined;
 
 /**
- * Takes a value T and a key K.
- * If value is an `Array<A>` (K is enforced as number in this case), it returns `value[key]` as `A | undefined`.
- * If value is a `Record<RK, any>` (K is enforced as RK in this case), it returns `value[key]` as `T[RK] | undefined`.
+ * Takes a value `T` and a key `K`.
+ * If value is an `Array<A>` (`K` is enforced as number in this case), it returns `value[key]` as `A | undefined`.
+ * If value is a `Record<any, any>` (`K` is enforced as `keyof T` in this case), it returns `value[key]` as `T[K] | undefined`.
  * Else it returns undefined.
  */
 export const pick = <T, K extends ToKeys<T>>(value: T, key: K): PickReturn<T, K> => {
@@ -364,13 +364,37 @@ export const pick = <T, K extends ToKeys<T>>(value: T, key: K): PickReturn<T, K>
 };
 
 /**
+ * The kind value used for `Getter<T>`
+ */
+export const getterKind = '__rxs__Getter<T>';
+
+/**
  * Return type of the toGetter function.
  * A `Getter<T>` can be used for optional chaining on arbitrary union types
  * (see toGetter() for detailed information).
  */
 export type Getter<T> = {
   get: () => T;
+  kind: typeof getterKind;
 } & (<K extends ToKeys<T>>(key: K) => Getter<PickReturn<T, K>>);
+
+/**
+ * Helper type to infer the concrete value type `T` wrapped by a `Getter<T>`
+ */
+export type ToGetterValue<T> = T extends Getter<infer V> ? V : never;
+
+/**
+ * Typeguard to check, if a value is a `Getter<any>`
+ */
+export const isGetter = (value: any): value is Getter<any> => value && value.kind === getterKind;
+
+const _toGetter = <T>(g: () => T): Getter<T> => {
+  const result = (<K extends ToKeys<T>>(key: K): Getter<PickReturn<T, K>> =>
+    _toGetter(() => pick(g(), key))) as Getter<T>;
+  result.get = () => g();
+  result.kind = getterKind;
+  return result;
+};
 
 /**
  * Wraps the given value of type T in a `Getter<T>`
@@ -406,11 +430,13 @@ export type Getter<T> = {
  * const x3 = toGetter(t3)('x')(1).get(); // => undefined (inferred as number | undefined)
  * ```
  */
-export const toGetter = <T>(value: T): Getter<T> => {
-  const result = (<K extends ToKeys<T>>(key: K): Getter<PickReturn<T, K>> => {
-    const picked = pick(value, key);
-    return toGetter(picked);
-  }) as Getter<T>;
-  result.get = () => value;
-  return result;
-};
+export const toGetter = <T>(value: T): Getter<T> => _toGetter<T>(() => value);
+// export const toGetter = <T>(value: T): Getter<T> => {
+//   const result = (<K extends ToKeys<T>>(key: K): Getter<PickReturn<T, K>> => {
+//     const picked = pick(value, key);
+//     return toGetter(picked);
+//   }) as Getter<T>;
+//   result.get = () => value;
+//   result.kind = getterKind;
+//   return result;
+// };
