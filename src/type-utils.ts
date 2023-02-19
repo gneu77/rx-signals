@@ -48,9 +48,9 @@ export type _MergeResult<
       };
 
 /**
- * This type represents the result of a merge of two Record\<string, any\> types T1 and T2, using the following rules:
- *  a) If there are no conflicts between T1 and T2, then Merged\<T1, T2\> equals T1 & T2
- *  b) If there's a conflict between T1 and T2, then Merged\<T1, T2\> equals \{ conflicts1: ConflictsFromT1; conflicts2: ConflictsFromT2 \} & NoConflicts\<T1, T2\>
+ * This type represents the result of a merge of two `Record<string, any>` types T1 and T2, using the following rules:
+ *  a) If there are no conflicts between T1 and T2, then `Merged<T1, T2>` equals `T1 & T2`
+ *  b) If there's a conflict between T1 and T2, then `Merged<T1, T2>` equals `{ conflicts1: ConflictsFromT1; conflicts2: ConflictsFromT2 } & NoConflicts<T1, T2>`
  *
  * Here are some examples:
  * ```ts
@@ -116,12 +116,12 @@ export type Merged<T1 extends Record<string, any>, T2 extends Record<string, any
 >;
 
 /**
- * This function merges two Record\<string, any\> T1 and T2, resulting in Merged\<T1, T2\>
+ * This function merges two `Record<string, any>` T1 and T2, resulting in `Merged<T1, T2>`
  *
  * @template T1 - type for the first argument
  * @template T2 - type for the second argument
- * @param {T1} t1 - first argument (extending Record\<string, any\>).
- * @param {T2} t2 - second argument (extending Record\<string, any\>).
+ * @param {T1} t1 - first argument (extending `Record<string, any>`).
+ * @param {T2} t2 - second argument (extending `Record<string, any>`).
  * @returns {Merged}
  */
 export const merge = <T1 extends Record<string, any>, T2 extends Record<string, any>>(
@@ -188,7 +188,7 @@ export const merge = <T1 extends Record<string, any>, T2 extends Record<string, 
 };
 
 /**
- * Just a type alias for Record\<string, any\>
+ * Just a type alias for `Record<string, any>`
  */
 export type Configuration = Record<string, any>;
 
@@ -199,8 +199,8 @@ export type _NM<T1 extends Configuration, T2 extends Configuration> = T1 & T2;
 
 /**
  * This type represents the result of a merge of two Configuration types T1 and T2, using the following rules:
- *  a) If either T1 or T2 is an empty object, then MergedConfiguration\<T1, T2\> equals T1 & T2
- *  b) If both, T1 and T2, are non-empty then MergedConfiguration\<T1, T2\> equals \{ c1: T1; c2: T2 \}
+ *  a) If either T1 or T2 is an empty object, then `MergedConfiguration<T1, T2>` equals `T1 & T2`
+ *  b) If both, T1 and T2, are non-empty then `MergedConfiguration<T1, T2>` equals `{ c1: T1; c2: T2 }`
  */
 export type MergedConfiguration<
   T1 extends Configuration,
@@ -263,7 +263,7 @@ export const isResultWithInput = <Input, Result>(
   mrwi.result !== NO_VALUE && mrwi.resultInput !== NO_VALUE;
 
 /**
- * A recursive Partial\<Record\<string, any\>\> type
+ * A recursive `Partial<Record<string, any>>` type
  */
 export type DeepPartial<T> = [T] extends [Record<string, any>]
   ? {

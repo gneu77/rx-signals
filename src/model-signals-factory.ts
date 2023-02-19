@@ -33,13 +33,12 @@ export type ModelWithDefault<T> = {
   /** the current model */
   model: T;
 
-  /** the default model (hence, either the initial default, or the last model given by the setAsDefault event) */
+  /** the default model (hence, either the initial default, or the last model given by the `setAsDefault` event) */
   default: T;
 };
 
 /**
- * Type specifying the input signal ids produced by a {@link ModelSignalsFactory} (the corresponding signal-sources
- * are NOT added to the store by the signals-setup, but by whoever uses the signals, e.g. by extendSetup or fmap or just using dispatch).
+ * Type specifying the input signal ids produced by a {@link ModelSignalsFactory}.
  *
  * @template T - the type of the model to be handled
  */
@@ -50,16 +49,16 @@ export type ModelInputSignals<T> = {
   /** like set, but also setting the new model as new default */
   setAsDefault: EventId<T>;
 
-  /** in case the model is a Record\<string, any\>, identifier for the event to update the model by a given shallow-partial model, else equals the set event  */
+  /** in case the model is a `Record<string, any>`, identifier for the event to update the model by a given shallow-partial model, else equals the set event  */
   update: EventId<ModelUpdateEventType<T>>;
 
-  /** in case the model is a Record\<string, any\>, identifier for the event to update the model by a given deep-partial model, else equals the set event */
+  /** in case the model is a `Record<string, any>`, identifier for the event to update the model by a given deep-partial model, else equals the set event */
   updateDeep: EventId<ModelUpdateDeepEventType<T>>;
 
   /** identifier for the event to update the model by a given update function */
   updateBy: EventId<ModelUpdateFunction<T>>;
 
-  /** identifier for the event to reset the model to the default state (configured or set by setAsDefault) */
+  /** identifier for the event to reset the model to the default state (configured or set by `setAsDefault`) */
   reset: EventId<undefined>;
 };
 
@@ -72,7 +71,7 @@ export type ModelOutputSignals<T> = {
   /** identifier for the current model behavior */
   model: BehaviorId<T>;
 
-  /** identifier for the behavior combining current model and default model (either the initial default, or the last model given by the setAsDefault event) */
+  /** identifier for the behavior combining current model and default model (either the initial default, or the last model given by the `setAsDefault` event) */
   modelWithDefault: BehaviorId<ModelWithDefault<T>>;
 };
 
@@ -85,7 +84,7 @@ export type ModelConfig<T> = {
   /** the default model */
   defaultModel: T;
 
-  /** optional string to be used as argument to calls of getBehaviorId and getEventId */
+  /** optional string to be used as argument to calls of `getBehaviorId` and `getEventId` */
   nameExtension?: string;
 };
 

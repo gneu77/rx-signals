@@ -16,21 +16,21 @@
 <li><a href="ToSignalId.html">ToSignalId</a></li></ul>
 <h1>Type alias ToSignalId&lt;S&gt;</h1></div>
 <div class="tsd-signature">To<wbr/>Signal<wbr/>Id<span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">S</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type" data-tsd-kind="Type parameter">S</span><span class="tsd-signature-symbol"> extends </span><a href="SignalId.html" class="tsd-signature-type" data-tsd-kind="Type alias">SignalId</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">infer </span> T<span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> ? </span><a href="SignalId.html" class="tsd-signature-type" data-tsd-kind="Type alias">SignalId</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> : </span><span class="tsd-signature-type">never</span></div>
-<div class="tsd-comment tsd-typography"><p>ToSignalId&lt;S&gt; is a utility type that equals Signal&lt;T&gt;, if S extends SignalId&lt;T&gt;, else never.</p>
+<div class="tsd-comment tsd-typography"><p><code>ToSignalId&lt;S&gt;</code> is a utility type that equals <code>Signal&lt;T&gt;</code>, if <code>S extends SignalId&lt;T&gt;</code>, else <code>never</code>.</p>
 <pre><code class="language-ts"><span class="hl-1">   </span><span class="hl-0">ToSignalId</span><span class="hl-1">&lt;</span><span class="hl-0">BehaviorId</span><span class="hl-1">&lt;</span><span class="hl-0">number</span><span class="hl-1">&gt;&gt; = </span><span class="hl-0">SignalId</span><span class="hl-1">&lt;</span><span class="hl-0">number</span><span class="hl-1">&gt;</span><br/><span class="hl-1">   </span><span class="hl-0">ToSignalId</span><span class="hl-1">&lt;</span><span class="hl-0">EventId</span><span class="hl-1">&lt;</span><span class="hl-0">string</span><span class="hl-1">&gt;&gt; = </span><span class="hl-0">SignalId</span><span class="hl-1">&lt;</span><span class="hl-0">string</span><span class="hl-1">&gt;</span><br/><span class="hl-1">   </span><span class="hl-0">ToSignalId</span><span class="hl-1">&lt;</span><span class="hl-0">number</span><span class="hl-1">&gt; = </span><span class="hl-0">never</span>
 </code></pre>
 
-<h3>Template</h3><p>the inferred generic parameter of S, if S extends SignalId&lt;T&gt;</p>
+<h3>Template</h3><p>the inferred generic parameter of <code>S</code>, if <code>S extends SignalId&lt;T&gt;</code></p>
 </div>
 <section class="tsd-panel tsd-type-parameters">
 <h4>Type Parameters</h4>
 <ul class="tsd-type-parameters">
 <li>
 <h4>S</h4>
-<div class="tsd-comment tsd-typography"><p>the generic argument to ToSignalId</p>
+<div class="tsd-comment tsd-typography"><p>the generic argument to <code>ToSignalId</code></p>
 </div></li></ul></section><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/ee21063/src/store-utils.ts#L68">store-utils.ts:68</a></li></ul></aside></div>
+<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/92b7b1e/src/store-utils.ts#L68">store-utils.ts:68</a></li></ul></aside></div>
 <div class="col-4 col-menu menu-sticky-wrap menu-highlight">
 <div class="tsd-navigation settings">
 <details class="tsd-index-accordion"><summary class="tsd-accordion-summary">
@@ -91,6 +91,7 @@
 <li class="tsd-kind-type-alias"><a href="EntityEditOutput.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Entity<wbr/>Edit<wbr/>Output</a></li>
 <li class="tsd-kind-type-alias"><a href="EventId.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Event<wbr/>Id</a></li>
 <li class="tsd-kind-type-alias"><a href="ExtendSetup.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Extend<wbr/>Setup</a></li>
+<li class="tsd-kind-type-alias"><a href="Getter.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Getter</a></li>
 <li class="tsd-kind-type-alias"><a href="KeysOfValueType.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Keys<wbr/>Of<wbr/>Value<wbr/>Type</a></li>
 <li class="tsd-kind-type-alias"><a href="LifecycleHandle.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Lifecycle<wbr/>Handle</a></li>
 <li class="tsd-kind-type-alias"><a href="MapConfig.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Map<wbr/>Config</a></li>
@@ -111,6 +112,7 @@
 <li class="tsd-kind-type-alias"><a href="NameToEffectId.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Name<wbr/>To<wbr/>Effect<wbr/>Id</a></li>
 <li class="tsd-kind-type-alias"><a href="NameToSignalId.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Name<wbr/>To<wbr/>Signal<wbr/>Id</a></li>
 <li class="tsd-kind-type-alias"><a href="NoValueType.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>No<wbr/>Value<wbr/>Type</a></li>
+<li class="tsd-kind-type-alias"><a href="PickReturn.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Pick<wbr/>Return</a></li>
 <li class="tsd-kind-type-alias"><a href="RenameEffectId.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Rename<wbr/>Effect<wbr/>Id</a></li>
 <li class="tsd-kind-type-alias"><a href="RenameId.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Rename<wbr/>Id</a></li>
 <li class="tsd-kind-type-alias"><a href="ResultWithInput.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Result<wbr/>With<wbr/>Input</a></li>
@@ -124,6 +126,7 @@
 <li class="tsd-kind-type-alias"><a href="ToBehaviorIdValueType.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>To<wbr/>Behavior<wbr/>Id<wbr/>Value<wbr/>Type</a></li>
 <li class="tsd-kind-type-alias"><a href="ToEffectType.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>To<wbr/>Effect<wbr/>Type</a></li>
 <li class="tsd-kind-type-alias"><a href="ToEventIdValueType.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>To<wbr/>Event<wbr/>Id<wbr/>Value<wbr/>Type</a></li>
+<li class="tsd-kind-type-alias"><a href="ToKeys.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>To<wbr/>Keys</a></li>
 <li class="tsd-kind-type-alias"><a href="ToObservableValueType.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>To<wbr/>Observable<wbr/>Value<wbr/>Type</a></li>
 <li class="current tsd-kind-type-alias"><a href="ToSignalId.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>To<wbr/>Signal<wbr/>Id</a></li>
 <li class="tsd-kind-type-alias"><a href="ToSignalIdValueType.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>To<wbr/>Signal<wbr/>Id<wbr/>Value<wbr/>Type</a></li>
@@ -164,7 +167,9 @@
 <li class="tsd-kind-function"><a href="../functions/isValidModelValidationResult.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg>is<wbr/>Valid<wbr/>Model<wbr/>Validation<wbr/>Result</a></li>
 <li class="tsd-kind-function"><a href="../functions/merge.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg>merge</a></li>
 <li class="tsd-kind-function"><a href="../functions/patchModelValidationResult.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg>patch<wbr/>Model<wbr/>Validation<wbr/>Result</a></li>
-<li class="tsd-kind-function"><a href="../functions/shallowEquals.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg>shallow<wbr/>Equals</a></li></ul></nav></div></div>
+<li class="tsd-kind-function"><a href="../functions/pick.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg>pick</a></li>
+<li class="tsd-kind-function"><a href="../functions/shallowEquals.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg>shallow<wbr/>Equals</a></li>
+<li class="tsd-kind-function"><a href="../functions/toGetter.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg>to<wbr/>Getter</a></li></ul></nav></div></div>
 <div class="container tsd-generator">
 <p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></div>
 <div class="overlay"></div><script src="../assets/main.js"></script></body></html>

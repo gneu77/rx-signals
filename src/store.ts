@@ -36,9 +36,9 @@ import {
 } from './store-utils';
 
 /**
- * The {@link Store} uses the TypedEvent\<T\> to bundle certain events and their
- * corresponding EventId\<T\>. This is used for EventSources that can dispatch events
- * of different types (see addXTypedEventSource methods) or for cases where you want to
+ * The {@link Store} uses the `TypedEvent<T>` to bundle certain events and their
+ * corresponding `EventId<T>`. This is used for EventSources that can dispatch events
+ * of different types (see `addXTypedEventSource` methods) or for cases where you want to
  * subscribe multiple events and need to differentiate between them at runtime.
  *
  * @template T - specifies the type for the corresponding event-values
@@ -59,7 +59,7 @@ export type StateReducer<T, E> = (state: T, event: E) => T;
 
 /**
  * A LifecycleHandle can be used to control signals and signal-sources that
- * are added to the {@link Store} by store.getLifecycleHandle
+ * are added to the {@link Store} by `store.getLifecycleHandle`
  */
 export type LifecycleHandle = {
   /** reset all behaviors corresponding to this lifecycle */
@@ -70,13 +70,13 @@ export type LifecycleHandle = {
 };
 
 /**
- * The Effect type specifies a potentially impure function that takes an input and a {@link Store} as arguments
- * and returns an effectful result as Observable.
+ * The `Effect<Input>` type specifies a potentially impure function that takes an input and a {@link Store} as arguments
+ * and returns an effectful result as `Observable<Result>`.
  * It is the low-level abstraction used by rx-signals for side-effect isolation.
- * The high-level abstraction {@link EffectSignalsFactory} takes an EffectId as configuration to access
- * the corresponding Effect.
- * The store argument can be used to access additional input from the store (thus, the Effect itself could also
- * be pure and just use something impure that was put into the store, e.g. another Effect).
+ * The high-level abstraction {@link EffectSignalsFactory} takes an `EffectId` as configuration to access
+ * the corresponding `Effect`.
+ * The store argument can be used to access additional input from the store (thus, the `Effect` itself could also
+ * be pure and just use something impure that was put into the store, e.g. another `Effect`).
  * The previousInput argument can be used e.g. to decide whether the effect must perform
  * a computation/query/etc., or if maybe the previousResult can be returned directly.
  *
@@ -158,12 +158,12 @@ export class Store {
 
   /**
    * Create and return a child store of this store. Event-subscribers of the child store will receive
-   * events from the parent (and its parents) and their own events (see getEventStream). However,
+   * events from the parent (and its parents) and their own events (see `getEventStream`). However,
    * events dispatched on the child will not propagate to the parent. The child will use the same event
    * queue as the parent to ensure correct event order even between parent-child boundaries.
    * Behavior-subscribers of the child will receive the observable from the parent, as long as no
    * corresponding behavior source is added to the child. It will switch to the child, once a source is
-   * added there (see getBehavior).
+   * added there (see `getBehavior`).
    *
    * @returns {Store}
    */
@@ -176,7 +176,7 @@ export class Store {
 
   // This method was public in pre-3.0.0-rc22 versions, however, distinction between
   // lazy and eager subscriptions becomes much clearer and less error-prone, when
-  // differentiating between StateId and DerivedId, which I introduced with 3.0.0-rc22.
+  // differentiating between `StateId` and `DerivedId`, which I introduced with 3.0.0-rc22.
   // Thus, to protect users from misusage, I made this low-level method private.
   private addBehavior<ID extends BehaviorId<any>>(
     identifier: ID,
@@ -216,8 +216,8 @@ export class Store {
    *
    * @param {DerivedId<T>} identifier - the unique identifier for the derived-state behavior
    * @param {Observable<T>} observable - the source for the behavior
-   * @param {T | (() => T) | symbol} initialValueOrValueGetter - the initial value or value getter (for lazy initialization) or symbol NO_VALUE, if there is no initial value (default)
-   * @throws if a state for the given identifier has already been added to this Store
+   * @param {T | (() => T) | symbol} initialValueOrValueGetter - the initial value or value getter (for lazy initialization) or symbol `NO_VALUE`, if there is no initial value (default)
+   * @throws if a state for the given identifier has already been added to this `Store`
    * @returns {void}
    */
   addDerivedState<ID extends DerivedId<any>>(
@@ -238,12 +238,12 @@ export class Store {
    * Use this for root-state only, hence state that only depends on events, but not on any other behavior.
    * The store will eagerly subscribe all reducers being added for the state.
    * If one of those reducers depends on an event-source that should be lazy, this situation
-   * can be solved using one of the addXTypedEventSource methods (see corresponding documentation) for the
+   * can be solved using one of the `addXTypedEventSource` methods (see corresponding documentation) for the
    * corresponding event-source.
    *
    * @param {StateId<T>} identifier - the unique identifier for the root-state behavior
    * @param {T | (() => T)} initialValueOrValueGetter - the initial value or value getter
-   * @throws if a state for the given identifier has already been added to this Store
+   * @throws if a state for the given identifier has already been added to this `Store`
    * @returns {void}
    */
   addState<ID extends StateId<any>>(
@@ -265,10 +265,10 @@ export class Store {
   }
 
   /**
-   * This adds a reducer to a behavior. This is meant to be used together with the addState method.
+   * This adds a reducer to a behavior. This is meant to be used together with the `addState` method.
    * The corresponding event will be subscribed eagerly by the store.
    * If the event comes from an event-source that should be lazy, this situation
-   * can be solved using one of the addXTypedEventSource methods (see corresponding documentation) for this
+   * can be solved using one of the `addXTypedEventSource` methods (see corresponding documentation) for this
    * event-source (another solution would be to switchMap the event-source depending on whatever condition).
    *
    * @param {StateId<T>} stateIdentifier - the unique identifier for the root-state behavior
@@ -308,16 +308,15 @@ export class Store {
    *
    * @param {SignalId<S extends T>} sourceId - the unique identifier for the source event or behavior
    * @param {SignalId<T>} targetId - the unique identifier for the target event or behavior
-   * @throws if targetId is a BehaviorId and already exists in this Store
-   * @returns {void | symbol} - symbol of the added event source in case the targetId is an EventId, else void
+   * @throws if targetId is a `BehaviorId` and already exists in this `Store`
+   * @returns {void | symbol} - symbol of the added event source in case the targetId is an `EventId`, else void
    */
   connect<TID extends SignalId<any>, S extends ToSignalIdValueType<TID>>(
     sourceId: SignalId<S>,
     targetId: TID,
   ): TID extends BehaviorId<ToSignalIdValueType<TID>> ? void : symbol {
     // We must use <TID extends SignalId, S extends ToSignalIdValueType<TID>>,
-    // because for some reason, TS does not enforce S extends T, if we
-    // use <T, S extends T, TID extends SignalId> (which it should in my opinion)
+    // because TS does not enforce S extends T, if we use <T, S extends T, TID extends SignalId>
     const source = isBehaviorId(sourceId)
       ? this.getBehavior(sourceId as BehaviorId<S>)
       : this.getEventStream(sourceId as EventId<S>);
@@ -326,15 +325,15 @@ export class Store {
 
   /**
    * This connects the source observable with the target event or behavior.
-   * If the targetId is a BehaviorId, a corresponding behavior source will be added
+   * If the targetId is a `BehaviorId`, a corresponding behavior source will be added
    * to the store.
-   * If the targetId is an EventId, a corresponding EventSource will be added to the store.
-   * Hence, if targetId is a BehaviorId, it must not yet exist in the store, else this method will throw a corresponding error!
+   * If the targetId is an `EventId`, a corresponding event-source will be added to the store.
+   * Hence, if targetId is a `BehaviorId`, it must not yet exist in the store, else this method will throw a corresponding error!
    *
    * @param {Observable<S extends T>} source - the source observable
    * @param {SignalId<T>} targetId - the unique identifier for the target event or behavior
-   * @throws if targetId is a BehaviorId and already exists in this Store
-   * @returns {void | symbol} - symbol of the added event source in case the targetId is an EventId, else void
+   * @throws if targetId is a `BehaviorId` and already exists in this Store
+   * @returns {void | symbol} - symbol of the added event source in case the targetId is an `EventId`, else void
    */
   connectObservable<TID extends SignalId<any>, S extends ToSignalIdValueType<TID>>(
     source: Observable<S>,
@@ -417,12 +416,12 @@ export class Store {
   }
 
   /**
-   * This method takes a callback that performs Store operations.
+   * This method takes a callback that performs `Store` operations.
    * It returns a {@link LifecycleHandle} that can be used to reset or end the lifecycle of signals
    * and signal-sources that are added to the store during the callback execution.
    *
    * @param {function} lifecycleRegistrationCallback - behaviors and event-sources added within this callback will be part of the lifecycle
-   * @throws if this method is called while already inside another lifecycleRegistrationCallback for this Store
+   * @throws if this method is called while already inside another `lifecycleRegistrationCallback` for this `Store`
    * @returns {LifecycleHandle}
    */
   getLifecycleHandle(lifecycleRegistrationCallback: (store: Store) => void): LifecycleHandle {
@@ -575,18 +574,18 @@ export class Store {
   }
 
   /**
-   * In contrast to addEventSource, this method adds an event source to the Store
-   * that can dispatch two different event types A and B.
-   * If you set the optional parameter subscribeObservableOnlyIfEventIsSubscribed, the whole
+   * In contrast to `addEventSource`, this method adds an event source to the `Store`
+   * that can dispatch two different event types `A` and `B`.
+   * If you set the optional parameter `subscribeObservableOnlyIfEventIsSubscribed`, the whole
    * source will only be subscribed, if the event corresponding to this parameter is subscribed.
-   * A common use-case for this would be an effect that dispatches A as result and B as generic
-   * error event. If you have a central error handler listening to B, this would normally always
+   * A common use-case for this would be an effect that dispatches `A` as result and `B` as generic
+   * error event. If you have a central error handler listening to `B`, this would normally always
    * subscribe the whole effect (you will listen for errors over the whole lifetime of your app),
-   * hence it would make lazy subscription of A impossible. But if you set subscribeObservableOnlyIfEventIsSubscribed
-   * to eventIdentifierA, then the whole source will only be subscribed as long as A is subscribed.
+   * hence it would make lazy subscription of `A` impossible. But if you set `subscribeObservableOnlyIfEventIsSubscribed`
+   * to `eventIdentifierA`, then the whole source will ONLY be subscribed as long as `A` is subscribed.
    *
-   * @param {EventId<A>} eventIdentifierA - the unique identifier for event type A
-   * @param {EventId<B>} eventIdentifierB - the unique identifier for event type B
+   * @param {EventId<A>} eventIdentifierA - the unique identifier for event type `A`
+   * @param {EventId<B>} eventIdentifierB - the unique identifier for event type `B`
    * @param {Observable<TypedEvent<A> | TypedEvent<B>>} observable - the event source
    * @param {EventId<any> | null} subscribeObservableOnlyIfEventIsSubscribed - defaults to null
    * @returns {smybol} - a symbol that can be used to remove the event-source from the store
@@ -906,7 +905,7 @@ export class Store {
   }
 
   /**
-   * Like getEventStream, but receiving TypedEvent<T> instead of T.
+   * Like `getEventStream`, but receiving `TypedEvent<T>` instead of `T`.
    *
    * @param {EventId<T>} identifier - the unique identifier for the event
    * @returns {Observable<TypedEvent<T>>} - the observable for the typed events
@@ -926,10 +925,10 @@ export class Store {
   }
 
   /**
-   * This method adds an Effect to the store.
+   * This method adds an `Effect` to the `Store`.
    *
    * @param {ID} id - the unique identifier for the effect
-   * @param {ToEffectType<ID>} effect - the Effect function
+   * @param {ToEffectType<ID>} effect - the `Effect` function
    * @returns {void}
    */
   addEffect<ID extends EffectId<any, any>>(id: ID, effect: ToEffectType<ID>): void {
@@ -937,7 +936,7 @@ export class Store {
   }
 
   /**
-   * This method returns an Observable for the effect specified by identifier.
+   * This method returns an `Observable` for the effect specified by identifier.
    * It does not matter, if the effect has already been added or not.
    * If it has already been added, a subscriber will get it immediately. Else, a subscriber will
    * get the effect as soon as it is added to the store.
@@ -957,7 +956,7 @@ export class Store {
   }
 
   /**
-   * The isSubscribed method is a convenience method for testing and debugging and should
+   * The `isSubscribed` method is a convenience method for testing and debugging and should
    * not serve any purpose in real program logic.
    *
    * @param {SignalId<T>} identifier - the unique identifier for the behavior or event
@@ -971,7 +970,7 @@ export class Store {
   }
 
   /**
-   * The getIsSubscribedObservable method is the reactive counterpart for the isSubscribed method,
+   * The `getIsSubscribedObservable` method is the reactive counterpart for the `isSubscribed` method,
    * also serving mainly for testing and debugging purposes (though in contrast to the non-reactive
    * counterpart, you could actually use this in some scenarios, but there are likely more idiomatic
    * ways).
@@ -995,7 +994,7 @@ export class Store {
   }
 
   /**
-   * The getNumberOfBehaviorSources method returns the number of sources for the specified behavior.
+   * The `getNumberOfBehaviorSources` method returns the number of sources for the specified behavior.
    * Again, this is mostly for testing and debugging.
    *
    * @param {BehaviorId<T>} identifier - the unique identifier for the behavior
@@ -1006,7 +1005,7 @@ export class Store {
   }
 
   /**
-   * The getNumberOfEventSources method returns the number of sources for the specified event.
+   * The `getNumberOfEventSources` method returns the number of sources for the specified event.
    * Again, this is mostly for testing and debugging.
    *
    * @param {EventId<T>} identifier - the unique identifier for the event
@@ -1017,7 +1016,7 @@ export class Store {
   }
 
   /**
-   * This method can be used to link a SignalId with a name.
+   * This method can be used to link a `SignalId` with a name.
    * The corresponding name will then be used in future debug methods to represent
    * tracked signals.
    *
@@ -1030,8 +1029,8 @@ export class Store {
   }
 
   /**
-   * Get the name linked to the given SignalId.
-   * If no specific name was linked (via setIdName), the default toString()
+   * Get the name linked to the given `SignalId`.
+   * If no specific name was linked (via `setIdName`), the default toString()
    * representation will be returned.
    *
    * @param {SignalId<T>} id - the id you are interested in

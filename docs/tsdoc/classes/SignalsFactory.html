@@ -16,14 +16,14 @@
 <li><a href="SignalsFactory.html">SignalsFactory</a></li></ul>
 <h1>Class SignalsFactory&lt;IN, OUT, CONFIG, EFF&gt;</h1></div>
 <section class="tsd-panel tsd-comment">
-<div class="tsd-comment tsd-typography"><p>A SignalsFactory wraps a <a href="../types/SignalsBuild.html">SignalsBuild</a> function, allowing for simple <a href="../types/Signals.html">Signals</a> composition
+<div class="tsd-comment tsd-typography"><p>A <code>SignalsFactory</code> wraps a <a href="../types/SignalsBuild.html">SignalsBuild</a> function, allowing for simple <a href="../types/Signals.html">Signals</a> composition
 and manipulation.
-Via the compose method, two SignalsFactories can be easily composed to a new one.
-Several convenience methods simplify re-mapping of IN, OUT, CONFIG and EFF.
-Monadic bind and fmap methods can be used for more complex cases (though 90% of use-cases should be covered by
-compose, extendSetup, mapInput, mapOutput and mapConfig).
-SignalsFactory instances are immutable (persistent data structures), hence all methods return a new SignalsFactory instance.
-(The whole purpose of this class is to provide immutable SignalsBuild composition)</p>
+Via the <code>compose</code> method, two <code>SignalsFactories</code> can be easily composed to a new one.
+Several convenience methods simplify re-mapping of <code>IN</code>, <code>OUT</code>, <code>CONFIG</code> and <code>EFF</code>.
+Monadic <code>bind</code> and <code>fmap</code> methods can be used for more complex cases (though 90% of use-cases should be covered by
+<code>compose</code>, <code>extendSetup</code>, <code>mapInput</code>, <code>mapOutput</code> and <code>mapConfig</code>).
+<code>SignalsFactory</code> instances are immutable (persistent data structures), hence all methods return a new <code>SignalsFactory</code> instance.
+(The whole purpose of this class is to provide immutable <code>SignalsBuild</code> composition)</p>
 </div></section> 
 <section class="tsd-panel tsd-type-parameters">
 <h4>Type Parameters</h4>
@@ -41,7 +41,7 @@ SignalsFactory instances are immutable (persistent data structures), hence all m
 <ul class="tsd-hierarchy">
 <li><span class="target">SignalsFactory</span></li></ul></section><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/ee21063/src/signals-factory.ts#L345">signals-factory.ts:345</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/92b7b1e/src/signals-factory.ts#L345">signals-factory.ts:345</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-index-accordion" open><summary class="tsd-accordion-summary tsd-index-summary">
@@ -109,7 +109,7 @@ SignalsFactory instances are immutable (persistent data structures), hence all m
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/ee21063/src/signals-factory.ts#L357">signals-factory.ts:357</a></li></ul></aside></li></ul></section></section>
+<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/92b7b1e/src/signals-factory.ts#L357">signals-factory.ts:357</a></li></ul></aside></li></ul></section></section>
 <section class="tsd-panel-group tsd-member-group">
 <h2>Properties</h2>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="build" class="tsd-anchor"></a>
@@ -118,7 +118,7 @@ SignalsFactory instances are immutable (persistent data structures), hence all m
 <div class="tsd-comment tsd-typography"><p>a pure function mapping from CONFIG to Signals</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/ee21063/src/signals-factory.ts#L357">signals-factory.ts:357</a></li></ul></aside></section></section>
+<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/92b7b1e/src/signals-factory.ts#L357">signals-factory.ts:357</a></li></ul></aside></section></section>
 <section class="tsd-panel-group tsd-member-group">
 <h2>Methods</h2>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="addEffectId" class="tsd-anchor"></a>
@@ -126,11 +126,11 @@ SignalsFactory instances are immutable (persistent data structures), hence all m
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="addEffectId.addEffectId-1">add<wbr/>Effect<wbr/>Id<span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">ID</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">(</span>name<span class="tsd-signature-symbol">: </span><a href="../types/AssertNonExistingKey.html" class="tsd-signature-type" data-tsd-kind="Type alias">AssertNonExistingKey</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">&quot;any name not in keyof EFF&quot;</span><span class="tsd-signature-symbol">&gt;</span>, idGetter<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span>config<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">ID</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><a href="../types/AddEffectId.html" class="tsd-signature-type" data-tsd-kind="Type alias">AddEffectId</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">ID</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span><a href="#addEffectId.addEffectId-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>addEffectId can be used as a short alternative to mapEffects, if you want
-to add just a single EffectId to the effect-ids.</p>
+<div class="tsd-comment tsd-typography"><p><code>addEffectId</code> can be used as a short alternative to <code>mapEffects</code>, if you want
+to add just a single <code>EffectId</code> to the effect-ids.</p>
 
 <h3>Returns</h3><ul>
-<li>a new SignalsFactory with modified effect-ids</li>
+<li>a new <code>SignalsFactory</code> with modified effect-ids</li>
 </ul>
 </div>
 <section class="tsd-panel tsd-type-parameters">
@@ -138,22 +138,22 @@ to add just a single EffectId to the effect-ids.</p>
 <ul class="tsd-type-parameters">
 <li>
 <h4>K<span class="tsd-signature-symbol"> extends </span><span class="tsd-signature-type">string</span></h4>
-<div class="tsd-comment tsd-typography"><p>a concrete string to be used as key for the new EffectId</p>
+<div class="tsd-comment tsd-typography"><p>a concrete string to be used as key for the new <code>EffectId</code></p>
 </div></li>
 <li>
 <h4>ID<span class="tsd-signature-symbol"> extends </span><a href="../types/EffectId.html" class="tsd-signature-type" data-tsd-kind="Type alias">EffectId</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></h4>
-<div class="tsd-comment tsd-typography"><p>a concrete EffectId type</p>
+<div class="tsd-comment tsd-typography"><p>a concrete <code>EffectId</code> type</p>
 </div></li></ul></section>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
 <h5>name: <a href="../types/AssertNonExistingKey.html" class="tsd-signature-type" data-tsd-kind="Type alias">AssertNonExistingKey</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">&quot;any name not in keyof EFF&quot;</span><span class="tsd-signature-symbol">&gt;</span></h5>
-<div class="tsd-comment tsd-typography"><p>the name of the new EffectId</p>
+<div class="tsd-comment tsd-typography"><p>the name of the new <code>EffectId</code></p>
 </div></li>
 <li>
 <h5>idGetter: <span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span>config<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">ID</span><span class="tsd-signature-symbol">)</span></h5>
-<div class="tsd-comment tsd-typography"><p>a function returning the new EffectId</p>
+<div class="tsd-comment tsd-typography"><p>a function returning the new <code>EffectId</code></p>
 </div>
 <ul class="tsd-parameters">
 <li class="tsd-parameter-signature">
@@ -168,17 +168,17 @@ to add just a single EffectId to the effect-ids.</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type" data-tsd-kind="Type parameter">ID</span></h4></li></ul></li></ul></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><a href="../types/AddEffectId.html" class="tsd-signature-type" data-tsd-kind="Type alias">AddEffectId</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">ID</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/ee21063/src/signals-factory.ts#L812">signals-factory.ts:812</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/92b7b1e/src/signals-factory.ts#L812">signals-factory.ts:812</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="addInputId" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>add<wbr/>Input<wbr/>Id</span><a href="#addInputId" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="addInputId.addInputId-1">add<wbr/>Input<wbr/>Id<span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">ID</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">(</span>name<span class="tsd-signature-symbol">: </span><a href="../types/AssertNonExistingKey.html" class="tsd-signature-type" data-tsd-kind="Type alias">AssertNonExistingKey</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">&quot;any name not in keyof IN&quot;</span><span class="tsd-signature-symbol">&gt;</span>, idGetter<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span>config<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">ID</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><a href="../types/AddSignalId.html" class="tsd-signature-type" data-tsd-kind="Type alias">AddSignalId</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">ID</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span><a href="#addInputId.addInputId-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>addInputId can be used as a short alternative to mapInput, if you want
-to add just a single SignalId to the input signal ids.</p>
+<div class="tsd-comment tsd-typography"><p><code>addInputId</code> can be used as a short alternative to <code>mapInput</code>, if you want
+to add just a single <code>SignalId</code> to the input signal ids.</p>
 
 <h3>Returns</h3><ul>
-<li>a new SignalsFactory with modified input signals</li>
+<li>a new <code>SignalsFactory</code> with modified input signals</li>
 </ul>
 </div>
 <section class="tsd-panel tsd-type-parameters">
@@ -186,22 +186,22 @@ to add just a single SignalId to the input signal ids.</p>
 <ul class="tsd-type-parameters">
 <li>
 <h4>K<span class="tsd-signature-symbol"> extends </span><span class="tsd-signature-type">string</span></h4>
-<div class="tsd-comment tsd-typography"><p>a concrete string to be used as key for the new SignalId</p>
+<div class="tsd-comment tsd-typography"><p>a concrete string to be used as key for the new <code>SignalId</code></p>
 </div></li>
 <li>
 <h4>ID<span class="tsd-signature-symbol"> extends </span><a href="../types/SignalId.html" class="tsd-signature-type" data-tsd-kind="Type alias">SignalId</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></h4>
-<div class="tsd-comment tsd-typography"><p>a concrete SignalId type</p>
+<div class="tsd-comment tsd-typography"><p>a concrete <code>SignalId</code> type</p>
 </div></li></ul></section>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
 <h5>name: <a href="../types/AssertNonExistingKey.html" class="tsd-signature-type" data-tsd-kind="Type alias">AssertNonExistingKey</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">&quot;any name not in keyof IN&quot;</span><span class="tsd-signature-symbol">&gt;</span></h5>
-<div class="tsd-comment tsd-typography"><p>the name of the new SignalId</p>
+<div class="tsd-comment tsd-typography"><p>the name of the new <code>SignalId</code></p>
 </div></li>
 <li>
 <h5>idGetter: <span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span>config<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">ID</span><span class="tsd-signature-symbol">)</span></h5>
-<div class="tsd-comment tsd-typography"><p>a function returning the new SignalId</p>
+<div class="tsd-comment tsd-typography"><p>a function returning the new <code>SignalId</code></p>
 </div>
 <ul class="tsd-parameters">
 <li class="tsd-parameter-signature">
@@ -216,17 +216,17 @@ to add just a single SignalId to the input signal ids.</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type" data-tsd-kind="Type parameter">ID</span></h4></li></ul></li></ul></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><a href="../types/AddSignalId.html" class="tsd-signature-type" data-tsd-kind="Type alias">AddSignalId</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">ID</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/ee21063/src/signals-factory.ts#L609">signals-factory.ts:609</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/92b7b1e/src/signals-factory.ts#L609">signals-factory.ts:609</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="addOutputId" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>add<wbr/>Output<wbr/>Id</span><a href="#addOutputId" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="addOutputId.addOutputId-1">add<wbr/>Output<wbr/>Id<span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">ID</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">(</span>name<span class="tsd-signature-symbol">: </span><a href="../types/AssertNonExistingKey.html" class="tsd-signature-type" data-tsd-kind="Type alias">AssertNonExistingKey</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">&quot;any name not in keyof OUT&quot;</span><span class="tsd-signature-symbol">&gt;</span>, idGetter<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span>config<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">ID</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><a href="../types/AddSignalId.html" class="tsd-signature-type" data-tsd-kind="Type alias">AddSignalId</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">ID</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span><a href="#addOutputId.addOutputId-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>addOutputId can be used as a short alternative to mapOutput, if you want
-to add just a single SignalId to the output signal ids.</p>
+<div class="tsd-comment tsd-typography"><p><code>addOutputId</code> can be used as a short alternative to <code>mapOutput</code>, if you want
+to add just a single <code>SignalId</code> to the output signal ids.</p>
 
 <h3>Returns</h3><ul>
-<li>a new SignalsFactory with modified output signals</li>
+<li>a new <code>SignalsFactory</code> with modified output signals</li>
 </ul>
 </div>
 <section class="tsd-panel tsd-type-parameters">
@@ -234,22 +234,22 @@ to add just a single SignalId to the output signal ids.</p>
 <ul class="tsd-type-parameters">
 <li>
 <h4>K<span class="tsd-signature-symbol"> extends </span><span class="tsd-signature-type">string</span></h4>
-<div class="tsd-comment tsd-typography"><p>a concrete string to be used as key for the new SignalId</p>
+<div class="tsd-comment tsd-typography"><p>a concrete string to be used as key for the new <code>SignalId</code></p>
 </div></li>
 <li>
 <h4>ID<span class="tsd-signature-symbol"> extends </span><a href="../types/SignalId.html" class="tsd-signature-type" data-tsd-kind="Type alias">SignalId</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></h4>
-<div class="tsd-comment tsd-typography"><p>a concrete SignalId type</p>
+<div class="tsd-comment tsd-typography"><p>a concrete <code>SignalId</code> type</p>
 </div></li></ul></section>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
 <h5>name: <a href="../types/AssertNonExistingKey.html" class="tsd-signature-type" data-tsd-kind="Type alias">AssertNonExistingKey</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">&quot;any name not in keyof OUT&quot;</span><span class="tsd-signature-symbol">&gt;</span></h5>
-<div class="tsd-comment tsd-typography"><p>the name of the new SignalId</p>
+<div class="tsd-comment tsd-typography"><p>the name of the new <code>SignalId</code></p>
 </div></li>
 <li>
 <h5>idGetter: <span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span>config<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">ID</span><span class="tsd-signature-symbol">)</span></h5>
-<div class="tsd-comment tsd-typography"><p>a function returning the new SignalId</p>
+<div class="tsd-comment tsd-typography"><p>a function returning the new <code>SignalId</code></p>
 </div>
 <ul class="tsd-parameters">
 <li class="tsd-parameter-signature">
@@ -264,20 +264,20 @@ to add just a single SignalId to the output signal ids.</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type" data-tsd-kind="Type parameter">ID</span></h4></li></ul></li></ul></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><a href="../types/AddSignalId.html" class="tsd-signature-type" data-tsd-kind="Type alias">AddSignalId</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">ID</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/ee21063/src/signals-factory.ts#L688">signals-factory.ts:688</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/92b7b1e/src/signals-factory.ts#L688">signals-factory.ts:688</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="bind" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>bind</span><a href="#bind" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="bind.bind-1">bind<span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF2</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">(</span>mapper<span class="tsd-signature-symbol">: </span><a href="../types/BindMapper.html" class="tsd-signature-type" data-tsd-kind="Type alias">BindMapper</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF2</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF2</span><span class="tsd-signature-symbol">&gt;</span><a href="#bind.bind-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>This method implements monadic-bind for the SignalsFactory.
-It takes as argument a pure function that implements SignalsMapToFactory&lt;IN, OUT, CONFIG, EFF, IN2, OUT2, CONFIG2, EFF2&gt;, hence
-a function taking SignalsBuild&lt;IN, OUT, CONFIG, EFF&gt; as argument and returning a SignalsFactory&lt;IN2, OUT2, CONFIG2, EFF2&gt;.
-The result of bind is a new SignalsFactory that uses the SignalsBuild&lt;IN2, OUT2, CONFIG2, EFF2&gt;::build
+<div class="tsd-comment tsd-typography"><p>This method implements monadic-bind for the <code>SignalsFactory</code>.
+It takes as argument a pure function that implements <code>SignalsMapToFactory&lt;IN, OUT, CONFIG, EFF, IN2, OUT2, CONFIG2, EFF2&gt;</code>, hence
+a function taking <code>SignalsBuild&lt;IN, OUT, CONFIG, EFF&gt;</code> as argument and returning a <code>SignalsFactory&lt;IN2, OUT2, CONFIG2, EFF2&gt;</code>.
+The result of <code>bind</code> is a new <code>SignalsFactory</code> that uses the <code>SignalsBuild&lt;IN2, OUT2, CONFIG2, EFF2&gt;::build</code>
 of the factory returned from the mapper (hence the result of bind is not the same instance as returned by the mapper).</p>
 
 <h3>Returns</h3><ul>
-<li>a new SignalsFactory&lt;IN2, OUT2, CONFIG2, EFF2&gt;</li>
+<li>a new <code>SignalsFactory&lt;IN2, OUT2, CONFIG2, EFF2&gt;</code></li>
 </ul>
 </div>
 <section class="tsd-panel tsd-type-parameters">
@@ -296,23 +296,23 @@ of the factory returned from the mapper (hence the result of bind is not the sam
 <ul class="tsd-parameter-list">
 <li>
 <h5>mapper: <a href="../types/BindMapper.html" class="tsd-signature-type" data-tsd-kind="Type alias">BindMapper</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF2</span><span class="tsd-signature-symbol">&gt;</span></h5>
-<div class="tsd-comment tsd-typography"><p>a pure function mapping from SignalsBuild&lt;IN, OUT, CONFIG, EFF&gt; to SignalsFactory&lt;IN2, OUT2, CONFIG2, EFF2&gt;</p>
+<div class="tsd-comment tsd-typography"><p>a pure function mapping from <code>SignalsBuild&lt;IN, OUT, CONFIG, EFF&gt;</code> to <code>SignalsFactory&lt;IN2, OUT2, CONFIG2, EFF2&gt;</code></p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF2</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/ee21063/src/signals-factory.ts#L412">signals-factory.ts:412</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/92b7b1e/src/signals-factory.ts#L412">signals-factory.ts:412</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="compose" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>compose</span><a href="#compose" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="compose.compose-1">compose<span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF2</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">(</span>factory2<span class="tsd-signature-symbol">: </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF2</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../types/ComposedFactory.html" class="tsd-signature-type" data-tsd-kind="Type alias">ComposedFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF2</span><span class="tsd-signature-symbol">&gt;</span><a href="#compose.compose-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>The compose method takes a second SignalsFactory2 and returns a new SignalsFactory
-that represents the composition of this SignalsFactory and the argument SignalsFactory2.
-You can re-map the input, output, configuration and effects of the resulting composed SignalsFactory
-by using mapInput, mapOutput, mapConfig and mapEffects correspondingly (as well as the many other convenience methods).</p>
+<div class="tsd-comment tsd-typography"><p>The <code>compose</code> method takes a second <code>SignalsFactory2</code> and returns a new <code>SignalsFactory</code>
+that represents the composition of this <code>SignalsFactory</code> and the argument <code>SignalsFactory2</code>.
+You can re-map the input, output, configuration and effects of the resulting composed <code>SignalsFactory</code>
+by using <code>mapInput</code>, <code>mapOutput</code>, <code>mapConfig</code> and <code>mapEffects</code> correspondingly (as well as the many other convenience methods).</p>
 
 <h3>Returns</h3><ul>
-<li>the SignalsFactory resulting from the composition of this SignalsFactory and SignalsFactory2</li>
+<li>the <code>SignalsFactory</code> resulting from the composition of this <code>SignalsFactory</code> and <code>SignalsFactory2</code></li>
 </ul>
 </div>
 <section class="tsd-panel tsd-type-parameters">
@@ -331,30 +331,30 @@ by using mapInput, mapOutput, mapConfig and mapEffects correspondingly (as well 
 <ul class="tsd-parameter-list">
 <li>
 <h5>factory2: <a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF2</span><span class="tsd-signature-symbol">&gt;</span></h5>
-<div class="tsd-comment tsd-typography"><p>a SignalsFactory</p>
+<div class="tsd-comment tsd-typography"><p>a <code>SignalsFactory</code></p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="../types/ComposedFactory.html" class="tsd-signature-type" data-tsd-kind="Type alias">ComposedFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF2</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/ee21063/src/signals-factory.ts#L368">signals-factory.ts:368</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/92b7b1e/src/signals-factory.ts#L368">signals-factory.ts:368</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="connect" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>connect</span><a href="#connect" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="connect.connect-1">connect<span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">KIN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">KOUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">B</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">(</span>outputName<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">KOUT</span>, inputName<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">KIN</span>, keepInputId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">B</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">B</span><span class="tsd-signature-symbol"> extends </span><span class="tsd-signature-type">true</span><span class="tsd-signature-symbol"> ? </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> : </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Omit</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">KIN</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span><a href="#connect.connect-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>The connect method offers an easy way to connect an output signal to an input signal.
-It takes the name of an output-id (a key of OUT) as first argument and the name of an input-id (a key of IN) as second argument.
-If keepInputId is set to true, it returns a new SignalsFactory of the same type as this SignalsFactory,
-but with an extended setup logic, that connects the Signal&lt;S extends T&gt; that corresponds to the named output-id to a
-new Signal&lt;T&gt; corresponding to the named input-id.
+<div class="tsd-comment tsd-typography"><p>The <code>connect</code> method offers an easy way to connect an output signal to an input signal.
+It takes the name of an output-id (a key of <code>OUT</code>) as first argument and the name of an input-id (a key of <code>IN</code>) as second argument.
+If keepInputId is set to true, it returns a new <code>SignalsFactory</code> of the same type as this <code>SignalsFactory</code>,
+but with an extended setup logic, that connects the <code>Signal&lt;S extends T&gt;</code> that corresponds to the named output-id to a
+new <code>Signal&lt;T&gt;</code> corresponding to the named input-id.
 If keepInputId is set to false, it also extends the setup logic to connect the corresponding signal-ids, but in addition
-the specified input-id will be excluded from the IN-type of the resulting factory.
-(also see store.connect documentation, as this is used under the hood)
-Typescript will enforce that both names (keys) map to compatible signal ids, hence if KIN corresponds to SignalId&lt;T&gt;,
-then KOUT must correspond to SignalId&lt;S extends T&gt; (though one might be an EventId and the other a BehaviorId).
-That is, even though you only use strings as arguments, this method is still type-safe and will not compile if you try to specify names of non-existing or incompatible ids.</p>
+the specified input-id will be excluded from the <code>IN</code>-type of the resulting factory.
+(also see <code>store.connect</code> documentation, as this is used under the hood)
+Typescript will enforce that both names (keys) map to compatible signal ids, hence if <code>KIN</code> corresponds to <code>SignalId&lt;T&gt;</code>,
+then <code>KOUT</code> must correspond to <code>SignalId&lt;S extends T&gt;</code> (though one might be an <code>EventId</code> and the other a <code>BehaviorId</code>).
+Even though you only use strings as arguments, this method is still type-safe and will not compile if you try to specify names of non-existing or incompatible ids.</p>
 
 <h3>Returns</h3><ul>
-<li>a new SignalsFactory with the concrete type depending on the keepInputId argument</li>
+<li>a new <code>SignalsFactory</code> with the concrete type depending on the keepInputId argument</li>
 </ul>
 </div>
 <section class="tsd-panel tsd-type-parameters">
@@ -371,30 +371,30 @@ That is, even though you only use strings as arguments, this method is still typ
 <ul class="tsd-parameter-list">
 <li>
 <h5>outputName: <span class="tsd-signature-type" data-tsd-kind="Type parameter">KOUT</span></h5>
-<div class="tsd-comment tsd-typography"><p>a key of OUT, where OUT[outputName] must be of type Signal&lt;S extends T&gt;</p>
+<div class="tsd-comment tsd-typography"><p>a key of OUT, where <code>OUT[outputName]</code> must be of type <code>Signal&lt;S extends T&gt;</code></p>
 </div></li>
 <li>
 <h5>inputName: <span class="tsd-signature-type" data-tsd-kind="Type parameter">KIN</span></h5>
-<div class="tsd-comment tsd-typography"><p>a key of IN, where IN[toName] must be of type Signal&lt;T&gt;</p>
+<div class="tsd-comment tsd-typography"><p>a key of IN, where <code>IN[toName]</code> must be of type <code>Signal&lt;T&gt;</code></p>
 </div></li>
 <li>
 <h5>keepInputId: <span class="tsd-signature-type" data-tsd-kind="Type parameter">B</span></h5>
-<div class="tsd-comment tsd-typography"><p>if set to false, the input-id corresponding to toName will be removed from the resulting factories&#39; IN</p>
+<div class="tsd-comment tsd-typography"><p>if set to false, the input-id corresponding to toName will be removed from the resulting factories&#39; <code>IN</code></p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type" data-tsd-kind="Type parameter">B</span><span class="tsd-signature-symbol"> extends </span><span class="tsd-signature-type">true</span><span class="tsd-signature-symbol"> ? </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> : </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Omit</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">KIN</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/ee21063/src/signals-factory.ts#L485">signals-factory.ts:485</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/92b7b1e/src/signals-factory.ts#L485">signals-factory.ts:485</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="connectId" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>connect<wbr/>Id</span><a href="#connectId" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="connectId.connectId-1">connect<wbr/>Id<span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">ID</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">B</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">(</span>fromId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">ID</span>, inputName<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span>, keepInputId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">B</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">B</span><span class="tsd-signature-symbol"> extends </span><span class="tsd-signature-type">true</span><span class="tsd-signature-symbol"> ? </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> : </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Omit</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span><a href="#connectId.connectId-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>The connectId method is a more general version of the connect method. In contrast to connect, it does not take the name
-of an OUT signal-id, but instead directly a signal-id (thus, some arbitrary signal-id can be used).
-Everything else works like connect, so please see the corresponding documentation there.</p>
+<div class="tsd-comment tsd-typography"><p>The <code>connectId</code> method is a more general version of the <code>connect</code> method. In contrast to <code>connect</code>, it does not take the name
+of an <code>OUT</code> signal-id, but instead directly a signal-id (thus, some arbitrary signal-id can be used).
+Everything else works like <code>connect</code>, so please see the corresponding documentation there.</p>
 
 <h3>Returns</h3><ul>
-<li>a new SignalsFactory with the concrete type depending on the keepInputId argument</li>
+<li>a new <code>SignalsFactory</code> with the concrete type depending on the keepInputId argument</li>
 </ul>
 </div>
 <section class="tsd-panel tsd-type-parameters">
@@ -411,30 +411,30 @@ Everything else works like connect, so please see the corresponding documentatio
 <ul class="tsd-parameter-list">
 <li>
 <h5>fromId: <span class="tsd-signature-type" data-tsd-kind="Type parameter">ID</span></h5>
-<div class="tsd-comment tsd-typography"><p>a Signal&lt;S extends T&gt;</p>
+<div class="tsd-comment tsd-typography"><p>a <code>Signal&lt;S extends T&gt;</code></p>
 </div></li>
 <li>
 <h5>inputName: <span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span></h5>
-<div class="tsd-comment tsd-typography"><p>a key of IN, where IN[toName] must be of type Signal&lt;T&gt;</p>
+<div class="tsd-comment tsd-typography"><p>a key of IN, where <code>IN[toName]</code> must be of type <code>Signal&lt;T&gt;</code></p>
 </div></li>
 <li>
 <h5>keepInputId: <span class="tsd-signature-type" data-tsd-kind="Type parameter">B</span></h5>
-<div class="tsd-comment tsd-typography"><p>if set to false, the input-id corresponding to toName will be removed from the resulting factories&#39; IN</p>
+<div class="tsd-comment tsd-typography"><p>if set to false, the input-id corresponding to toName will be removed from the resulting factories&#39; <code>IN</code></p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type" data-tsd-kind="Type parameter">B</span><span class="tsd-signature-symbol"> extends </span><span class="tsd-signature-type">true</span><span class="tsd-signature-symbol"> ? </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> : </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Omit</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/ee21063/src/signals-factory.ts#L517">signals-factory.ts:517</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/92b7b1e/src/signals-factory.ts#L517">signals-factory.ts:517</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="connectObservable" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>connect<wbr/>Observable</span><a href="#connectObservable" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="connectObservable.connectObservable-1">connect<wbr/>Observable<span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">S</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">O</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">B</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">(</span>sourceGetter<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span>store<span class="tsd-signature-symbol">: </span><a href="Store.html" class="tsd-signature-type" data-tsd-kind="Class">Store</a>, output<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span>, config<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">O</span><span class="tsd-signature-symbol">)</span>, inputName<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span>, keepInputId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">B</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">B</span><span class="tsd-signature-symbol"> extends </span><span class="tsd-signature-type">true</span><span class="tsd-signature-symbol"> ? </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> : </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Omit</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span><a href="#connectObservable.connectObservable-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>The connectObservable method is even more general compared to the connect and connectId methods. In contrast to the previous two,
+<div class="tsd-comment tsd-typography"><p>The <code>connectObservable</code> method is even more general compared to the <code>connect</code> and <code>connectId</code> methods. In contrast to the previous two,
 its first argument is a function that takes store, output and config as arguments and returns an observable.
 For the other arguments, please see the documentation of the connect method.</p>
 
 <h3>Returns</h3><ul>
-<li>a new SignalsFactory with the concrete type depending on the keepInputId argument</li>
+<li>a new <code>SignalsFactory</code> with the concrete type depending on the keepInputId argument</li>
 </ul>
 </div>
 <section class="tsd-panel tsd-type-parameters">
@@ -453,7 +453,7 @@ For the other arguments, please see the documentation of the connect method.</p>
 <ul class="tsd-parameter-list">
 <li>
 <h5>sourceGetter: <span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span>store<span class="tsd-signature-symbol">: </span><a href="Store.html" class="tsd-signature-type" data-tsd-kind="Class">Store</a>, output<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span>, config<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">O</span><span class="tsd-signature-symbol">)</span></h5>
-<div class="tsd-comment tsd-typography"><p>a function returning an Observable&lt;S extends T&gt;</p>
+<div class="tsd-comment tsd-typography"><p>a function returning an <code>Observable&lt;S extends T&gt;</code></p>
 </div>
 <ul class="tsd-parameters">
 <li class="tsd-parameter-signature">
@@ -472,26 +472,26 @@ For the other arguments, please see the documentation of the connect method.</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type" data-tsd-kind="Type parameter">O</span></h4></li></ul></li></ul></li>
 <li>
 <h5>inputName: <span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span></h5>
-<div class="tsd-comment tsd-typography"><p>a key of IN, where IN[toName] must be of type Signal&lt;T&gt;</p>
+<div class="tsd-comment tsd-typography"><p>a key of IN, where <code>IN[toName]</code> must be of type <code>Signal&lt;T&gt;</code></p>
 </div></li>
 <li>
 <h5>keepInputId: <span class="tsd-signature-type" data-tsd-kind="Type parameter">B</span></h5>
-<div class="tsd-comment tsd-typography"><p>if set to false, the input-id corresponding to toName will be removed from the resulting factories&#39; IN</p>
+<div class="tsd-comment tsd-typography"><p>if set to false, the input-id corresponding to toName will be removed from the resulting factories&#39; <code>IN</code></p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type" data-tsd-kind="Type parameter">B</span><span class="tsd-signature-symbol"> extends </span><span class="tsd-signature-type">true</span><span class="tsd-signature-symbol"> ? </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> : </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Omit</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/ee21063/src/signals-factory.ts#L544">signals-factory.ts:544</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/92b7b1e/src/signals-factory.ts#L544">signals-factory.ts:544</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="extendSetup" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>extend<wbr/>Setup</span><a href="#extendSetup" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="extendSetup.extendSetup-1">extend<wbr/>Setup<span class="tsd-signature-symbol">(</span>extend<span class="tsd-signature-symbol">: </span><a href="../types/ExtendSetup.html" class="tsd-signature-type" data-tsd-kind="Type alias">ExtendSetup</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span><a href="#extendSetup.extendSetup-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>The extendSetup method takes as argument a function that implements ExtendSetup&lt;IN, OUT, CONFIG, EFF&gt;.
-It returns a new SignalsFactory of the same type as this SignalsFactory, but with a wrapped SignalsBuild that
-extends the code executed in the Signals setup method by the provided code.</p>
+<div class="tsd-comment tsd-typography"><p>The <code>extendSetup</code> method takes as argument a function that implements <code>ExtendSetup&lt;IN, OUT, CONFIG, EFF&gt;</code>.
+It returns a new <code>SignalsFactory</code> of the same type as this <code>SignalsFactory</code>, but with a wrapped <code>SignalsBuild</code> that
+extends the code executed in the <code>Signals</code> setup method by the provided code.</p>
 
 <h3>Returns</h3><ul>
-<li>a new SignalsFactory with extended store setup</li>
+<li>a new <code>SignalsFactory</code> with extended store setup</li>
 </ul>
 </div>
 <div class="tsd-parameters">
@@ -499,24 +499,24 @@ extends the code executed in the Signals setup method by the provided code.</p>
 <ul class="tsd-parameter-list">
 <li>
 <h5>extend: <a href="../types/ExtendSetup.html" class="tsd-signature-type" data-tsd-kind="Type alias">ExtendSetup</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span></h5>
-<div class="tsd-comment tsd-typography"><p>a function extending the setup method of the Signals produced by the SignalsBuild of the resulting SignalsFactory</p>
+<div class="tsd-comment tsd-typography"><p>a function extending the setup method of the <code>Signals</code> produced by the <code>SignalsBuild</code> of the resulting <code>SignalsFactory</code></p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/ee21063/src/signals-factory.ts#L454">signals-factory.ts:454</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/92b7b1e/src/signals-factory.ts#L454">signals-factory.ts:454</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="fmap" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>fmap</span><a href="#fmap" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="fmap.fmap-1">fmap<span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF2</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">(</span>mapper<span class="tsd-signature-symbol">: </span><a href="../types/BuildMapper.html" class="tsd-signature-type" data-tsd-kind="Type alias">BuildMapper</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF2</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF2</span><span class="tsd-signature-symbol">&gt;</span><a href="#fmap.fmap-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>This method implements the functor-fmap for the SignalsFactory.
-It takes as argument a pure function that implements BuildMapper&lt;IN, OUT, CONFIG, EFF, IN2, OUT2, CONFIG2, EFF2&gt;, hence
-a function taking SignalsBuild&lt;IN, OUT, CONFIG, EFF&gt; as argument and returning a SignalsBuild&lt;IN2, OUT2, CONFIG2, EFF2&gt;.
-The result of fmap is a new SignalsFactory that uses the SignalsBuild&lt;IN2, OUT2, CONFIG2, EFF2&gt; returned
+<div class="tsd-comment tsd-typography"><p>This method implements the functor-fmap for the <code>SignalsFactory</code>.
+It takes as argument a pure function that implements <code>BuildMapper&lt;IN, OUT, CONFIG, EFF, IN2, OUT2, CONFIG2, EFF2&gt;</code>, hence
+a function taking <code>SignalsBuild&lt;IN, OUT, CONFIG, EFF&gt;</code> as argument and returning a <code>SignalsBuild&lt;IN2, OUT2, CONFIG2, EFF2&gt;</code>.
+The result of <code>fmap</code> is a new <code>SignalsFactory</code> that uses the <code>SignalsBuild&lt;IN2, OUT2, CONFIG2, EFF2&gt;</code> returned
 from the mapper.</p>
 
 <h3>Returns</h3><ul>
-<li>a new SignalsFactory&lt;IN2, OUT2, CONFIG2, EFF2&gt;</li>
+<li>a new <code>SignalsFactory&lt;IN2, OUT2, CONFIG2, EFF2&gt;</code></li>
 </ul>
 </div>
 <section class="tsd-panel tsd-type-parameters">
@@ -535,21 +535,21 @@ from the mapper.</p>
 <ul class="tsd-parameter-list">
 <li>
 <h5>mapper: <a href="../types/BuildMapper.html" class="tsd-signature-type" data-tsd-kind="Type alias">BuildMapper</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF2</span><span class="tsd-signature-symbol">&gt;</span></h5>
-<div class="tsd-comment tsd-typography"><p>a pure function mapping from SignalsBuild&lt;IN, OUT, CONFIG, EFF&gt; to SignalsBuild&lt;IN2, OUT2, CONFIG2, EFF2&gt;</p>
+<div class="tsd-comment tsd-typography"><p>a pure function mapping from <code>SignalsBuild&lt;IN, OUT, CONFIG, EFF&gt;</code> to <code>SignalsBuild&lt;IN2, OUT2, CONFIG2, EFF2&gt;</code></p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF2</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/ee21063/src/signals-factory.ts#L434">signals-factory.ts:434</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/92b7b1e/src/signals-factory.ts#L434">signals-factory.ts:434</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="mapConfig" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>map<wbr/>Config</span><a href="#mapConfig" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="mapConfig.mapConfig-1">map<wbr/>Config<span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG2</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">(</span>mapper<span class="tsd-signature-symbol">: </span><a href="../types/MapConfig.html" class="tsd-signature-type" data-tsd-kind="Type alias">MapConfig</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG2</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span><a href="#mapConfig.mapConfig-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>The mapConfig method takes as argument a pure function that implements MapConfig&lt;CONFIG, CONFIG2&gt;.
-It returns a new SignalsFactory&lt;IN, OUT, CONFIG2, EFF&gt;.</p>
+<div class="tsd-comment tsd-typography"><p>The <code>mapConfig</code> method takes as argument a pure function that implements <code>MapConfig&lt;CONFIG, CONFIG2&gt;</code>.
+It returns a new <code>SignalsFactory&lt;IN, OUT, CONFIG2, EFF&gt;</code>.</p>
 
 <h3>Returns</h3><ul>
-<li>a new SignalsFactory with different Configuration type</li>
+<li>a new <code>SignalsFactory</code> with different <code>Configuration</code> type</li>
 </ul>
 </div>
 <section class="tsd-panel tsd-type-parameters">
@@ -562,21 +562,21 @@ It returns a new SignalsFactory&lt;IN, OUT, CONFIG2, EFF&gt;.</p>
 <ul class="tsd-parameter-list">
 <li>
 <h5>mapper: <a href="../types/MapConfig.html" class="tsd-signature-type" data-tsd-kind="Type alias">MapConfig</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG2</span><span class="tsd-signature-symbol">&gt;</span></h5>
-<div class="tsd-comment tsd-typography"><p>a pure function mapping CONFIG2 to CONFIG</p>
+<div class="tsd-comment tsd-typography"><p>a pure function mapping <code>CONFIG2</code> to <code>CONFIG</code></p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/ee21063/src/signals-factory.ts#L573">signals-factory.ts:573</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/92b7b1e/src/signals-factory.ts#L573">signals-factory.ts:573</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="mapEffects" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>map<wbr/>Effects</span><a href="#mapEffects" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="mapEffects.mapEffects-1">map<wbr/>Effects<span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF2</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">(</span>mapper<span class="tsd-signature-symbol">: </span><a href="../types/MapEffectIds.html" class="tsd-signature-type" data-tsd-kind="Type alias">MapEffectIds</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF2</span><span class="tsd-signature-symbol">&gt;</span><a href="#mapEffects.mapEffects-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>The mapEffects method takes as argument a pure function that implements MapEffectIds&lt;EFF, EFF2, CONFIG&gt;.
-It returns a new SignalsFactory&lt;IN, OUT, CONFIG, EFF2&gt;.</p>
+<div class="tsd-comment tsd-typography"><p>The <code>mapEffects</code> method takes as argument a pure function that implements <code>MapEffectIds&lt;EFF, EFF2, CONFIG&gt;</code>.
+It returns a new <code>SignalsFactory&lt;IN, OUT, CONFIG, EFF2&gt;</code>.</p>
 
 <h3>Returns</h3><ul>
-<li>a new SignalsFactory with different effect-ids</li>
+<li>a new <code>SignalsFactory</code> with different effect-ids</li>
 </ul>
 </div>
 <section class="tsd-panel tsd-type-parameters">
@@ -589,21 +589,21 @@ It returns a new SignalsFactory&lt;IN, OUT, CONFIG, EFF2&gt;.</p>
 <ul class="tsd-parameter-list">
 <li>
 <h5>mapper: <a href="../types/MapEffectIds.html" class="tsd-signature-type" data-tsd-kind="Type alias">MapEffectIds</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">&gt;</span></h5>
-<div class="tsd-comment tsd-typography"><p>a pure function mapping from EFF to EFF2</p>
+<div class="tsd-comment tsd-typography"><p>a pure function mapping from <code>EFF</code> to <code>EFF2</code></p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF2</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/ee21063/src/signals-factory.ts#L790">signals-factory.ts:790</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/92b7b1e/src/signals-factory.ts#L790">signals-factory.ts:790</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="mapInput" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>map<wbr/>Input</span><a href="#mapInput" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="mapInput.mapInput-1">map<wbr/>Input<span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN2</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">(</span>mapper<span class="tsd-signature-symbol">: </span><a href="../types/MapSignalIds.html" class="tsd-signature-type" data-tsd-kind="Type alias">MapSignalIds</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span><a href="#mapInput.mapInput-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>The mapInput method takes as argument a pure function that implements MapSignalIds&lt;IN, IN2&gt;.
-It returns a new SignalsFactory&lt;IN2, OUT, CONFIG, EFF&gt;.</p>
+<div class="tsd-comment tsd-typography"><p>The <code>mapInput</code> method takes as argument a pure function that implements <code>MapSignalIds&lt;IN, IN2&gt;</code>.
+It returns a new <code>SignalsFactory&lt;IN2, OUT, CONFIG, EFF&gt;</code>.</p>
 
 <h3>Returns</h3><ul>
-<li>a new SignalsFactory with different input signals</li>
+<li>a new <code>SignalsFactory</code> with different input signals</li>
 </ul>
 </div>
 <section class="tsd-panel tsd-type-parameters">
@@ -616,21 +616,21 @@ It returns a new SignalsFactory&lt;IN2, OUT, CONFIG, EFF&gt;.</p>
 <ul class="tsd-parameter-list">
 <li>
 <h5>mapper: <a href="../types/MapSignalIds.html" class="tsd-signature-type" data-tsd-kind="Type alias">MapSignalIds</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">&gt;</span></h5>
-<div class="tsd-comment tsd-typography"><p>a pure function mapping from IN to IN2</p>
+<div class="tsd-comment tsd-typography"><p>a pure function mapping from <code>IN</code> to <code>IN2</code></p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/ee21063/src/signals-factory.ts#L587">signals-factory.ts:587</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/92b7b1e/src/signals-factory.ts#L587">signals-factory.ts:587</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="mapOutput" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>map<wbr/>Output</span><a href="#mapOutput" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="mapOutput.mapOutput-1">map<wbr/>Output<span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT2</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">(</span>mapper<span class="tsd-signature-symbol">: </span><a href="../types/MapSignalIds.html" class="tsd-signature-type" data-tsd-kind="Type alias">MapSignalIds</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span><a href="#mapOutput.mapOutput-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>The mapOutput method takes as argument a pure function that implements MapSignalIds&lt;OUT, OUT2&gt;.
-It returns a new SignalsFactory&lt;IN, OUT2, CONFIG, EFF&gt;.</p>
+<div class="tsd-comment tsd-typography"><p>The <code>mapOutput</code> method takes as argument a pure function that implements <code>MapSignalIds&lt;OUT, OUT2&gt;</code>.
+It returns a new <code>SignalsFactory&lt;IN, OUT2, CONFIG, EFF&gt;</code>.</p>
 
 <h3>Returns</h3><ul>
-<li>a new SignalsFactory with different output signals</li>
+<li>a new <code>SignalsFactory</code> with different output signals</li>
 </ul>
 </div>
 <section class="tsd-panel tsd-type-parameters">
@@ -643,25 +643,25 @@ It returns a new SignalsFactory&lt;IN, OUT2, CONFIG, EFF&gt;.</p>
 <ul class="tsd-parameter-list">
 <li>
 <h5>mapper: <a href="../types/MapSignalIds.html" class="tsd-signature-type" data-tsd-kind="Type alias">MapSignalIds</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">&gt;</span></h5>
-<div class="tsd-comment tsd-typography"><p>a pure function mapping from OUT to OUT2</p>
+<div class="tsd-comment tsd-typography"><p>a pure function mapping from <code>OUT</code> to <code>OUT2</code></p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT2</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/ee21063/src/signals-factory.ts#L666">signals-factory.ts:666</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/92b7b1e/src/signals-factory.ts#L666">signals-factory.ts:666</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="mapOutputBehavior" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>map<wbr/>Output<wbr/>Behavior</span><a href="#mapOutputBehavior" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="mapOutputBehavior.mapOutputBehavior-1">map<wbr/>Output<wbr/>Behavior<span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">TNEW</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">KOUT</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">(</span>outputName<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">KOUT</span>, mapper<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span>old<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Observable</span><span class="tsd-signature-symbol">&lt;</span><a href="../types/ToBehaviorIdValueType.html" class="tsd-signature-type" data-tsd-kind="Type alias">ToBehaviorIdValueType</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">[</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">KOUT</span><span class="tsd-signature-symbol">]</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span>, store<span class="tsd-signature-symbol">: </span><a href="Store.html" class="tsd-signature-type" data-tsd-kind="Class">Store</a>, input<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span>, output<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span>, config<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">Observable</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">TNEW</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><a href="../types/AddOrReplaceId.html" class="tsd-signature-type" data-tsd-kind="Type alias">AddOrReplaceId</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">KOUT</span><span class="tsd-signature-symbol">, </span><a href="../types/DerivedId.html" class="tsd-signature-type" data-tsd-kind="Type alias">DerivedId</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">TNEW</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span><a href="#mapOutputBehavior.mapOutputBehavior-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>mapOutputBehavior can be used to transfrom an output-behavior of type TOLD to a new behavior of type TNEW,
+<div class="tsd-comment tsd-typography"><p><code>mapOutputBehavior</code> can be used to transfrom an output-behavior of type <code>TOLD</code> to a new behavior of type <code>TNEW</code>,
 keeping the output-id-name. Thus, this is a short form for adding a new behavior based on an existing
 output-behavior, then removing the ID of the existing one from output and finally, putting the ID of the
 new behavior into output under the removed name of the existing behavior.
-Hence, this transforms from SignalsFactory&lt;IN, OUT, CONFIG&gt; to SignalsFactory&lt;IN, OUT2, CONFIG&gt;
-with OUT2 having the same keys as OUT, but OUT2[KOUT] having type TNEW and OUT[KOUT] having type TOLD</p>
+Hence, this transforms from <code>SignalsFactory&lt;IN, OUT, CONFIG&gt;</code> to <code>SignalsFactory&lt;IN, OUT2, CONFIG&gt;</code>
+with <code>OUT2</code> having the same keys as <code>OUT</code>, but <code>OUT2[KOUT]</code> having type <code>TNEW</code> and <code>OUT[KOUT]</code> having type <code>TOLD</code></p>
 
 <h3>Returns</h3><ul>
-<li>a new SignalsFactory with a modified output signal</li>
+<li>a new <code>SignalsFactory</code> with a modified output signal</li>
 </ul>
 </div>
 <section class="tsd-panel tsd-type-parameters">
@@ -669,22 +669,22 @@ with OUT2 having the same keys as OUT, but OUT2[KOUT] having type TNEW and OUT[K
 <ul class="tsd-type-parameters">
 <li>
 <h4>TNEW</h4>
-<div class="tsd-comment tsd-typography"><p>value-type of the OUT2[KOUT] BehaviorId after mapping</p>
+<div class="tsd-comment tsd-typography"><p>value-type of the <code>OUT2[KOUT]</code> BehaviorId after mapping</p>
 </div></li>
 <li>
 <h4>KOUT<span class="tsd-signature-symbol"> extends </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">symbol</span></h4>
-<div class="tsd-comment tsd-typography"><p>a concrete output key mapping to a BehaviorId<any></p>
+<div class="tsd-comment tsd-typography"><p>a concrete output key mapping to a <code>BehaviorId&lt;any&gt;</code></p>
 </div></li></ul></section>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
 <h5>outputName: <span class="tsd-signature-type" data-tsd-kind="Type parameter">KOUT</span></h5>
-<div class="tsd-comment tsd-typography"><p>the name of a BehaviorId&lt;any&gt; from OUT</p>
+<div class="tsd-comment tsd-typography"><p>the name of a <code>BehaviorId&lt;any&gt;</code> from <code>OUT</code></p>
 </div></li>
 <li>
 <h5>mapper: <span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span>old<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Observable</span><span class="tsd-signature-symbol">&lt;</span><a href="../types/ToBehaviorIdValueType.html" class="tsd-signature-type" data-tsd-kind="Type alias">ToBehaviorIdValueType</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">[</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">KOUT</span><span class="tsd-signature-symbol">]</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span>, store<span class="tsd-signature-symbol">: </span><a href="Store.html" class="tsd-signature-type" data-tsd-kind="Class">Store</a>, input<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span>, output<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span>, config<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">Observable</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">TNEW</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span></h5>
-<div class="tsd-comment tsd-typography"><p>a function returning Observable&lt;TNEW&gt;</p>
+<div class="tsd-comment tsd-typography"><p>a function returning <code>Observable&lt;TNEW&gt;</code></p>
 </div>
 <ul class="tsd-parameters">
 <li class="tsd-parameter-signature">
@@ -707,17 +707,17 @@ with OUT2 having the same keys as OUT, but OUT2[KOUT] having type TNEW and OUT[K
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Observable</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">TNEW</span><span class="tsd-signature-symbol">&gt;</span></h4></li></ul></li></ul></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><a href="../types/AddOrReplaceId.html" class="tsd-signature-type" data-tsd-kind="Type alias">AddOrReplaceId</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">KOUT</span><span class="tsd-signature-symbol">, </span><a href="../types/DerivedId.html" class="tsd-signature-type" data-tsd-kind="Type alias">DerivedId</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">TNEW</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/ee21063/src/signals-factory.ts#L752">signals-factory.ts:752</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/92b7b1e/src/signals-factory.ts#L752">signals-factory.ts:752</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="removeEffectId" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>remove<wbr/>Effect<wbr/>Id</span><a href="#removeEffectId" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="removeEffectId.removeEffectId-1">remove<wbr/>Effect<wbr/>Id<span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">(</span>name<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">Omit</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span><a href="#removeEffectId.removeEffectId-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>removeEffectId can be used as a short alternative to mapEffects, if you want
-to remove just a single EffectId from the effect-ids.</p>
+<div class="tsd-comment tsd-typography"><p><code>removeEffectId</code> can be used as a short alternative to <code>mapEffects</code>, if you want
+to remove just a single <code>EffectId</code> from the effect-ids.</p>
 
 <h3>Returns</h3><ul>
-<li>a new SignalsFactory with modified effect-ids</li>
+<li>a new <code>SignalsFactory</code> with modified effect-ids</li>
 </ul>
 </div>
 <section class="tsd-panel tsd-type-parameters">
@@ -732,21 +732,21 @@ to remove just a single EffectId from the effect-ids.</p>
 <ul class="tsd-parameter-list">
 <li>
 <h5>name: <span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span></h5>
-<div class="tsd-comment tsd-typography"><p>the name of in NameToEffectIds to be removed</p>
+<div class="tsd-comment tsd-typography"><p>the name of in <code>NameToEffectIds</code> to be removed</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">Omit</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/ee21063/src/signals-factory.ts#L830">signals-factory.ts:830</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/92b7b1e/src/signals-factory.ts#L830">signals-factory.ts:830</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="removeInputId" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>remove<wbr/>Input<wbr/>Id</span><a href="#removeInputId" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="removeInputId.removeInputId-1">remove<wbr/>Input<wbr/>Id<span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">(</span>name<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Omit</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span><a href="#removeInputId.removeInputId-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>removeInputId can be used as a short alternative to mapInput, if you want
-to remove just a single SignalId from the input signal ids.</p>
+<div class="tsd-comment tsd-typography"><p><code>removeInputId</code> can be used as a short alternative to <code>mapInput</code>, if you want
+to remove just a single <code>SignalId</code> from the input signal ids.</p>
 
 <h3>Returns</h3><ul>
-<li>a new SignalsFactory with modified input signals</li>
+<li>a new <code>SignalsFactory</code> with modified input signals</li>
 </ul>
 </div>
 <section class="tsd-panel tsd-type-parameters">
@@ -754,28 +754,28 @@ to remove just a single SignalId from the input signal ids.</p>
 <ul class="tsd-type-parameters">
 <li>
 <h4>K<span class="tsd-signature-symbol"> extends </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">symbol</span></h4>
-<div class="tsd-comment tsd-typography"><p>a concrete K of the input signals of this factory</p>
+<div class="tsd-comment tsd-typography"><p>a concrete <code>K</code> of the input signals of this factory</p>
 </div></li></ul></section>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
 <h5>name: <span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span></h5>
-<div class="tsd-comment tsd-typography"><p>the name of the SignalId to be removed</p>
+<div class="tsd-comment tsd-typography"><p>the name of the <code>SignalId</code> to be removed</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Omit</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/ee21063/src/signals-factory.ts#L651">signals-factory.ts:651</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/92b7b1e/src/signals-factory.ts#L651">signals-factory.ts:651</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="removeOutputId" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>remove<wbr/>Output<wbr/>Id</span><a href="#removeOutputId" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="removeOutputId.removeOutputId-1">remove<wbr/>Output<wbr/>Id<span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">(</span>name<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">Omit</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span><a href="#removeOutputId.removeOutputId-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>removeOutputId can be used as a short alternative to mapOutput, if you want
-to remove just a single SignalId from the output signal ids.</p>
+<div class="tsd-comment tsd-typography"><p><code>removeOutputId</code> can be used as a short alternative to <code>mapOutput</code>, if you want
+to remove just a single <code>SignalId</code> from the output signal ids.</p>
 
 <h3>Returns</h3><ul>
-<li>a new SignalsFactory with modified output signals</li>
+<li>a new <code>SignalsFactory</code> with modified output signals</li>
 </ul>
 </div>
 <section class="tsd-panel tsd-type-parameters">
@@ -783,28 +783,28 @@ to remove just a single SignalId from the output signal ids.</p>
 <ul class="tsd-type-parameters">
 <li>
 <h4>K<span class="tsd-signature-symbol"> extends </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">symbol</span></h4>
-<div class="tsd-comment tsd-typography"><p>a concrete K of the output signals of this factory</p>
+<div class="tsd-comment tsd-typography"><p>a concrete <code>K</code> of the output signals of this factory</p>
 </div></li></ul></section>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
 <h5>name: <span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span></h5>
-<div class="tsd-comment tsd-typography"><p>the name of the SignalId to be removed</p>
+<div class="tsd-comment tsd-typography"><p>the name of the <code>SignalId</code> to be removed</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">Omit</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/ee21063/src/signals-factory.ts#L730">signals-factory.ts:730</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/92b7b1e/src/signals-factory.ts#L730">signals-factory.ts:730</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="renameEffectId" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>rename<wbr/>Effect<wbr/>Id</span><a href="#renameEffectId" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="renameEffectId.renameEffectId-1">rename<wbr/>Effect<wbr/>Id<span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K1</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K2</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">(</span>oldName<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K1</span>, newName<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K2</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><a href="../types/RenameEffectId.html" class="tsd-signature-type" data-tsd-kind="Type alias">RenameEffectId</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K1</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K2</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span><a href="#renameEffectId.renameEffectId-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>renameEffectId can be used as a short alternative to mapEffects, if you want
-to change the name of a single EffectId in the effect-ids.</p>
+<div class="tsd-comment tsd-typography"><p><code>renameEffectId</code> can be used as a short alternative to <code>mapEffects</code>, if you want
+to change the name of a single <code>EffectId</code> in the effect-ids.</p>
 
 <h3>Returns</h3><ul>
-<li>a new SignalsFactory with modified effect-ids</li>
+<li>a new <code>SignalsFactory</code> with modified effect-ids</li>
 </ul>
 </div>
 <section class="tsd-panel tsd-type-parameters">
@@ -812,11 +812,11 @@ to change the name of a single EffectId in the effect-ids.</p>
 <ul class="tsd-type-parameters">
 <li>
 <h4>K1<span class="tsd-signature-symbol"> extends </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">symbol</span></h4>
-<div class="tsd-comment tsd-typography"><p>a concrete key of EFF</p>
+<div class="tsd-comment tsd-typography"><p>a concrete key of <code>EFF</code></p>
 </div></li>
 <li>
 <h4>K2<span class="tsd-signature-symbol"> extends </span><span class="tsd-signature-type">string</span></h4>
-<div class="tsd-comment tsd-typography"><p>the new name for EFF[K1]</p>
+<div class="tsd-comment tsd-typography"><p>the new name for <code>EFF[K1]</code></p>
 </div></li></ul></section>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
@@ -831,17 +831,17 @@ to change the name of a single EffectId in the effect-ids.</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><a href="../types/RenameEffectId.html" class="tsd-signature-type" data-tsd-kind="Type alias">RenameEffectId</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K1</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K2</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/ee21063/src/signals-factory.ts#L883">signals-factory.ts:883</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/92b7b1e/src/signals-factory.ts#L883">signals-factory.ts:883</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="renameInputId" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>rename<wbr/>Input<wbr/>Id</span><a href="#renameInputId" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="renameInputId.renameInputId-1">rename<wbr/>Input<wbr/>Id<span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K1</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K2</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">(</span>oldName<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K1</span>, newName<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K2</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><a href="../types/RenameId.html" class="tsd-signature-type" data-tsd-kind="Type alias">RenameId</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K1</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K2</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span><a href="#renameInputId.renameInputId-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>renameInputId can be used as a short alternative to mapInput, if you want
-to change the name of a single SignalId in the input signal ids.</p>
+<div class="tsd-comment tsd-typography"><p><code>renameInputId</code> can be used as a short alternative to <code>mapInput</code>, if you want
+to change the name of a single <code>SignalId</code> in the input signal ids.</p>
 
 <h3>Returns</h3><ul>
-<li>a new SignalsFactory with modified input signals</li>
+<li>a new <code>SignalsFactory</code> with modified input signals</li>
 </ul>
 </div>
 <section class="tsd-panel tsd-type-parameters">
@@ -849,11 +849,11 @@ to change the name of a single SignalId in the input signal ids.</p>
 <ul class="tsd-type-parameters">
 <li>
 <h4>K1<span class="tsd-signature-symbol"> extends </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">symbol</span></h4>
-<div class="tsd-comment tsd-typography"><p>a concrete key of IN</p>
+<div class="tsd-comment tsd-typography"><p>a concrete key of <code>IN</code></p>
 </div></li>
 <li>
 <h4>K2<span class="tsd-signature-symbol"> extends </span><span class="tsd-signature-type">string</span></h4>
-<div class="tsd-comment tsd-typography"><p>the new name for IN[K1]</p>
+<div class="tsd-comment tsd-typography"><p>the new name for <code>IN[K1]</code></p>
 </div></li></ul></section>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
@@ -868,17 +868,17 @@ to change the name of a single SignalId in the input signal ids.</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><a href="../types/RenameId.html" class="tsd-signature-type" data-tsd-kind="Type alias">RenameId</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K1</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K2</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/ee21063/src/signals-factory.ts#L629">signals-factory.ts:629</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/92b7b1e/src/signals-factory.ts#L629">signals-factory.ts:629</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="renameOutputId" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>rename<wbr/>Output<wbr/>Id</span><a href="#renameOutputId" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="renameOutputId.renameOutputId-1">rename<wbr/>Output<wbr/>Id<span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K1</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K2</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">(</span>oldName<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K1</span>, newName<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K2</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><a href="../types/RenameId.html" class="tsd-signature-type" data-tsd-kind="Type alias">RenameId</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K1</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K2</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span><a href="#renameOutputId.renameOutputId-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>renameOutputId can be used as a short alternative to mapOutput, if you want
-to change the name of a single SignalId in the output signal ids.</p>
+<div class="tsd-comment tsd-typography"><p><code>renameOutputId</code> can be used as a short alternative to <code>mapOutput</code>, if you want
+to change the name of a single <code>SignalId</code> in the output signal ids.</p>
 
 <h3>Returns</h3><ul>
-<li>a new SignalsFactory with modified output signals</li>
+<li>a new <code>SignalsFactory</code> with modified output signals</li>
 </ul>
 </div>
 <section class="tsd-panel tsd-type-parameters">
@@ -886,11 +886,11 @@ to change the name of a single SignalId in the output signal ids.</p>
 <ul class="tsd-type-parameters">
 <li>
 <h4>K1<span class="tsd-signature-symbol"> extends </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">symbol</span></h4>
-<div class="tsd-comment tsd-typography"><p>a concrete key of OUT</p>
+<div class="tsd-comment tsd-typography"><p>a concrete key of <code>OUT</code></p>
 </div></li>
 <li>
 <h4>K2<span class="tsd-signature-symbol"> extends </span><span class="tsd-signature-type">string</span></h4>
-<div class="tsd-comment tsd-typography"><p>the new name for OUT[K1]</p>
+<div class="tsd-comment tsd-typography"><p>the new name for <code>OUT[K1]</code></p>
 </div></li></ul></section>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
@@ -905,17 +905,17 @@ to change the name of a single SignalId in the output signal ids.</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><a href="../types/RenameId.html" class="tsd-signature-type" data-tsd-kind="Type alias">RenameId</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K1</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K2</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/ee21063/src/signals-factory.ts#L708">signals-factory.ts:708</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/92b7b1e/src/signals-factory.ts#L708">signals-factory.ts:708</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="useExistingEffect" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>use<wbr/>Existing<wbr/>Effect</span><a href="#useExistingEffect" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="useExistingEffect.useExistingEffect-1">use<wbr/>Existing<wbr/>Effect<span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">InputType</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">ResultType</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">B</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">(</span>name<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span>, idGetter<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span>config<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><a href="../types/EffectId.html" class="tsd-signature-type" data-tsd-kind="Type alias">EffectId</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">InputType</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">ResultType</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span>, keepEffectId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">B</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">B</span><span class="tsd-signature-symbol"> extends </span><span class="tsd-signature-type">true</span><span class="tsd-signature-symbol"> ? </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> : </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">Omit</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span><a href="#useExistingEffect.useExistingEffect-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>useExistingEffect can be used to get a factory that uses an existing effect
+<div class="tsd-comment tsd-typography"><p><code>useExistingEffect</code> can be used to get a factory that uses an existing effect
 as the effect referenced by a given effect-id generated by this factory.</p>
 
 <h3>Returns</h3><ul>
-<li>a new SignalsFactory with the concrete type depending on the keepInputId argument</li>
+<li>a new <code>SignalsFactory</code> with the concrete type depending on the <code>keepInputId</code> argument</li>
 </ul>
 </div>
 <section class="tsd-panel tsd-type-parameters">
@@ -936,11 +936,11 @@ as the effect referenced by a given effect-id generated by this factory.</p>
 <ul class="tsd-parameter-list">
 <li>
 <h5>name: <span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span></h5>
-<div class="tsd-comment tsd-typography"><p>a name from this factory&#39;s effects, mapping to a concrete EffectId</p>
+<div class="tsd-comment tsd-typography"><p>a name from this factory&#39;s effects, mapping to a concrete <code>EffectId</code></p>
 </div></li>
 <li>
 <h5>idGetter: <span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span>config<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><a href="../types/EffectId.html" class="tsd-signature-type" data-tsd-kind="Type alias">EffectId</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">InputType</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">ResultType</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span></h5>
-<div class="tsd-comment tsd-typography"><p>a function, getting the config as argument and returning the EffectId of an existing effect that should be used for the EffectId specified by K.</p>
+<div class="tsd-comment tsd-typography"><p>a function, getting the config as argument and returning the <code>EffectId</code> of an existing effect that should be used for the <code>EffectId</code> specified by <code>K</code>.</p>
 </div>
 <ul class="tsd-parameters">
 <li class="tsd-parameter-signature">
@@ -955,11 +955,11 @@ as the effect referenced by a given effect-id generated by this factory.</p>
 <h4 class="tsd-returns-title">Returns <a href="../types/EffectId.html" class="tsd-signature-type" data-tsd-kind="Type alias">EffectId</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">InputType</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">ResultType</span><span class="tsd-signature-symbol">&gt;</span></h4></li></ul></li></ul></li>
 <li>
 <h5>keepEffectId: <span class="tsd-signature-type" data-tsd-kind="Type parameter">B</span></h5>
-<div class="tsd-comment tsd-typography"><p>specifies whether the resulting SignalsFactory should still produce the EffectId referenced by K.</p>
+<div class="tsd-comment tsd-typography"><p>specifies whether the resulting <code>SignalsFactory</code> should still produce the <code>EffectId</code> referenced by <code>K</code>.</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type" data-tsd-kind="Type parameter">B</span><span class="tsd-signature-symbol"> extends </span><span class="tsd-signature-type">true</span><span class="tsd-signature-symbol"> ? </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> : </span><a href="SignalsFactory.html" class="tsd-signature-type" data-tsd-kind="Class">SignalsFactory</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">Omit</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">K</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/ee21063/src/signals-factory.ts#L848">signals-factory.ts:848</a></li></ul></aside></li></ul></section></section></div>
+<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/92b7b1e/src/signals-factory.ts#L848">signals-factory.ts:848</a></li></ul></aside></li></ul></section></section></div>
 <div class="col-4 col-menu menu-sticky-wrap menu-highlight">
 <div class="tsd-navigation settings">
 <details class="tsd-index-accordion"><summary class="tsd-accordion-summary">

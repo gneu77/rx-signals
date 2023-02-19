@@ -21,19 +21,19 @@
 <ul class="tsd-type-parameters">
 <li>
 <h4>IN<span class="tsd-signature-symbol"> extends </span><a href="NameToSignalId.html" class="tsd-signature-type" data-tsd-kind="Type alias">NameToSignalId</a></h4>
-<div class="tsd-comment tsd-typography"><p>concrete <a href="NameToSignalId.html">NameToSignalId</a> defining input signal-ids of the resulting Signals object</p>
+<div class="tsd-comment tsd-typography"><p>concrete <a href="NameToSignalId.html">NameToSignalId</a> defining input signal-ids of the resulting <code>Signals</code> object</p>
 </div></li>
 <li>
 <h4>OUT<span class="tsd-signature-symbol"> extends </span><a href="NameToSignalId.html" class="tsd-signature-type" data-tsd-kind="Type alias">NameToSignalId</a></h4>
-<div class="tsd-comment tsd-typography"><p>concrete <a href="NameToSignalId.html">NameToSignalId</a> defining output signal-ids of the resulting Signals object</p>
+<div class="tsd-comment tsd-typography"><p>concrete <a href="NameToSignalId.html">NameToSignalId</a> defining output signal-ids of the resulting <code>Signals</code> object</p>
 </div></li>
 <li>
 <h4>CONFIG<span class="tsd-signature-symbol"> extends </span><a href="Configuration.html" class="tsd-signature-type" data-tsd-kind="Type alias">Configuration</a></h4>
-<div class="tsd-comment tsd-typography"><p>concrete <a href="Configuration.html">Configuration</a> for the given SignalsBuild</p>
+<div class="tsd-comment tsd-typography"><p>concrete <a href="Configuration.html">Configuration</a> for the given <code>SignalsBuild</code></p>
 </div></li>
 <li>
 <h4>EFF<span class="tsd-signature-symbol"> extends </span><a href="NameToEffectId.html" class="tsd-signature-type" data-tsd-kind="Type alias">NameToEffectId</a></h4>
-<div class="tsd-comment tsd-typography"><p>concrete <a href="NameToEffectId.html">NameToEffectId</a> defining effect-ids of the resulting Signals object</p>
+<div class="tsd-comment tsd-typography"><p>concrete <a href="NameToEffectId.html">NameToEffectId</a> defining effect-ids of the resulting <code>Signals</code> object</p>
 </div></li></ul></section>
 <div class="tsd-type-declaration">
 <h4>Type declaration</h4>
@@ -45,9 +45,9 @@
 <div class="tsd-comment tsd-typography"><p>This type defines a function taking some config-object as argument and returning a <a href="Signals.html">Signals</a> object, hence the type being used as constructor argument for <a href="../classes/SignalsFactory.html">SignalsFactory</a>.
 It creates input- and output-ids, as well as effect-ids.
 It is the reactive counterpart of a class/class-constructor.
-However, the setup method of the returned Signals only adds signals to the store
-for the output-ids. For the input-ids, corresponding signals must be setup somewhere else (e.g. via store.connect).
-If you have a scenario, where setup needs a <a href="SignalId.html">SignalId</a> that is NOT created by <a href="SignalsBuild.html">SignalsBuild</a>, then you can pass it via CONFIG.
+However, the setup method of the returned <code>Signals</code> only adds signals to the store
+for the output-ids. For the input-ids, corresponding signals must be setup somewhere else (e.g. via <code>store.connect</code>).
+If you have a scenario, where setup needs a <a href="SignalId.html">SignalId</a> that is NOT created by <a href="SignalsBuild.html">SignalsBuild</a>, then you can pass it via <code>CONFIG</code>.
 The same holds true for effects (no effects for the generated effect-ids will be added to the store).
 (see <a href="../classes/SignalsFactory.html#useExistingEffect">useExistingEffect</a> on how to delegate from a generated effect-id to an existing effect)</p>
 </div>
@@ -58,7 +58,7 @@ The same holds true for effects (no effects for the generated effect-ids will be
 <h5>config: <span class="tsd-signature-type" data-tsd-kind="Type parameter">CONFIG</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="Signals.html" class="tsd-signature-type" data-tsd-kind="Type alias">Signals</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">IN</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">OUT</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">EFF</span><span class="tsd-signature-symbol">&gt;</span></h4></li></ul></li></ul></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/ee21063/src/signals-factory.ts#L93">signals-factory.ts:93</a></li></ul></aside></div>
+<li>Defined in <a href="https://github.com/gneu77/rx-signals/blob/92b7b1e/src/signals-factory.ts#L93">signals-factory.ts:93</a></li></ul></aside></div>
 <div class="col-4 col-menu menu-sticky-wrap menu-highlight">
 <div class="tsd-navigation settings">
 <details class="tsd-index-accordion"><summary class="tsd-accordion-summary">
@@ -119,6 +119,7 @@ The same holds true for effects (no effects for the generated effect-ids will be
 <li class="tsd-kind-type-alias"><a href="EntityEditOutput.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Entity<wbr/>Edit<wbr/>Output</a></li>
 <li class="tsd-kind-type-alias"><a href="EventId.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Event<wbr/>Id</a></li>
 <li class="tsd-kind-type-alias"><a href="ExtendSetup.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Extend<wbr/>Setup</a></li>
+<li class="tsd-kind-type-alias"><a href="Getter.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Getter</a></li>
 <li class="tsd-kind-type-alias"><a href="KeysOfValueType.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Keys<wbr/>Of<wbr/>Value<wbr/>Type</a></li>
 <li class="tsd-kind-type-alias"><a href="LifecycleHandle.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Lifecycle<wbr/>Handle</a></li>
 <li class="tsd-kind-type-alias"><a href="MapConfig.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Map<wbr/>Config</a></li>
@@ -139,6 +140,7 @@ The same holds true for effects (no effects for the generated effect-ids will be
 <li class="tsd-kind-type-alias"><a href="NameToEffectId.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Name<wbr/>To<wbr/>Effect<wbr/>Id</a></li>
 <li class="tsd-kind-type-alias"><a href="NameToSignalId.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Name<wbr/>To<wbr/>Signal<wbr/>Id</a></li>
 <li class="tsd-kind-type-alias"><a href="NoValueType.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>No<wbr/>Value<wbr/>Type</a></li>
+<li class="tsd-kind-type-alias"><a href="PickReturn.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Pick<wbr/>Return</a></li>
 <li class="tsd-kind-type-alias"><a href="RenameEffectId.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Rename<wbr/>Effect<wbr/>Id</a></li>
 <li class="tsd-kind-type-alias"><a href="RenameId.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Rename<wbr/>Id</a></li>
 <li class="tsd-kind-type-alias"><a href="ResultWithInput.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Result<wbr/>With<wbr/>Input</a></li>
@@ -152,6 +154,7 @@ The same holds true for effects (no effects for the generated effect-ids will be
 <li class="tsd-kind-type-alias"><a href="ToBehaviorIdValueType.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>To<wbr/>Behavior<wbr/>Id<wbr/>Value<wbr/>Type</a></li>
 <li class="tsd-kind-type-alias"><a href="ToEffectType.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>To<wbr/>Effect<wbr/>Type</a></li>
 <li class="tsd-kind-type-alias"><a href="ToEventIdValueType.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>To<wbr/>Event<wbr/>Id<wbr/>Value<wbr/>Type</a></li>
+<li class="tsd-kind-type-alias"><a href="ToKeys.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>To<wbr/>Keys</a></li>
 <li class="tsd-kind-type-alias"><a href="ToObservableValueType.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>To<wbr/>Observable<wbr/>Value<wbr/>Type</a></li>
 <li class="tsd-kind-type-alias"><a href="ToSignalId.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>To<wbr/>Signal<wbr/>Id</a></li>
 <li class="tsd-kind-type-alias"><a href="ToSignalIdValueType.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>To<wbr/>Signal<wbr/>Id<wbr/>Value<wbr/>Type</a></li>
@@ -192,7 +195,9 @@ The same holds true for effects (no effects for the generated effect-ids will be
 <li class="tsd-kind-function"><a href="../functions/isValidModelValidationResult.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg>is<wbr/>Valid<wbr/>Model<wbr/>Validation<wbr/>Result</a></li>
 <li class="tsd-kind-function"><a href="../functions/merge.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg>merge</a></li>
 <li class="tsd-kind-function"><a href="../functions/patchModelValidationResult.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg>patch<wbr/>Model<wbr/>Validation<wbr/>Result</a></li>
-<li class="tsd-kind-function"><a href="../functions/shallowEquals.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg>shallow<wbr/>Equals</a></li></ul></nav></div></div>
+<li class="tsd-kind-function"><a href="../functions/pick.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg>pick</a></li>
+<li class="tsd-kind-function"><a href="../functions/shallowEquals.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg>shallow<wbr/>Equals</a></li>
+<li class="tsd-kind-function"><a href="../functions/toGetter.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg>to<wbr/>Getter</a></li></ul></nav></div></div>
 <div class="container tsd-generator">
 <p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></div>
 <div class="overlay"></div><script src="../assets/main.js"></script></body></html>

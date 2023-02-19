@@ -35,31 +35,31 @@ import {
 export type CombinedEffectResult<Input, Result> = {
   /**
    * The current input (which might differ from the resultInput),
-   * or NO_VALUE, if no input was received yet
+   * or `NO_VALUE`, if no input was received yet
    */
   currentInput: Input | NoValueType;
 
   /**
    * The current result,
-   * or NO_VALUE if no result was received yet,
+   * or `NO_VALUE` if no result was received yet,
    * or the effect produced an error
    */
   result: Result | NoValueType;
 
   /**
    * The input that produced the current result,
-   * or NO_VALUE, if initial result or no result received yet */
+   * or `NO_VALUE`, if initial result or no result received yet */
   resultInput: Input | NoValueType;
 
   /**
-   * In case the effect led to an error (result === NO_VALUE in that case), else undefined */
+   * In case the effect led to an error (`result === NO_VALUE` in that case), else undefined */
   resultError?: any;
 
   /**
    * Indicates whether the effect is currently running.
    * In case of a factory without trigger, this will be true whenever one or multiple
    * of the following conditions is met:
-   * currentInput !== resultInput,
+   * `currentInput !== resultInput`,
    * or an invalidation event has been sent,
    * or the effect has sent a result, but has not yet completed.
    * In case of a factory with result-trigger, in addition to the previous
@@ -82,7 +82,7 @@ export type CombinedEffectResultInErrorState<Input> = {
 };
 
 /**
- * Typeguard to check if a {@link CombinedEffectResult} is a CombinedEffectResultInErrorState
+ * Typeguard to check if a {@link CombinedEffectResult} is a {@link CombinedEffectResultInErrorState}
  */
 export const isCombinedEffectResultInErrorState = <Input, Result>(
   cer: CombinedEffectResult<Input, Result>,
@@ -106,7 +106,7 @@ export type CombinedEffectResultInSuccessState<Input, Result> = {
 };
 
 /**
- * Typeguard to check if a {@link CombinedEffectResult} is a CombinedEffectResultInErrorState
+ * Typeguard to check if a {@link CombinedEffectResult} is a {@link CombinedEffectResultInSuccessState}
  */
 export const isCombinedEffectResultInSuccessState = <Input, Result>(
   cer: CombinedEffectResult<Input, Result>,
@@ -144,10 +144,10 @@ export type EffectSuccess<Input, Result> = {
   /** the effect input that lead to the result */
   resultInput: Input;
 
-  /** the input of the previous completed result, or NO_VALUE */
+  /** the input of the previous completed result, or `NO_VALUE` */
   previousInput: Input | NoValueType;
 
-  /** the previous completed result, or NO_VALUE */
+  /** the previous completed result, or `NO_VALUE` */
   previousResult: Result | NoValueType;
 
   /** has the effect for the given resultInput completed */
@@ -188,13 +188,13 @@ export type EffectInputSignals<Input> = {
 
   /**
    * Event that can be dispatched to trigger the given effect.
-   * This event has only meaning, if withTrigger is configured (see EffectConfiguration),
+   * This event has only meaning, if `withTrigger` is configured (see `EffectConfiguration`),
    * else dispatching it is a no-op. */
   trigger: EventId<undefined>;
 };
 
 /**
- * Type specifying the output {@link EffectSignals} (signals produced by EffectSignals).
+ * Type specifying the output {@link EffectSignals} (signals produced by `EffectSignals`).
  * The {@link EffectSignalsFactory} takes care that subscribing error- or success-events keeps
  * the effect itself lazy (hence only subscribing the combined behavior will subscribe the effect itself).
  *
@@ -223,7 +223,7 @@ export type EffectOutputSignals<Input, Result> = {
 
 /**
  * Type specifying the effect-type of {@link EffectSignals} (the corresponding effects are NOT added to the store
- * by the EffectSignals-setup, but by whoever uses the signals, e.g. by useExistingEffect or via extended configuration plus extendSetup).
+ * by the EffectSignals-setup, but by whoever uses the signals, e.g. by `useExistingEffect` or via extended configuration plus `extendSetup`).
  *
  * @template Input - specifies the input type for the effect
  * @template Result - specifies the result type of the effect
@@ -233,7 +233,7 @@ export type EffectFactoryEffects<Input, Result> = {
 };
 
 /**
- * This type specifies generic effect signals. EffectSignals generically handle side-effects (hence, are an abstraction over side-effects).
+ * This type specifies generic effect signals. `EffectSignals` generically handle side-effects (hence, are an abstraction over side-effects).
  * They fulfill the following requirements:
  * ```markdown
  * 1.) The produced CombinedEffectResult<Input, Result> behavior must be lazy, hence, as long as it is not subscribed,
@@ -246,7 +246,7 @@ export type EffectFactoryEffects<Input, Result> = {
  *     subscribe the result behavior. (the same holds true for the completedSuccesses event-stream)
  * ```
  *
- * See the documentation for {@link EffectConfiguration} for further configuration of EffectSignals.
+ * See the documentation for {@link EffectConfiguration} for further configuration of `EffectSignals`.
  *
  * @template Input - specifies the input type for the effect
  * @template Result - specifies the result type of the effect
@@ -264,7 +264,7 @@ export type EffectSignals<Input, Result> = Signals<
  * @template Result - specifies the result type of the effect
  */
 export type EffectConfiguration<Input, Result> = {
-  /** Function used to determine whether a new input equals the previous one. Defaults to strict equals (a === b) */
+  /** Function used to determine whether a new input equals the previous one. Defaults to strict equals (`a === b`) */
   effectInputEquals?: (a: Input, b: Input) => boolean;
 
   /** Defaults to false. If true, the effect will only be performed in case a trigger event is received (else, whenever the input changes) */
@@ -273,25 +273,25 @@ export type EffectConfiguration<Input, Result> = {
   /** If defined, this function will be used to determine an initial result for the result behavior */
   initialResultGetter?: () => Result;
 
-  /** If defined and ```>0```, then it will be used as milliseconds to debounce new input to the effect (please DON't debounce the input signal yourself, because that would debounce before trigger and/or input equals!) */
+  /** If defined and `>0`, then it will be used as milliseconds to debounce new input to the effect (please DON'T debounce the input signal yourself, because that would debounce before trigger and/or input equals!) */
   effectDebounceTime?: number;
 
-  /** Function to wrap the effect defined by effectId with a custom Effect */
+  /** Function to wrap the effect defined by effectId with a custom `Effect` */
   wrappedEffectGetter?: (effect: Effect<Input, Result>) => Effect<Input, Result>;
 
   /** Specifies whether the input behavior should be subscribed eagerly (defaults to false) */
   eagerInputSubscription?: boolean;
 
-  /** Optional string to be used as argument to calls of getBehaviorId and getEventId */
+  /** Optional string to be used as argument to calls of `getBehaviorId` and `getEventId` */
   nameExtension?: string;
 };
 
 /**
- * Type specifying the {@link SignalsBuild} function for {@link EffectSignals}, hence a function taking a {@link EffectConfiguration} and producing EffectSignals.
+ * Type specifying the {@link SignalsBuild} function for {@link EffectSignals}, hence a function taking a {@link EffectConfiguration} and producing {@link EffectSignals}.
  *
  * @template Input - specifies the input type for the effect
  * @template Result - specifies the result type of the effect
- * @param {EffectConfiguration<Input, Result>} config - the configuration for the EffectSignals
+ * @param {EffectConfiguration<Input, Result>} config - the configuration for the `EffectSignals`
  */
 export type EffectSignalsBuild = <Input, Result>(
   config: EffectConfiguration<Input, Result>,
