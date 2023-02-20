@@ -194,7 +194,7 @@ export type EntityEditEffects<
   /** effect that takes an entity-id or null and returns a corresponding entity (which sets the default model) */
   load: EffectId<LoadInput | null, Entity>;
 
-  /** effect that takes a {@link ModelWithDefault<Entity>} and returns the corresponding {@link ModelValidationResult} */
+  /** effect that takes a {@link ModelWithDefault} for the entity and returns the corresponding {@link ModelValidationResult} */
   validation: EffectId<
     ModelWithDefault<Entity>,
     ModelValidationResult<Entity, ValidationErrorType>
