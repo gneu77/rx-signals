@@ -1,6 +1,6 @@
 {
   "name": "@rx-signals/store",
-  "version": "3.0.0-rc38",
+  "version": "3.0.0-rc39",
   "description": "Reactive state- and effects-management with behaviors and event streams",
   "author": "Gerd Neudert",
   "license": "MIT",
@@ -48,8 +48,8 @@
   },
   "devDependencies": {
     "@types/jest": "^28.1.8",
-    "@typescript-eslint/eslint-plugin": "^5.52.0",
-    "@typescript-eslint/parser": "^5.52.0",
+    "@typescript-eslint/eslint-plugin": "^5.53.0",
+    "@typescript-eslint/parser": "^5.53.0",
     "eslint": "^8.34.0",
     "eslint-config-airbnb-typescript": "^17.0.0",
     "eslint-config-prettier": "^8.5.0",
