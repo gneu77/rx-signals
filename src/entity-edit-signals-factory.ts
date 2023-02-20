@@ -59,14 +59,20 @@ export const shallowEquals = <T>(a: T, b: T): boolean => {
  * Value-type for the derived model behavior produced by {@link EntityEditFactory} Signals.
  *
  * @template Entity - specifies the entity type
- * @template IdType - specifies the entity-id-type
+ * @template LoadInput - specifies the input-type for the loading-effect will be `LoadInput | null` (defaults to number)
+ * @template SaveOutput - specifies the output-type for the save-effect (defaults to LoadInput)
  * @template ValidationErrorType - specifies the error-type for failed validations
  */
-export type EntityEditModel<Entity, IdType = number, ValidationErrorType = string> = {
+export type EntityEditModel<
+  Entity,
+  LoadInput = number,
+  SaveOutput = LoadInput,
+  ValidationErrorType = string,
+> = {
   /**
    * The {@link CombinedEffectResult} for the load effect
    */
-  load: CombinedEffectResult<IdType | null, Entity>;
+  load: CombinedEffectResult<LoadInput | null, Entity>;
 
   /**
    * The {@link ValidatedInputWithResult} for validation and result effects
@@ -74,7 +80,7 @@ export type EntityEditModel<Entity, IdType = number, ValidationErrorType = strin
   edit: ValidatedInputWithResult<
     ModelWithDefault<Entity>,
     ModelValidationResult<Entity, ValidationErrorType>,
-    IdType
+    SaveOutput
   >;
 
   /**
@@ -116,9 +122,9 @@ export type EntityEditModel<Entity, IdType = number, ValidationErrorType = strin
  * Type specifying the input signals for entity edit signals, hence a combination of
  * {@link ModelInputSignals}, an id-behavior (load) and a save event.
  */
-export type EntityEditInput<Entity, IdType = number> = ModelInputSignals<Entity> & {
+export type EntityEditInput<Entity, LoadInput = number> = ModelInputSignals<Entity> & {
   /** input for the load effect */
-  load: DerivedId<IdType | null>;
+  load: DerivedId<LoadInput | null>;
 
   /** trigger the load effect again, if a model for the current input id was already loaded */
   reload: EventId<undefined>;
@@ -130,19 +136,24 @@ export type EntityEditInput<Entity, IdType = number> = ModelInputSignals<Entity>
 /**
  * Type specifying the output signals for entity edit signals,
  */
-export type EntityEditOutput<Entity, IdType = number, ValidationErrorType = string> = {
+export type EntityEditOutput<
+  Entity,
+  LoadInput = number,
+  SaveOutput = LoadInput,
+  ValidationErrorType = string,
+> = {
   /** {@link EffectOutputSignals} for the load effect */
-  load: EffectOutputSignals<IdType | null, Entity>;
+  load: EffectOutputSignals<LoadInput | null, Entity>;
 
   /** {@link ValidatedInputWithResultOutput} for the validation and result effects */
   edit: ValidatedInputWithResultOutput<
     ModelWithDefault<Entity>,
     ModelValidationResult<Entity, ValidationErrorType>,
-    IdType
+    SaveOutput
   >;
 
   /** derived bahavior for the {@link EntityEditModel} */
-  model: DerivedId<EntityEditModel<Entity, IdType, ValidationErrorType>>;
+  model: DerivedId<EntityEditModel<Entity, LoadInput, SaveOutput, ValidationErrorType>>;
 };
 
 /**
@@ -174,9 +185,14 @@ export type EntityEditConfiguration<Entity> = {
 /**
  * Type specifying the effects for {@link EntityEditFactory},
  */
-export type EntityEditEffects<Entity, IdType = number, ValidationErrorType = string> = {
+export type EntityEditEffects<
+  Entity,
+  LoadInput = number,
+  SaveOutput = LoadInput,
+  ValidationErrorType = string,
+> = {
   /** effect that takes an entity-id or null and returns a corresponding entity (which sets the default model) */
-  load: EffectId<IdType | null, Entity>;
+  load: EffectId<LoadInput | null, Entity>;
 
   /** effect that takes a {@link ModelWithDefault<Entity>} and returns the corresponding {@link ModelValidationResult} */
   validation: EffectId<
@@ -185,25 +201,27 @@ export type EntityEditEffects<Entity, IdType = number, ValidationErrorType = str
   >;
 
   /** effect that takes an entity and returns the id of the persisted entity */
-  save: EffectId<Entity, IdType>;
+  save: EffectId<Entity, SaveOutput>;
 };
 
 /**
  * This type specifies a {@link SignalsFactory} producing signals to load, edit and persist an entity.
  *
  * @template Entity - specifies the entity type
- * @template IdType - specifies the entity-id-type
+ * @template LoadInput - specifies the input-type for the loading-effect will be `LoadInput | null` (defaults to number)
+ * @template SaveOutput - specifies the output-type for the save-effect (defaults to LoadInput)
  * @template ValidationErrorType - specifies the error-type for failed validations
  */
 export type EntityEditFactory<
   Entity,
-  IdType = number,
+  LoadInput = number,
+  SaveOutput = LoadInput,
   ValidationErrorType = string,
 > = SignalsFactory<
-  EntityEditInput<Entity, IdType>,
-  EntityEditOutput<Entity, IdType, ValidationErrorType>,
+  EntityEditInput<Entity, LoadInput>,
+  EntityEditOutput<Entity, LoadInput, SaveOutput, ValidationErrorType>,
   EntityEditConfiguration<Entity>,
-  EntityEditEffects<Entity, IdType, ValidationErrorType>
+  EntityEditEffects<Entity, LoadInput, SaveOutput, ValidationErrorType>
 >;
 
 /**
@@ -212,13 +230,19 @@ export type EntityEditFactory<
  * (a) EffectSignalsFactory for entity loading
  * (b) ModelSignalsFactory for entity changing
  * (c) ValidatedInputWithResultSignalsFactory for validation and persiting
+ *
+ * @template Entity - specifies the entity type
+ * @template LoadInput - specifies the input-type for the loading-effect will be `LoadInput | null` (defaults to number)
+ * @template SaveOutput - specifies the output-type for the save-effect (defaults to LoadInput)
+ * @template ValidationErrorType - specifies the error-type for failed validations
  */
 export const getEntityEditSignalsFactory = <
   Entity,
-  IdType = number,
+  LoadInput = number,
+  SaveOutput = LoadInput,
   ValidationErrorType = string,
->(): EntityEditFactory<Entity, IdType, ValidationErrorType> =>
-  getEffectSignalsFactory<IdType | null, Entity>() // model-fetch (fetching the edit entity)
+>(): EntityEditFactory<Entity, LoadInput, SaveOutput, ValidationErrorType> =>
+  getEffectSignalsFactory<LoadInput | null, Entity>() // model-fetch (fetching the edit entity)
     .renameInputId('input', 'load')
     .compose(getModelSignalsFactory<Entity>()) // editing-model
     .connectObservable(
@@ -230,12 +254,12 @@ export const getEntityEditSignalsFactory = <
       getValidatedInputWithResultSignalsFactory<
         ModelWithDefault<Entity>,
         ModelValidationResult<Entity, ValidationErrorType>,
-        IdType
+        SaveOutput
       >(),
     ) // model validation and save
     .connect('modelWithDefault', 'input', false) // connecting editing-model and vali-persist-input
     .addOutputId('combinedModel', () =>
-      getDerivedId<EntityEditModel<Entity, IdType, ValidationErrorType>>(),
+      getDerivedId<EntityEditModel<Entity, LoadInput, SaveOutput, ValidationErrorType>>(),
     )
     .mapConfig((config: EntityEditConfiguration<Entity>) => ({
       c1: {
@@ -254,7 +278,7 @@ export const getEntityEditSignalsFactory = <
       onSaveCompletedEvent: config.onSaveCompletedEvent,
       entityEquals: config.entityEquals,
     }))
-    .addEffectId('save', () => getEffectId<Entity, IdType>())
+    .addEffectId('save', () => getEffectId<Entity, SaveOutput>())
     .extendSetup((store, _, output, config, effects) => {
       store.addEffect(effects.result, (modelWithResult, st, prevInput, prevResult) =>
         st.getEffect(effects.save).pipe(
@@ -285,11 +309,11 @@ export const getEntityEditSignalsFactory = <
           ]).pipe(
             map(
               ([load, edit]): [
-                CombinedEffectResult<IdType | null, Entity>,
+                CombinedEffectResult<LoadInput | null, Entity>,
                 ValidatedInputWithResult<
                   ModelWithDefault<Entity>,
                   ModelValidationResult<Entity, ValidationErrorType>,
-                  IdType
+                  SaveOutput
                 >,
                 boolean,
                 boolean,
@@ -350,7 +374,7 @@ export const getEntityEditSignalsFactory = <
       }
     })
     .mapInput(
-      (ids): EntityEditInput<Entity, IdType> => ({
+      (ids): EntityEditInput<Entity, LoadInput> => ({
         load: ids.load,
         reload: ids.invalidate,
         save: ids.resultTrigger,
@@ -363,7 +387,7 @@ export const getEntityEditSignalsFactory = <
       }),
     )
     .mapOutput(
-      (ids): EntityEditOutput<Entity, IdType, ValidationErrorType> => ({
+      (ids): EntityEditOutput<Entity, LoadInput, SaveOutput, ValidationErrorType> => ({
         load: {
           combined: ids.conflicts1.combined,
           result: ids.conflicts1.result,
@@ -386,7 +410,7 @@ export const getEntityEditSignalsFactory = <
       }),
     )
     .mapEffects(
-      (ids): EntityEditEffects<Entity, IdType, ValidationErrorType> => ({
+      (ids): EntityEditEffects<Entity, LoadInput, SaveOutput, ValidationErrorType> => ({
         load: ids.id,
         validation: ids.validation,
         save: ids.save,
