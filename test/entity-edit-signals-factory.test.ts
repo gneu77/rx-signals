@@ -10,6 +10,7 @@ import {
   getEntityEditSignalsFactory,
   shallowEquals,
 } from './../src/entity-edit-signals-factory';
+import { ModelWithDefault } from './../src/model-signals-factory';
 import { ModelValidationResult, patchModelValidationResult, toGetter } from './../src/type-utils';
 
 type MyEntity = {
@@ -65,7 +66,10 @@ describe('EntityEditSignalsFactory', () => {
       it('should give edit behavior and handle update', async () => {
         const sequence = expectSequence(store.getBehavior(outputSignals.edit.combined), [
           {
-            currentInput: defaultEntity,
+            currentInput: {
+              default: defaultEntity,
+              model: defaultEntity,
+            },
             validationPending: true,
             isValid: false,
             validatedInput: NO_VALUE,
@@ -75,7 +79,10 @@ describe('EntityEditSignalsFactory', () => {
             result: NO_VALUE,
           },
           {
-            currentInput: { ...defaultEntity, id: 5 },
+            currentInput: {
+              default: defaultEntity,
+              model: { ...defaultEntity, id: 5 },
+            },
             validationPending: true,
             isValid: false,
             validatedInput: NO_VALUE,
@@ -99,7 +106,10 @@ describe('EntityEditSignalsFactory', () => {
               result: NO_VALUE,
             },
             edit: {
-              currentInput: defaultEntity,
+              currentInput: {
+                default: defaultEntity,
+                model: defaultEntity,
+              },
               validationPending: true,
               isValid: false,
               validatedInput: NO_VALUE,
@@ -132,7 +142,10 @@ describe('EntityEditSignalsFactory', () => {
               result: NO_VALUE,
             },
             edit: {
-              currentInput: defaultEntity,
+              currentInput: {
+                default: defaultEntity,
+                model: defaultEntity,
+              },
               validationPending: true,
               isValid: false,
               validatedInput: NO_VALUE,
@@ -155,7 +168,10 @@ describe('EntityEditSignalsFactory', () => {
               result: NO_VALUE,
             },
             edit: {
-              currentInput: expectedEntity,
+              currentInput: {
+                default: defaultEntity,
+                model: expectedEntity,
+              },
               validationPending: true,
               isValid: false,
               validatedInput: NO_VALUE,
@@ -189,23 +205,25 @@ describe('EntityEditSignalsFactory', () => {
         ).pipe(delay(50));
       };
 
-      const validationEffect: Effect<MyEntity, ModelValidationResult<MyEntity>> = (
-        input: MyEntity,
-        _,
-        prevInput,
-        prevResult,
-      ) =>
-        of<ModelValidationResult<MyEntity>>(input.d.length < 1 ? { d: 'min size 1' } : null).pipe(
-          map(v => (!!input.b ? v : patchModelValidationResult(v, { b: 'mandatory' }))), // 'b' is mandatory
+      const validationEffect: Effect<
+        ModelWithDefault<MyEntity>,
+        ModelValidationResult<MyEntity>
+      > = (input: ModelWithDefault<MyEntity>, _, prevInput, prevResult) =>
+        of<ModelValidationResult<MyEntity>>(
+          input.model.d.length < 1 ? { d: 'min size 1' } : null,
+        ).pipe(
+          map(v => (!!input.model.b ? v : patchModelValidationResult(v, { b: 'mandatory' }))), // 'b' is mandatory
           switchMap(
             v =>
               (toGetter(v)('b').get() ?? null) !== null // is 'b' already validated as being missing?
                 ? of(v) // 'b' is missing, so validation is finished (it cannot have unique violation)
-                : toGetter(prevInput)('b').get() === input.b // is current 'b' the same as in the previous input?
+                : toGetter(prevInput)('model')('b').get() === input.model.b // is current 'b' the same as in the previous input?
                 ? of(patchModelValidationResult(v, { b: toGetter(prevResult)('b').get() })) // it's the same, so we can take it's previous validation result
                 : of(
                     // it's not the same, so "we have to call our backend to validate uniqueness"
-                    patchModelValidationResult(v, { b: input.b === 'exists' ? 'exists' : null }),
+                    patchModelValidationResult(v, {
+                      b: input.model.b === 'exists' ? 'exists' : null,
+                    }),
                   ).pipe(delay(10), startWith(v)), // while the "backend call is running" (the delay), we already dispatch the validation so far
           ),
         );
@@ -231,7 +249,10 @@ describe('EntityEditSignalsFactory', () => {
               result: NO_VALUE,
             },
             edit: {
-              currentInput: defaultEntity,
+              currentInput: {
+                default: defaultEntity,
+                model: defaultEntity,
+              },
               validationPending: true,
               isValid: false,
               validatedInput: NO_VALUE,
@@ -254,7 +275,10 @@ describe('EntityEditSignalsFactory', () => {
               result: NO_VALUE,
             },
             edit: {
-              currentInput: defaultEntity,
+              currentInput: {
+                default: defaultEntity,
+                model: defaultEntity,
+              },
               validationPending: true,
               isValid: false,
               validatedInput: NO_VALUE,
@@ -277,10 +301,16 @@ describe('EntityEditSignalsFactory', () => {
               result: NO_VALUE,
             },
             edit: {
-              currentInput: defaultEntity,
+              currentInput: {
+                default: defaultEntity,
+                model: defaultEntity,
+              },
               validationPending: true,
               isValid: false,
-              validatedInput: defaultEntity,
+              validatedInput: {
+                default: defaultEntity,
+                model: defaultEntity,
+              },
               validationResult: null,
               resultPending: false,
               resultInput: NO_VALUE,
@@ -300,10 +330,16 @@ describe('EntityEditSignalsFactory', () => {
               result: NO_VALUE,
             },
             edit: {
-              currentInput: defaultEntity,
+              currentInput: {
+                default: defaultEntity,
+                model: defaultEntity,
+              },
               validationPending: true,
               isValid: false,
-              validatedInput: defaultEntity,
+              validatedInput: {
+                default: defaultEntity,
+                model: defaultEntity,
+              },
               validationResult: { b: null },
               resultPending: false,
               resultInput: NO_VALUE,
@@ -323,10 +359,16 @@ describe('EntityEditSignalsFactory', () => {
               result: NO_VALUE,
             },
             edit: {
-              currentInput: defaultEntity,
+              currentInput: {
+                default: defaultEntity,
+                model: defaultEntity,
+              },
               validationPending: false,
               isValid: true,
-              validatedInput: defaultEntity,
+              validatedInput: {
+                default: defaultEntity,
+                model: defaultEntity,
+              },
               validationResult: { b: null },
               resultPending: false,
               resultInput: NO_VALUE,
@@ -346,10 +388,16 @@ describe('EntityEditSignalsFactory', () => {
               result: { id: 3, b: 'loaded', d: [3] },
             },
             edit: {
-              currentInput: defaultEntity,
+              currentInput: {
+                default: defaultEntity,
+                model: defaultEntity,
+              },
               validationPending: false,
               isValid: true,
-              validatedInput: defaultEntity,
+              validatedInput: {
+                default: defaultEntity,
+                model: defaultEntity,
+              },
               validationResult: { b: null },
               resultPending: false,
               resultInput: NO_VALUE,
@@ -369,10 +417,16 @@ describe('EntityEditSignalsFactory', () => {
               result: { id: 3, b: 'loaded', d: [3] },
             },
             edit: {
-              currentInput: defaultEntity,
+              currentInput: {
+                default: defaultEntity,
+                model: defaultEntity,
+              },
               validationPending: false,
               isValid: true,
-              validatedInput: defaultEntity,
+              validatedInput: {
+                default: defaultEntity,
+                model: defaultEntity,
+              },
               validationResult: { b: null },
               resultPending: false,
               resultInput: NO_VALUE,
@@ -392,10 +446,16 @@ describe('EntityEditSignalsFactory', () => {
               result: { id: 3, b: 'loaded', d: [3] },
             },
             edit: {
-              currentInput: { id: 3, b: 'loaded', d: [3] },
+              currentInput: {
+                default: { id: 3, b: 'loaded', d: [3] },
+                model: { id: 3, b: 'loaded', d: [3] },
+              },
               validationPending: true,
               isValid: false,
-              validatedInput: defaultEntity,
+              validatedInput: {
+                default: defaultEntity,
+                model: defaultEntity,
+              },
               validationResult: { b: null },
               resultPending: false,
               resultInput: NO_VALUE,
@@ -415,10 +475,16 @@ describe('EntityEditSignalsFactory', () => {
               result: { id: 3, b: 'loaded', d: [3] },
             },
             edit: {
-              currentInput: { id: 3, b: 'loaded', d: [3] },
+              currentInput: {
+                default: { id: 3, b: 'loaded', d: [3] },
+                model: { id: 3, b: 'loaded', d: [3] },
+              },
               validationPending: true,
               isValid: false,
-              validatedInput: { id: 3, b: 'loaded', d: [3] },
+              validatedInput: {
+                default: { id: 3, b: 'loaded', d: [3] },
+                model: { id: 3, b: 'loaded', d: [3] },
+              },
               validationResult: null,
               resultPending: false,
               resultInput: NO_VALUE,
@@ -438,10 +504,16 @@ describe('EntityEditSignalsFactory', () => {
               result: { id: 3, b: 'loaded', d: [3] },
             },
             edit: {
-              currentInput: { id: 3, b: 'loaded', d: [3] },
+              currentInput: {
+                default: { id: 3, b: 'loaded', d: [3] },
+                model: { id: 3, b: 'loaded', d: [3] },
+              },
               validationPending: true,
               isValid: false,
-              validatedInput: { id: 3, b: 'loaded', d: [3] },
+              validatedInput: {
+                default: { id: 3, b: 'loaded', d: [3] },
+                model: { id: 3, b: 'loaded', d: [3] },
+              },
               validationResult: { b: null },
               resultPending: false,
               resultInput: NO_VALUE,
@@ -461,10 +533,16 @@ describe('EntityEditSignalsFactory', () => {
               result: { id: 3, b: 'loaded', d: [3] },
             },
             edit: {
-              currentInput: { id: 3, b: 'loaded', d: [3] },
+              currentInput: {
+                default: { id: 3, b: 'loaded', d: [3] },
+                model: { id: 3, b: 'loaded', d: [3] },
+              },
               validationPending: false,
               isValid: true,
-              validatedInput: { id: 3, b: 'loaded', d: [3] },
+              validatedInput: {
+                default: { id: 3, b: 'loaded', d: [3] },
+                model: { id: 3, b: 'loaded', d: [3] },
+              },
               validationResult: { b: null },
               resultPending: false,
               resultInput: NO_VALUE,
@@ -490,60 +568,96 @@ describe('EntityEditSignalsFactory', () => {
           ),
           [
             {
-              currentInput: defaultEntity,
+              currentInput: {
+                default: defaultEntity,
+                model: defaultEntity,
+              },
               validationPending: true,
               isValid: false,
-              validatedInput: defaultEntity,
+              validatedInput: {
+                default: defaultEntity,
+                model: defaultEntity,
+              },
               validationResult: null,
               resultPending: false,
               resultInput: NO_VALUE,
               result: NO_VALUE,
             },
             {
-              currentInput: defaultEntity,
+              currentInput: {
+                default: defaultEntity,
+                model: defaultEntity,
+              },
               validationPending: true,
               isValid: false,
-              validatedInput: defaultEntity,
+              validatedInput: {
+                default: defaultEntity,
+                model: defaultEntity,
+              },
               validationResult: { b: null },
               resultPending: false,
               resultInput: NO_VALUE,
               result: NO_VALUE,
             },
             {
-              currentInput: defaultEntity,
+              currentInput: {
+                default: defaultEntity,
+                model: defaultEntity,
+              },
               validationPending: false,
               isValid: true,
-              validatedInput: defaultEntity,
+              validatedInput: {
+                default: defaultEntity,
+                model: defaultEntity,
+              },
               validationResult: { b: null },
               resultPending: false,
               resultInput: NO_VALUE,
               result: NO_VALUE,
             },
             {
-              currentInput: { id: 3, b: 'loaded', d: [3] },
+              currentInput: {
+                default: { id: 3, b: 'loaded', d: [3] },
+                model: { id: 3, b: 'loaded', d: [3] },
+              },
               validationPending: true,
               isValid: false,
-              validatedInput: { id: 3, b: 'loaded', d: [3] },
+              validatedInput: {
+                default: { id: 3, b: 'loaded', d: [3] },
+                model: { id: 3, b: 'loaded', d: [3] },
+              },
               validationResult: null,
               resultPending: false,
               resultInput: NO_VALUE,
               result: NO_VALUE,
             },
             {
-              currentInput: { id: 3, b: 'loaded', d: [3] },
+              currentInput: {
+                default: { id: 3, b: 'loaded', d: [3] },
+                model: { id: 3, b: 'loaded', d: [3] },
+              },
               validationPending: true,
               isValid: false,
-              validatedInput: { id: 3, b: 'loaded', d: [3] },
+              validatedInput: {
+                default: { id: 3, b: 'loaded', d: [3] },
+                model: { id: 3, b: 'loaded', d: [3] },
+              },
               validationResult: { b: null },
               resultPending: false,
               resultInput: NO_VALUE,
               result: NO_VALUE,
             },
             {
-              currentInput: { id: 3, b: 'loaded', d: [3] },
+              currentInput: {
+                default: { id: 3, b: 'loaded', d: [3] },
+                model: { id: 3, b: 'loaded', d: [3] },
+              },
               validationPending: false,
               isValid: true,
-              validatedInput: { id: 3, b: 'loaded', d: [3] },
+              validatedInput: {
+                default: { id: 3, b: 'loaded', d: [3] },
+                model: { id: 3, b: 'loaded', d: [3] },
+              },
               validationResult: { b: null },
               resultPending: false,
               resultInput: NO_VALUE,
@@ -562,40 +676,64 @@ describe('EntityEditSignalsFactory', () => {
           ),
           [
             {
-              currentInput: { id: 3, b: 'loaded', d: [3] },
+              currentInput: {
+                default: { id: 3, b: 'loaded', d: [3] },
+                model: { id: 3, b: 'loaded', d: [3] },
+              },
               validationPending: false,
               isValid: true,
-              validatedInput: { id: 3, b: 'loaded', d: [3] },
+              validatedInput: {
+                default: { id: 3, b: 'loaded', d: [3] },
+                model: { id: 3, b: 'loaded', d: [3] },
+              },
               validationResult: { b: null },
               resultPending: false,
               resultInput: NO_VALUE,
               result: NO_VALUE,
             },
             {
-              currentInput: { id: 3, b: 'exists', d: [3] },
+              currentInput: {
+                default: { id: 3, b: 'loaded', d: [3] },
+                model: { id: 3, b: 'exists', d: [3] },
+              },
               validationPending: true,
               isValid: false,
-              validatedInput: { id: 3, b: 'exists', d: [3] },
+              validatedInput: {
+                default: { id: 3, b: 'loaded', d: [3] },
+                model: { id: 3, b: 'exists', d: [3] },
+              },
               validationResult: null,
               resultPending: false,
               resultInput: NO_VALUE,
               result: NO_VALUE,
             },
             {
-              currentInput: { id: 3, b: 'exists', d: [3] },
+              currentInput: {
+                default: { id: 3, b: 'loaded', d: [3] },
+                model: { id: 3, b: 'exists', d: [3] },
+              },
               validationPending: true,
               isValid: false,
-              validatedInput: { id: 3, b: 'exists', d: [3] },
+              validatedInput: {
+                default: { id: 3, b: 'loaded', d: [3] },
+                model: { id: 3, b: 'exists', d: [3] },
+              },
               validationResult: { b: 'exists' },
               resultPending: false,
               resultInput: NO_VALUE,
               result: NO_VALUE,
             },
             {
-              currentInput: { id: 3, b: 'exists', d: [3] },
+              currentInput: {
+                default: { id: 3, b: 'loaded', d: [3] },
+                model: { id: 3, b: 'exists', d: [3] },
+              },
               validationPending: false,
               isValid: false,
-              validatedInput: { id: 3, b: 'exists', d: [3] },
+              validatedInput: {
+                default: { id: 3, b: 'loaded', d: [3] },
+                model: { id: 3, b: 'exists', d: [3] },
+              },
               validationResult: { b: 'exists' },
               resultPending: false,
               resultInput: NO_VALUE,
@@ -619,10 +757,16 @@ describe('EntityEditSignalsFactory', () => {
                 result: { id: 3, b: 'loaded', d: [3] },
               },
               edit: {
-                currentInput: defaultEntity,
+                currentInput: {
+                  default: defaultEntity,
+                  model: defaultEntity,
+                },
                 validationPending: false,
                 isValid: true,
-                validatedInput: defaultEntity,
+                validatedInput: {
+                  default: defaultEntity,
+                  model: defaultEntity,
+                },
                 validationResult: { b: null },
                 resultPending: false,
                 resultInput: NO_VALUE,
@@ -642,10 +786,16 @@ describe('EntityEditSignalsFactory', () => {
                 result: { id: 3, b: 'loaded', d: [3] },
               },
               edit: {
-                currentInput: { id: 3, b: 'loaded', d: [3] },
+                currentInput: {
+                  default: { id: 3, b: 'loaded', d: [3] },
+                  model: { id: 3, b: 'loaded', d: [3] },
+                },
                 validationPending: false,
                 isValid: true,
-                validatedInput: { id: 3, b: 'loaded', d: [3] },
+                validatedInput: {
+                  default: { id: 3, b: 'loaded', d: [3] },
+                  model: { id: 3, b: 'loaded', d: [3] },
+                },
                 validationResult: { b: null },
                 resultPending: false,
                 resultInput: NO_VALUE,
@@ -673,10 +823,16 @@ describe('EntityEditSignalsFactory', () => {
                 result: { id: 3, b: 'loaded', d: [3] },
               },
               edit: {
-                currentInput: { id: 3, b: 'loaded', d: [3] },
+                currentInput: {
+                  default: { id: 3, b: 'loaded', d: [3] },
+                  model: { id: 3, b: 'loaded', d: [3] },
+                },
                 validationPending: false,
                 isValid: true,
-                validatedInput: { id: 3, b: 'loaded', d: [3] },
+                validatedInput: {
+                  default: { id: 3, b: 'loaded', d: [3] },
+                  model: { id: 3, b: 'loaded', d: [3] },
+                },
                 validationResult: { b: null },
                 resultPending: false,
                 resultInput: NO_VALUE,
@@ -696,13 +852,22 @@ describe('EntityEditSignalsFactory', () => {
                 result: { id: 3, b: 'loaded', d: [3] },
               },
               edit: {
-                currentInput: { id: 3, b: 'loaded', d: [3] },
+                currentInput: {
+                  default: { id: 3, b: 'loaded', d: [3] },
+                  model: { id: 3, b: 'loaded', d: [3] },
+                },
                 validationPending: false,
                 isValid: true,
-                validatedInput: { id: 3, b: 'loaded', d: [3] },
+                validatedInput: {
+                  default: { id: 3, b: 'loaded', d: [3] },
+                  model: { id: 3, b: 'loaded', d: [3] },
+                },
                 validationResult: { b: null },
                 resultPending: false,
-                resultInput: { id: 3, b: 'loaded', d: [3] },
+                resultInput: {
+                  default: { id: 3, b: 'loaded', d: [3] },
+                  model: { id: 3, b: 'loaded', d: [3] },
+                },
                 result: 3,
               },
               entity: { id: 3, b: 'loaded', d: [3] },
@@ -714,6 +879,78 @@ describe('EntityEditSignalsFactory', () => {
           ],
         );
         store.dispatch(inputSignals.save);
+        await sequence2;
+      });
+
+      it('should trigger reload', async () => {
+        const sequence = expectSequence(
+          store.getBehavior(outputSignals.model).pipe(
+            map(m => m.load),
+            distinctUntilChanged(),
+          ),
+          [
+            {
+              currentInput: NO_VALUE,
+              resultPending: false,
+              resultInput: NO_VALUE,
+              result: NO_VALUE,
+            },
+            {
+              currentInput: 3,
+              resultPending: true,
+              resultInput: NO_VALUE,
+              result: NO_VALUE,
+            },
+            {
+              currentInput: 3,
+              resultPending: true,
+              resultInput: 3,
+              result: { id: 3, b: 'loaded', d: [3] },
+            },
+            {
+              currentInput: 3,
+              resultPending: false,
+              resultInput: 3,
+              result: { id: 3, b: 'loaded', d: [3] },
+            },
+          ],
+        );
+        inputSubject.next(3);
+        await sequence;
+
+        const sequence2 = expectSequence(
+          store.getBehavior(outputSignals.model).pipe(
+            map(m => m.load),
+            distinctUntilChanged(),
+          ),
+          [
+            {
+              currentInput: 3,
+              resultPending: false,
+              resultInput: 3,
+              result: { id: 3, b: 'loaded', d: [3] },
+            },
+            {
+              currentInput: 3,
+              resultPending: true,
+              resultInput: 3,
+              result: { id: 3, b: 'loaded', d: [3] },
+            },
+            {
+              currentInput: 3,
+              resultPending: true,
+              resultInput: 3,
+              result: { id: 3, b: 'loaded', d: [3] },
+            },
+            {
+              currentInput: 3,
+              resultPending: false,
+              resultInput: 3,
+              result: { id: 3, b: 'loaded', d: [3] },
+            },
+          ],
+        );
+        store.dispatch(inputSignals.reload);
         await sequence2;
       });
     });

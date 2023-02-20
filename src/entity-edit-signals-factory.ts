@@ -1,11 +1,15 @@
 import { combineLatest, distinctUntilChanged, map, startWith } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { filter, switchMap, take } from 'rxjs/operators';
 import {
   CombinedEffectResult,
   EffectOutputSignals,
   getEffectSignalsFactory,
 } from './effect-signals-factory';
-import { ModelInputSignals, getModelSignalsFactory } from './model-signals-factory';
+import {
+  ModelInputSignals,
+  ModelWithDefault,
+  getModelSignalsFactory,
+} from './model-signals-factory';
 import { SignalsFactory } from './signals-factory';
 import {
   DerivedId,
@@ -13,6 +17,7 @@ import {
   EventId,
   NO_VALUE,
   getDerivedId,
+  getEffectId,
   isNotNoValueType,
 } from './store-utils';
 import { ModelValidationResult, isValidModelValidationResult } from './type-utils';
@@ -67,19 +72,20 @@ export type EntityEditModel<Entity, IdType = number, ValidationErrorType = strin
    * The {@link ValidatedInputWithResult} for validation and result effects
    */
   edit: ValidatedInputWithResult<
-    Entity,
+    ModelWithDefault<Entity>,
     ModelValidationResult<Entity, ValidationErrorType>,
     IdType
   >;
 
   /**
-   * The current Entity state (matching edit.currentInput)
+   * The current Entity state (matching edit.currentInput.model)
+   * If you need to compare with the current default, use edit.currentInput instead.
    */
   entity: Entity;
 
   /**
    * Current {@link ModelValidationResult} for entity.
-   * If entity === edit.validatedInput, this matches edit.validationResult, else it's null.
+   * If entity === edit.validatedInput.model, this matches edit.validationResult, else it's null.
    */
   validation: ModelValidationResult<Entity, ValidationErrorType>;
 
@@ -114,6 +120,9 @@ export type EntityEditInput<Entity, IdType = number> = ModelInputSignals<Entity>
   /** input for the load effect */
   load: DerivedId<IdType | null>;
 
+  /** trigger the load effect again, if a model for the current input id was already loaded */
+  reload: EventId<undefined>;
+
   /** input for the save effect */
   save: EventId<undefined>;
 };
@@ -127,7 +136,7 @@ export type EntityEditOutput<Entity, IdType = number, ValidationErrorType = stri
 
   /** {@link ValidatedInputWithResultOutput} for the validation and result effects */
   edit: ValidatedInputWithResultOutput<
-    Entity,
+    ModelWithDefault<Entity>,
     ModelValidationResult<Entity, ValidationErrorType>,
     IdType
   >;
@@ -157,17 +166,23 @@ export type EntityEditConfiguration<Entity> = {
 
   /** specifies whether the load behavior should be subscribed eagerly (defaults to false) */
   eagerLoadSubscription?: boolean;
+
+  /** if specified with a value `>0`, this will be used as debounce-time for the validation-effect */
+  validationEffectDebounceTime?: number;
 };
 
 /**
  * Type specifying the effects for {@link EntityEditFactory},
  */
 export type EntityEditEffects<Entity, IdType = number, ValidationErrorType = string> = {
-  /** effect that takes entity id or null and returns a corresponding entity (which sets the default model) */
+  /** effect that takes an entity-id or null and returns a corresponding entity (which sets the default model) */
   load: EffectId<IdType | null, Entity>;
 
-  /** effect that takes an entity and returns the corresponding {@link ModelValidationResult} */
-  validation: EffectId<Entity, ModelValidationResult<Entity, ValidationErrorType>>;
+  /** effect that takes a {@link ModelWithDefault<Entity>} and returns the corresponding {@link ModelValidationResult} */
+  validation: EffectId<
+    ModelWithDefault<Entity>,
+    ModelValidationResult<Entity, ValidationErrorType>
+  >;
 
   /** effect that takes an entity and returns the id of the persisted entity */
   save: EffectId<Entity, IdType>;
@@ -213,12 +228,12 @@ export const getEntityEditSignalsFactory = <
     ) // connecting entity model-fetch-result to editing-model
     .compose(
       getValidatedInputWithResultSignalsFactory<
-        Entity,
+        ModelWithDefault<Entity>,
         ModelValidationResult<Entity, ValidationErrorType>,
         IdType
       >(),
     ) // model validation and save
-    .connect('model', 'input', false) // connecting editing-model and vali-persist
+    .connect('modelWithDefault', 'input', false) // connecting editing-model and vali-persist-input
     .addOutputId('combinedModel', () =>
       getDerivedId<EntityEditModel<Entity, IdType, ValidationErrorType>>(),
     )
@@ -234,11 +249,26 @@ export const getEntityEditSignalsFactory = <
       c2: {
         isValidationResultValid: isValidModelValidationResult,
         withResultTrigger: true,
+        validationEffectDebounceTime: config.validationEffectDebounceTime,
       },
       onSaveCompletedEvent: config.onSaveCompletedEvent,
       entityEquals: config.entityEquals,
     }))
-    .extendSetup((store, _, output, config) => {
+    .addEffectId('save', () => getEffectId<Entity, IdType>())
+    .extendSetup((store, _, output, config, effects) => {
+      store.addEffect(effects.result, (modelWithResult, st, prevInput, prevResult) =>
+        st.getEffect(effects.save).pipe(
+          take(1), // without this, the effect would never complete
+          switchMap(eff =>
+            eff(
+              modelWithResult.model,
+              st,
+              isNotNoValueType(prevInput) ? prevInput.model : NO_VALUE,
+              prevResult,
+            ),
+          ),
+        ),
+      );
       store.addDerivedState(
         output.combinedModel,
         combineLatest([
@@ -257,7 +287,7 @@ export const getEntityEditSignalsFactory = <
               ([load, edit]): [
                 CombinedEffectResult<IdType | null, Entity>,
                 ValidatedInputWithResult<
-                  Entity,
+                  ModelWithDefault<Entity>,
                   ModelValidationResult<Entity, ValidationErrorType>,
                   IdType
                 >,
@@ -297,7 +327,10 @@ export const getEntityEditSignalsFactory = <
               ]),
             ),
         ]).pipe(
-          filter(([[, edit], [entity]]) => edit.currentInput === entity),
+          filter(
+            ([[, edit], [entity]]) =>
+              isNotNoValueType(edit.currentInput) && edit.currentInput.model === entity,
+          ),
           map(([[load, edit, loading, disabled, validation], [entity, changed]]) => ({
             load,
             edit,
@@ -319,6 +352,7 @@ export const getEntityEditSignalsFactory = <
     .mapInput(
       (ids): EntityEditInput<Entity, IdType> => ({
         load: ids.load,
+        reload: ids.invalidate,
         save: ids.resultTrigger,
         set: ids.set,
         setAsDefault: ids.setAsDefault,
@@ -355,6 +389,6 @@ export const getEntityEditSignalsFactory = <
       (ids): EntityEditEffects<Entity, IdType, ValidationErrorType> => ({
         load: ids.id,
         validation: ids.validation,
-        save: ids.result,
+        save: ids.save,
       }),
     );
