@@ -16,7 +16,7 @@ export class SourceObservable<T> {
     private readonly sourceId: symbol,
     private readonly sourceObservable: Observable<T>,
     private readonly lazySubscription: boolean,
-    private readonly initialValueOrValueGetter: T | (() => T) | NoValueType = NO_VALUE,
+    private readonly initialValueOrValueGetter: T | (() => T) | NoValueType,
   ) {}
 
   getId(): symbol {
@@ -62,13 +62,13 @@ export class SourceObservable<T> {
         }
       }
       contextHandle.withContext(() => {
-        this.subscription = this.sourceObservable.subscribe(
-          next => {
-            targetSubject.next(next);
+        this.subscription = this.sourceObservable.subscribe({
+          next: value => {
+            targetSubject.next(value);
           },
           error,
           complete,
-        );
+        });
       });
     } finally {
       this.subscriptionPending = false;

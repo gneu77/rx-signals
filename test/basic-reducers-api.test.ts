@@ -1,6 +1,7 @@
 import { Store } from '../src/store';
-import { getEventId, getStateId } from '../src/store-utils';
+import { getEventId } from '../src/store-utils';
 import { expectSequence } from '../src/test-utils/test-utils';
+import { getStateId } from './../src/store-utils';
 
 describe('Reducers', () => {
   const counterState = getStateId<number>();
@@ -85,5 +86,14 @@ describe('Reducers', () => {
 
     store.removeBehaviorSources(counterState);
     expect(store.getNumberOfBehaviorSources(counterState)).toBe(0);
+  });
+
+  it('should work for state of type undefined', async () => {
+    const undefinedStateId = getStateId<undefined | number>();
+    store.addState(undefinedStateId, undefined);
+    store.addReducer(undefinedStateId, increaseEvent, (_, e) => e);
+    const sequence = expectSequence(store.getBehavior(undefinedStateId), [undefined, 1]);
+    store.dispatch(increaseEvent, 1);
+    await sequence;
   });
 });

@@ -27,7 +27,7 @@ import {
   getValidatedInputWithResultSignalsFactory,
 } from './validated-input-with-result-signals-factory';
 
-const isStringRecord = (value: any): value is Record<string, any> =>
+const isRecord = (value: any): value is Record<any, any> =>
   value && typeof value === 'object' && !Array.isArray(value);
 
 /**
@@ -38,7 +38,7 @@ export const shallowEquals = <T>(a: T, b: T): boolean => {
   if (a === b) {
     return true;
   }
-  if (isStringRecord(a) && isStringRecord(b)) {
+  if (isRecord(a) && isRecord(b)) {
     return (Object.entries(a).find(([k, v]) => v !== b[k]) ?? null) === null;
   }
   if (Array.isArray(a) && Array.isArray(b)) {

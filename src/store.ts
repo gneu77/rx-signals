@@ -286,7 +286,12 @@ export class Store {
       map(([event, state]) => reducer(state, event)),
     );
     this.getBehaviorControlledSubject(stateIdentifier).addSource(
-      new SourceObservable<ToBehaviorIdValueType<SID>>(eventIdentifier, sourceObservable, false),
+      new SourceObservable<ToBehaviorIdValueType<SID>>(
+        eventIdentifier,
+        sourceObservable,
+        false,
+        NO_VALUE,
+      ),
     );
   }
 
@@ -565,7 +570,7 @@ export class Store {
   ): symbol {
     const sourceId = Symbol('');
     this.getEventStreamControlledSubject(eventIdentifier).addSource(
-      new SourceObservable<ToEventIdValueType<ID>>(sourceId, observable, true),
+      new SourceObservable<ToEventIdValueType<ID>>(sourceId, observable, true, NO_VALUE),
     );
     if (this.currentLifecycleObjects !== null) {
       this.currentLifecycleObjects.events.push(sourceId);
@@ -1066,7 +1071,7 @@ export class Store {
       map(event => event.event),
     );
     this.getEventStreamControlledSubject(eventIdentifier).addSource(
-      new SourceObservable<T>(sourceIdentifier, source, true),
+      new SourceObservable<T>(sourceIdentifier, source, true, NO_VALUE),
     );
   }
 
