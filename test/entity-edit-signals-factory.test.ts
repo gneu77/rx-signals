@@ -751,10 +751,47 @@ describe('EntityEditSignalsFactory', () => {
           [
             {
               load: {
-                currentInput: 3,
+                currentInput: null,
                 resultPending: false,
-                resultInput: 3,
-                result: { id: 3, b: 'loaded', d: [3] },
+                resultInput: null,
+                result: defaultEntity,
+              },
+              edit: {
+                currentInput: {
+                  default: defaultEntity,
+                  model: defaultEntity,
+                },
+                validationPending: false,
+                isValid: true,
+                validatedInput: {
+                  default: defaultEntity,
+                  model: defaultEntity,
+                },
+                validationResult: { b: null },
+                resultPending: false,
+                resultInput: NO_VALUE,
+                result: NO_VALUE,
+              },
+              entity: defaultEntity,
+              validation: { b: null },
+              loading: false,
+              disabled: false,
+              changed: false,
+            },
+          ],
+        );
+        inputSubject.next(null);
+        await sequence;
+
+        const sequence2 = expectSequence(
+          store.getBehavior(outputSignals.model).pipe(filter(m => m.disabled === false)),
+          [
+            {
+              load: {
+                currentInput: null,
+                resultPending: false,
+                resultInput: null,
+                result: defaultEntity,
               },
               edit: {
                 currentInput: {
@@ -780,106 +817,106 @@ describe('EntityEditSignalsFactory', () => {
             },
             {
               load: {
-                currentInput: 3,
+                currentInput: null,
                 resultPending: false,
-                resultInput: 3,
-                result: { id: 3, b: 'loaded', d: [3] },
+                resultInput: null,
+                result: defaultEntity,
               },
               edit: {
                 currentInput: {
-                  default: { id: 3, b: 'loaded', d: [3] },
-                  model: { id: 3, b: 'loaded', d: [3] },
+                  default: defaultEntity,
+                  model: { ...defaultEntity, b: 'updated' },
                 },
                 validationPending: false,
                 isValid: true,
                 validatedInput: {
-                  default: { id: 3, b: 'loaded', d: [3] },
-                  model: { id: 3, b: 'loaded', d: [3] },
+                  default: defaultEntity,
+                  model: { ...defaultEntity, b: 'updated' },
                 },
                 validationResult: { b: null },
                 resultPending: false,
                 resultInput: NO_VALUE,
                 result: NO_VALUE,
               },
-              entity: { id: 3, b: 'loaded', d: [3] },
+              entity: { ...defaultEntity, b: 'updated' },
               validation: { b: null },
               loading: false,
               disabled: false,
-              changed: false,
+              changed: true,
             },
           ],
         );
-        inputSubject.next(3);
-        await sequence;
+        store.dispatch(inputSignals.update, { b: 'updated' });
+        await sequence2;
 
-        const sequence2 = expectSequence(
-          store.getBehavior(outputSignals.model).pipe(filter(m => m.disabled === false)),
+        const sequence3 = expectSequence(
+          store.getBehavior(outputSignals.model).pipe(filter(m => m.loading === false)),
           [
             {
               load: {
-                currentInput: 3,
+                currentInput: null,
                 resultPending: false,
-                resultInput: 3,
-                result: { id: 3, b: 'loaded', d: [3] },
+                resultInput: null,
+                result: defaultEntity,
               },
               edit: {
                 currentInput: {
-                  default: { id: 3, b: 'loaded', d: [3] },
-                  model: { id: 3, b: 'loaded', d: [3] },
+                  default: defaultEntity,
+                  model: { ...defaultEntity, b: 'updated' },
                 },
                 validationPending: false,
                 isValid: true,
                 validatedInput: {
-                  default: { id: 3, b: 'loaded', d: [3] },
-                  model: { id: 3, b: 'loaded', d: [3] },
+                  default: defaultEntity,
+                  model: { ...defaultEntity, b: 'updated' },
                 },
                 validationResult: { b: null },
                 resultPending: false,
                 resultInput: NO_VALUE,
                 result: NO_VALUE,
               },
-              entity: { id: 3, b: 'loaded', d: [3] },
+              entity: { ...defaultEntity, b: 'updated' },
               validation: { b: null },
               loading: false,
               disabled: false,
-              changed: false,
+              changed: true,
             },
             {
               load: {
-                currentInput: 3,
+                currentInput: null,
                 resultPending: false,
-                resultInput: 3,
-                result: { id: 3, b: 'loaded', d: [3] },
+                resultInput: null,
+                result: defaultEntity,
               },
               edit: {
                 currentInput: {
-                  default: { id: 3, b: 'loaded', d: [3] },
-                  model: { id: 3, b: 'loaded', d: [3] },
+                  default: defaultEntity,
+                  model: { ...defaultEntity, b: 'updated' },
                 },
                 validationPending: false,
                 isValid: true,
                 validatedInput: {
-                  default: { id: 3, b: 'loaded', d: [3] },
-                  model: { id: 3, b: 'loaded', d: [3] },
+                  default: defaultEntity,
+                  model: { ...defaultEntity, b: 'updated' },
                 },
                 validationResult: { b: null },
                 resultPending: false,
                 resultInput: {
-                  default: { id: 3, b: 'loaded', d: [3] },
-                  model: { id: 3, b: 'loaded', d: [3] },
+                  default: defaultEntity,
+                  model: { ...defaultEntity, b: 'updated' },
                 },
-                result: 3,
+                result: 42,
               },
-              entity: { id: 3, b: 'loaded', d: [3] },
+              entity: { ...defaultEntity, b: 'updated' },
               validation: { b: null },
               loading: false,
-              disabled: false,
-              changed: false,
+              disabled: true,
+              changed: true,
             },
           ],
         );
         store.dispatch(inputSignals.save);
-        await sequence2;
+        await sequence3;
       });
 
       it('should trigger reload', async () => {

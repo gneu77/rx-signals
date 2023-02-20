@@ -107,7 +107,8 @@ export type EntityEditModel<
    * the load effect is pending, or
    * the result effect is pending, or
    * the validation effect is pending, or
-   * edit.isValid is false (the current validation result represents invalid entity state)
+   * edit.isValid is false (the current validation result represents invalid entity state), or
+   * the result-input equals the current-input
    */
   disabled: boolean;
 
@@ -322,7 +323,15 @@ export const getEntityEditSignalsFactory = <
                 load,
                 edit,
                 load.resultPending || edit.resultPending,
-                load.resultPending || edit.resultPending || edit.validationPending || !edit.isValid,
+                load.resultPending ||
+                  edit.resultPending ||
+                  edit.validationPending ||
+                  !edit.isValid ||
+                  (isNotNoValueType(edit.resultInput) &&
+                    isNotNoValueType(edit.currentInput) &&
+                    (config.entityEquals
+                      ? config.entityEquals(edit.resultInput.model, edit.currentInput.model)
+                      : shallowEquals(edit.resultInput.model, edit.currentInput.model))),
                 edit.currentInput === edit.validatedInput && isNotNoValueType(edit.validationResult)
                   ? edit.validationResult
                   : null,
