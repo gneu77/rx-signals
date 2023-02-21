@@ -114,7 +114,7 @@ export const isCombinedEffectResultInSuccessState = <Input, Result>(
   !cer.resultError && !cer.resultPending && isNotNoValueType(cer.result);
 
 /**
- * Value-type for error events produced by an {@link EffectSignals} (unhandled effect errors).
+ * Value-type for error events produced by an `Effect<Input, any>` (unhandled effect errors).
  *
  * @template Input - specifies the input type for the effect
  */
