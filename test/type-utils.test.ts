@@ -55,48 +55,48 @@ describe('type utiles', () => {
       });
 
       it('should get correct a', () => {
-        expect(toGetter(t1)('a').get()).toBe(undefined);
-        expect(toGetter(t2)('a').get()).toBe(42);
-        expect(toGetter(t3)('a').get()).toBe(7);
-        expect(toGetter(t4)('a').get()).toBe(6);
+        expect(toGetter(t1).k('a').get()).toBe(undefined);
+        expect(toGetter(t2).k('a').get()).toBe(42);
+        expect(toGetter(t3).k('a').get()).toBe(7);
+        expect(toGetter(t4).k('a').get()).toBe(6);
       });
 
       it('should get correct b', () => {
-        expect(toGetter(t1)('b').get()).toBe(undefined);
-        expect(toGetter(t2)('b').get()).toBe('Test2');
-        expect(toGetter(t3)('b').get()).toEqual({
+        expect(toGetter(t1).k('b').get()).toBe(undefined);
+        expect(toGetter(t2).k('b').get()).toBe('Test2');
+        expect(toGetter(t3).k('b').get()).toEqual({
           c: {
             d: 9,
           },
         });
-        expect(toGetter(t4)('b').get()).toEqual({
+        expect(toGetter(t4).k('b').get()).toEqual({
           c: [1, 2, 3],
         });
       });
 
       it('should get correct b.c', () => {
-        expect(toGetter(t1)('b')('c').get()).toBe(undefined);
-        expect(toGetter(t2)('b')('c').get()).toBe(undefined);
-        expect(toGetter(t3)('b')('c').get()).toEqual({
+        expect(toGetter(t1).k('b').k('c').get()).toBe(undefined);
+        expect(toGetter(t2).k('b').k('c').get()).toBe(undefined);
+        expect(toGetter(t3).k('b').k('c').get()).toEqual({
           d: 9,
         });
-        expect(toGetter(t4)('b')('c').get()).toEqual([1, 2, 3]);
+        expect(toGetter(t4).k('b').k('c').get()).toEqual([1, 2, 3]);
       });
 
       it('should get correct b.c.d', () => {
-        expect(toGetter(t1)('b')('c')('d').get()).toBe(undefined);
-        expect(toGetter(t2)('b')('c')('d').get()).toBe(undefined);
-        expect(toGetter(t3)('b')('c')('d').get()).toEqual(9);
-        expect(toGetter(t4)('b')('c')('d').get()).toEqual(undefined);
+        expect(toGetter(t1).k('b').k('c').k('d').get()).toBe(undefined);
+        expect(toGetter(t2).k('b').k('c').k('d').get()).toBe(undefined);
+        expect(toGetter(t3).k('b').k('c').k('d').get()).toEqual(9);
+        expect(toGetter(t4).k('b').k('c').k('d').get()).toEqual(undefined);
       });
 
       it('should get correct b.c[n]', () => {
-        expect(toGetter(t1)('b')('c')(1).get()).toBe(undefined);
-        expect(toGetter(t2)('b')('c')(1).get()).toBe(undefined);
-        expect(toGetter(t3)('b')('c')(1).get()).toBe(undefined);
-        expect(toGetter(t4)('b')('c')(1).get()).toBe(2);
-        expect(toGetter(t4)('b')('c')(2).get()).toBe(3);
-        expect(toGetter(t4)('b')('c')(3).get()).toBe(undefined);
+        expect(toGetter(t1).k('b').k('c').k(1).get()).toBe(undefined);
+        expect(toGetter(t2).k('b').k('c').k(1).get()).toBe(undefined);
+        expect(toGetter(t3).k('b').k('c').k(1).get()).toBe(undefined);
+        expect(toGetter(t4).k('b').k('c').k(1).get()).toBe(2);
+        expect(toGetter(t4).k('b').k('c').k(2).get()).toBe(3);
+        expect(toGetter(t4).k('b').k('c').k(3).get()).toBe(undefined);
       });
 
       describe('union of two different records', () => {
@@ -139,25 +139,25 @@ describe('type utiles', () => {
         });
 
         it('should get correct a', () => {
-          expect(toGetter(t21)('a').get()).toBe(undefined);
-          expect(toGetter(t22)('a').get()).toEqual({
+          expect(toGetter(t21).k('a').get()).toBe(undefined);
+          expect(toGetter(t22).k('a').get()).toEqual({
             b: 7,
           });
-          expect(toGetter(t23)('a').get()).toEqual({
+          expect(toGetter(t23).k('a').get()).toEqual({
             b: true,
           });
         });
 
         it('should get correct a.b', () => {
-          expect(toGetter(t21)('a')('b').get()).toBe(undefined);
-          expect(toGetter(t22)('a')('b').get()).toBe(7);
-          expect(toGetter(t23)('a')('b').get()).toBe(true);
+          expect(toGetter(t21).k('a').k('b').get()).toBe(undefined);
+          expect(toGetter(t22).k('a').k('b').get()).toBe(7);
+          expect(toGetter(t23).k('a').k('b').get()).toBe(true);
         });
 
         it('should get correct x', () => {
-          expect(toGetter(t21)('x').get()).toBe(undefined);
-          expect(toGetter(t22)('x').get()).toBe(undefined);
-          expect(toGetter(t23)('x').get()).toBe('Test23');
+          expect(toGetter(t21).k('x').get()).toBe(undefined);
+          expect(toGetter(t22).k('x').get()).toBe(undefined);
+          expect(toGetter(t23).k('x').get()).toBe('Test23');
         });
       });
     });
@@ -172,7 +172,7 @@ describe('type utiles', () => {
       });
 
       it('should get correct a', () => {
-        const lens = getLens<Test>()('a');
+        const lens = getLens<Test>().k('a');
         expect(lens.get(t1)).toBe(undefined);
         expect(lens.get(t2)).toBe(42);
         expect(lens.get(t3)).toBe(7);
@@ -180,7 +180,7 @@ describe('type utiles', () => {
       });
 
       it('should get correct b', () => {
-        const lens = getLens<Test>()('b');
+        const lens = getLens<Test>().k('b');
         expect(lens.get(t1)).toBe(undefined);
         expect(lens.get(t2)).toBe('Test2');
         expect(lens.get(t3)).toEqual({
@@ -194,7 +194,7 @@ describe('type utiles', () => {
       });
 
       it('should get correct b.c', () => {
-        const lens = getLens<Test>()('b')('c');
+        const lens = getLens<Test>().k('b').k('c');
         expect(lens.get(t1)).toBe(undefined);
         expect(lens.get(t2)).toBe(undefined);
         expect(lens.get(t3)).toEqual({
@@ -204,7 +204,7 @@ describe('type utiles', () => {
       });
 
       it('should get correct b.c.d', () => {
-        const lens = getLens<Test>()('b')('c')('d');
+        const lens = getLens<Test>().k('b').k('c').k('d');
         expect(lens.get(t1)).toBe(undefined);
         expect(lens.get(t2)).toBe(undefined);
         expect(lens.get(t3)).toEqual(9);
@@ -212,10 +212,10 @@ describe('type utiles', () => {
       });
 
       it('should get correct b.c[n]', () => {
-        const base = getLens<Test>()('b')('c');
-        const lens1 = base(1);
-        const lens2 = base(2);
-        const lens3 = base(3);
+        const base = getLens<Test>().k('b').k('c');
+        const lens1 = base.k(1);
+        const lens2 = base.k(2);
+        const lens3 = base.k(3);
         expect(lens1.get(t1)).toBe(undefined);
         expect(lens1.get(t2)).toBe(undefined);
         expect(lens1.get(t3)).toBe(undefined);
@@ -265,7 +265,7 @@ describe('type utiles', () => {
         });
 
         it('should get correct a', () => {
-          const lens = getLens<Test2>()('a');
+          const lens = getLens<Test2>().k('a');
           expect(lens.get(t21)).toBe(undefined);
           expect(lens.get(t22)).toEqual({
             b: 7,
@@ -276,14 +276,14 @@ describe('type utiles', () => {
         });
 
         it('should get correct a.b', () => {
-          const lens = getLens<Test2>()('a')('b');
+          const lens = getLens<Test2>().k('a').k('b');
           expect(lens.get(t21)).toBe(undefined);
           expect(lens.get(t22)).toBe(7);
           expect(lens.get(t23)).toBe(true);
         });
 
         it('should get correct x', () => {
-          const lens = getLens<Test2>()('x');
+          const lens = getLens<Test2>().k('x');
           expect(lens.get(t21)).toBe(undefined);
           expect(lens.get(t22)).toBe(undefined);
           expect(lens.get(t23)).toBe('Test23');
@@ -318,28 +318,28 @@ describe('type utiles', () => {
         });
 
         it('should get correct a', () => {
-          const lens = getLens<Test3>()('a');
+          const lens = getLens<Test3>().k('a');
           expect(lens.get(t31)).toBe(undefined);
           expect(lens.get(t32)).toBe('Test3');
           expect(lens.get(t33)).toEqual([true, { x: 7 }, { x: [1, 2, 3] }]);
         });
 
         it('should get correct a[0]', () => {
-          const lens = getLens<Test3>()('a')(0);
+          const lens = getLens<Test3>().k('a').k(0);
           expect(lens.get(t31)).toBe(undefined);
           expect(lens.get(t32)).toBe(undefined);
           expect(lens.get(t33)).toBe(true);
         });
 
         it('should get correct a[1]', () => {
-          const lens = getLens<Test3>()('a')(1);
+          const lens = getLens<Test3>().k('a').k(1);
           expect(lens.get(t31)).toBe(undefined);
           expect(lens.get(t32)).toBe(undefined);
           expect(lens.get(t33)).toEqual({ x: 7 });
         });
 
         it('should get correct a[2].x[1]', () => {
-          const lens = getLens<Test3>()('a')(2)('x')(1);
+          const lens = getLens<Test3>().k('a').k(2).k('x').k(1);
           expect(lens.get(t31)).toBe(undefined);
           expect(lens.get(t32)).toBe(undefined);
           expect(lens.get(t33)).toEqual(2);

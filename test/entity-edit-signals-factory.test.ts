@@ -194,8 +194,8 @@ describe('EntityEditSignalsFactory', () => {
     });
 
     describe('with effects', () => {
-      const validationLens = getLens<ModelValidationResult<MyEntity>>()('b');
-      const modelLens = getLens<NoValueType | ModelWithDefault<MyEntity>>()('model')('b');
+      const validationLens = getLens<ModelValidationResult<MyEntity>>().k('b');
+      const modelLens = getLens<NoValueType | ModelWithDefault<MyEntity>>().k('model').k('b');
       const loadEffect: Effect<number | null, MyEntity> = (id: number | null) => {
         return of(
           id === null

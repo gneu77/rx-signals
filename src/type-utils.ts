@@ -395,12 +395,12 @@ export const pick = <T, K extends ToKeys<T>>(value: T, key: K): PickReturn<T, K>
  *
  * you could get the following results with optional-lenses:
  * ```ts
- * const lensA = getLens<Test>()('a');
+ * const lensA = getLens<Test>().k('a');
  * const a1 = lensA.get(t1); // => undefined (inferred as undefined | string | Array<boolean | { x: number | Array<number>}>)
  * const a2 = lensA.get(t2); // => 'Test3' (inferred as undefined | string | Array<boolean | { x: number | Array<number>}>)
  * const a3 = lensA.get(t3); // => [true, { x: 7 }, { x: [1, 2, 3] }] (inferred as undefined | string | Array<boolean | { x: number | Array<number>}>)
  *
- * const lensA2X1 = getLens<Test>()('a')(2)('x')(1);
+ * const lensA2X1 = lensA.k(2).k('x').k(1);
  * const n1 = lensA2X1.get(t1); // => undefined (inferred as number | undefined)
  * const n2 = lensA2X1.get(t2); // => undefined (inferred as number | undefined)
  * const n3 = lensA2X1.get(t3); // => 2 (inferred as number | undefined)
@@ -408,19 +408,21 @@ export const pick = <T, K extends ToKeys<T>>(value: T, key: K): PickReturn<T, K>
  */
 export type OptionalLens<T, P> = {
   get: (value: T) => P | undefined;
-} & (<K extends ToKeys<P>>(key: K) => OptionalLens<T, PickReturn<P, K>>);
+  k: <K extends ToKeys<P>>(key: K) => OptionalLens<T, PickReturn<P, K>>;
+};
 
 const _toLens = <T, P, K extends ToKeys<P>>(
   get: (value: T) => P,
   key: K,
 ): OptionalLens<T, PickReturn<P, K>> => {
   const newGet = (v: T): PickReturn<P, K> => pick(get(v), key);
-  const result = (<NK extends ToKeys<PickReturn<P, K>>>(
-    k: NK,
-  ): OptionalLens<T, PickReturn<PickReturn<P, K>, NK>> =>
-    _toLens<T, PickReturn<P, K>, NK>(newGet, k)) as OptionalLens<T, PickReturn<P, K>>;
-  result.get = newGet;
-  return result;
+  return {
+    get: newGet,
+    k: <NK extends ToKeys<PickReturn<P, K>>>(
+      k: NK,
+    ): OptionalLens<T, PickReturn<PickReturn<P, K>, NK>> =>
+      _toLens<T, PickReturn<P, K>, NK>(newGet, k),
+  };
 };
 
 /**
@@ -449,12 +451,12 @@ const _toLens = <T, P, K extends ToKeys<P>>(
  *
  * you could get the following results with optional-lenses:
  * ```ts
- * const lensA = getLens<Test>()('a');
+ * const lensA = getLens<Test>().k('a');
  * const a1 = lensA.get(t1); // => undefined (inferred as undefined | string | Array<boolean | { x: number | Array<number>}>)
  * const a2 = lensA.get(t2); // => 'Test3' (inferred as undefined | string | Array<boolean | { x: number | Array<number>}>)
  * const a3 = lensA.get(t3); // => [true, { x: 7 }, { x: [1, 2, 3] }] (inferred as undefined | string | Array<boolean | { x: number | Array<number>}>)
  *
- * const lensA2X1 = getLens<Test>()('a')(2)('x')(1);
+ * const lensA2X1 = lensA.k(2).k('x').k(1);
  * const n1 = lensA2X1.get(t1); // => undefined (inferred as number | undefined)
  * const n2 = lensA2X1.get(t2); // => undefined (inferred as number | undefined)
  * const n3 = lensA2X1.get(t3); // => 2 (inferred as number | undefined)
@@ -462,10 +464,11 @@ const _toLens = <T, P, K extends ToKeys<P>>(
  */
 export const getLens = <T>(): OptionalLens<T, T> => {
   const get = (value: T) => value;
-  const result = (<K extends ToKeys<T>>(key: K): OptionalLens<T, PickReturn<T, K>> =>
-    _toLens<T, T, K>(get, key)) as OptionalLens<T, T>;
-  result.get = get;
-  return result;
+  return {
+    get,
+    k: <K extends ToKeys<T>>(key: K): OptionalLens<T, PickReturn<T, K>> =>
+      _toLens<T, T, K>(get, key),
+  };
 };
 
 /**
@@ -479,19 +482,18 @@ export const getLens = <T>(): OptionalLens<T, T> => {
  */
 export type Getter<T> = {
   get: () => T;
-} & (<K extends ToKeys<T>>(key: K) => Getter<PickReturn<T, K>>);
+  k: <K extends ToKeys<T>>(key: K) => Getter<PickReturn<T, K>>;
+};
 
 /**
  * Helper type to infer the concrete value type `T` wrapped by a `Getter<T>`
  */
 export type ToGetterValue<T> = T extends Getter<infer V> ? V : never;
 
-const _toGetter = <T>(g: () => T): Getter<T> => {
-  const result = (<K extends ToKeys<T>>(key: K): Getter<PickReturn<T, K>> =>
-    _toGetter(() => pick(g(), key))) as Getter<T>;
-  result.get = () => g();
-  return result;
-};
+const _toGetter = <T>(g: () => T): Getter<T> => ({
+  get: () => g(),
+  k: <K extends ToKeys<T>>(key: K): Getter<PickReturn<T, K>> => _toGetter(() => pick(g(), key)),
+});
 
 /**
  * Wraps the given value of type T in a `Getter<T>`.
@@ -521,12 +523,12 @@ const _toGetter = <T>(g: () => T): Getter<T> => {
  *
  * you could get the following results with toGetter:
  * ```ts
- * const b1 = toGetter(t1)('a')('b').get(); // => undefined (inferred as number | string | undefined)
- * const b2 = toGetter(t2)('a')('b').get(); // => undefined (inferred as number | string | undefined)
- * const b3 = toGetter(t3)('a')('b').get(); // => 'Test' (inferred as number | string | undefined)
- * const x1 = toGetter(t1)('x')(1).get(); // => undefined (inferred as number | undefined)
- * const x2 = toGetter(t2)('x')(1).get(); // => 2 (inferred as number | undefined)
- * const x3 = toGetter(t3)('x')(1).get(); // => undefined (inferred as number | undefined)
+ * const b1 = toGetter(t1).k('a').k('b').get(); // => undefined (inferred as number | string | undefined)
+ * const b2 = toGetter(t2).k('a').k('b').get(); // => undefined (inferred as number | string | undefined)
+ * const b3 = toGetter(t3).k('a').k('b').get(); // => 'Test' (inferred as number | string | undefined)
+ * const x1 = toGetter(t1).k('x').k(1).get(); // => undefined (inferred as number | undefined)
+ * const x2 = toGetter(t2).k('x').k(1).get(); // => 2 (inferred as number | undefined)
+ * const x3 = toGetter(t3).k('x').k(1).get(); // => undefined (inferred as number | undefined)
  * ```
  */
 export const toGetter = <T>(value: T): Getter<T> => _toGetter<T>(() => value);
