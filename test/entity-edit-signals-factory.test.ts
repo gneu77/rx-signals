@@ -11,7 +11,8 @@ import {
   shallowEquals,
 } from './../src/entity-edit-signals-factory';
 import { ModelWithDefault } from './../src/model-signals-factory';
-import { ModelValidationResult, patchModelValidationResult, toGetter } from './../src/type-utils';
+import { NoValueType } from './../src/store-utils';
+import { ModelValidationResult, getLens, patchModelValidationResult } from './../src/type-utils';
 
 type MyEntity = {
   id: number;
@@ -193,6 +194,8 @@ describe('EntityEditSignalsFactory', () => {
     });
 
     describe('with effects', () => {
+      const validationLens = getLens<ModelValidationResult<MyEntity>>()('b');
+      const modelLens = getLens<NoValueType | ModelWithDefault<MyEntity>>()('model')('b');
       const loadEffect: Effect<number | null, MyEntity> = (id: number | null) => {
         return of(
           id === null
@@ -215,10 +218,10 @@ describe('EntityEditSignalsFactory', () => {
           map(v => (!!input.model.b ? v : patchModelValidationResult(v, { b: 'mandatory' }))), // 'b' is mandatory
           switchMap(
             v =>
-              (toGetter(v)('b').get() ?? null) !== null // is 'b' already validated as being missing?
+              (validationLens.get(v) ?? null) !== null // is 'b' already validated as being missing?
                 ? of(v) // 'b' is missing, so validation is finished (it cannot have unique violation)
-                : toGetter(prevInput)('model')('b').get() === input.model.b // is current 'b' the same as in the previous input?
-                ? of(patchModelValidationResult(v, { b: toGetter(prevResult)('b').get() })) // it's the same, so we can take it's previous validation result
+                : modelLens.get(prevInput) === input.model.b // is current 'b' the same as in the previous input?
+                ? of(patchModelValidationResult(v, { b: validationLens.get(prevResult) })) // it's the same, so we can take it's previous validation result
                 : of(
                     // it's not the same, so "we have to call our backend to validate uniqueness"
                     patchModelValidationResult(v, {

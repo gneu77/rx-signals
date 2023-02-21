@@ -364,18 +364,121 @@ export const pick = <T, K extends ToKeys<T>>(value: T, key: K): PickReturn<T, K>
 };
 
 /**
- * The kind value used for `Getter<T>`
+ * An `OptionalLens<T, P>` grants type-safe access on potential `P`, hence it can be used to
+ * get `P | undefined` from an arbitrary `T`, where `T` might be a union of arbitrary types.
+ *
+ * From an `OptionalLens<T, P>`, you can also retrieve a new `OptionalLens<P, P[K]>`, where K is a potential key of P.
+ * Use `getLens<T>()` to get an initial `OptionalLens<T, T>`.
+ *
+ * You can see `OptionalLens` as "universal optional chaining". While normal optional chaining only works on a `T | null | undefined`,
+ * the `OptionalLens` allows the type-safe access on arbitrary unions.
+ *
+ * E.g. given the following type and values:
+ * ```ts
+ * type Test =
+ *        | number
+ *        | {
+ *            a:
+ *              | string
+ *              | Array<
+ *                  | boolean
+ *                  | {
+ *                      x: number | Array<number>;
+ *                    }
+ *                >;
+ *          };
+ *
+ * const t1: Test = 42;
+ * const t2: Test = { a: 'Test3' };
+ * const t3: Test = { a: [true, { x: 7 }, { x: [1, 2, 3] }] };
+ * ```
+ *
+ * you could get the following results with optional-lenses:
+ * ```ts
+ * const lensA = getLens<Test>()('a');
+ * const a1 = lensA.get(t1); // => undefined (inferred as undefined | string | Array<boolean | { x: number | Array<number>}>)
+ * const a2 = lensA.get(t2); // => 'Test3' (inferred as undefined | string | Array<boolean | { x: number | Array<number>}>)
+ * const a3 = lensA.get(t3); // => [true, { x: 7 }, { x: [1, 2, 3] }] (inferred as undefined | string | Array<boolean | { x: number | Array<number>}>)
+ *
+ * const lensA2X1 = getLens<Test>()('a')(2)('x')(1);
+ * const n1 = lensA2X1.get(t1); // => undefined (inferred as number | undefined)
+ * const n2 = lensA2X1.get(t2); // => undefined (inferred as number | undefined)
+ * const n3 = lensA2X1.get(t3); // => 2 (inferred as number | undefined)
+ * ```
  */
-export const getterKind = '__rxs__Getter<T>';
+export type OptionalLens<T, P> = {
+  get: (value: T) => P | undefined;
+} & (<K extends ToKeys<P>>(key: K) => OptionalLens<T, PickReturn<P, K>>);
+
+const _toLens = <T, P, K extends ToKeys<P>>(
+  get: (value: T) => P,
+  key: K,
+): OptionalLens<T, PickReturn<P, K>> => {
+  const newGet = (v: T): PickReturn<P, K> => pick(get(v), key);
+  const result = (<NK extends ToKeys<PickReturn<P, K>>>(
+    k: NK,
+  ): OptionalLens<T, PickReturn<PickReturn<P, K>, NK>> =>
+    _toLens<T, PickReturn<P, K>, NK>(newGet, k)) as OptionalLens<T, PickReturn<P, K>>;
+  result.get = newGet;
+  return result;
+};
+
+/**
+ * Get an `OptionalLens<T, T>` for type-safe access on arbitrarily nested properties of type `T`,
+ * where `T` might be a union of arbitrary types.
+ *
+ * Given the following type and values:
+ * ```ts
+ * type Test =
+ *        | number
+ *        | {
+ *            a:
+ *              | string
+ *              | Array<
+ *                  | boolean
+ *                  | {
+ *                      x: number | Array<number>;
+ *                    }
+ *                >;
+ *          };
+ *
+ * const t1: Test = 42;
+ * const t2: Test = { a: 'Test3' };
+ * const t3: Test = { a: [true, { x: 7 }, { x: [1, 2, 3] }] };
+ * ```
+ *
+ * you could get the following results with optional-lenses:
+ * ```ts
+ * const lensA = getLens<Test>()('a');
+ * const a1 = lensA.get(t1); // => undefined (inferred as undefined | string | Array<boolean | { x: number | Array<number>}>)
+ * const a2 = lensA.get(t2); // => 'Test3' (inferred as undefined | string | Array<boolean | { x: number | Array<number>}>)
+ * const a3 = lensA.get(t3); // => [true, { x: 7 }, { x: [1, 2, 3] }] (inferred as undefined | string | Array<boolean | { x: number | Array<number>}>)
+ *
+ * const lensA2X1 = getLens<Test>()('a')(2)('x')(1);
+ * const n1 = lensA2X1.get(t1); // => undefined (inferred as number | undefined)
+ * const n2 = lensA2X1.get(t2); // => undefined (inferred as number | undefined)
+ * const n3 = lensA2X1.get(t3); // => 2 (inferred as number | undefined)
+ * ```
+ */
+export const getLens = <T>(): OptionalLens<T, T> => {
+  const get = (value: T) => value;
+  const result = (<K extends ToKeys<T>>(key: K): OptionalLens<T, PickReturn<T, K>> =>
+    _toLens<T, T, K>(get, key)) as OptionalLens<T, T>;
+  result.get = get;
+  return result;
+};
 
 /**
  * Return type of the toGetter function.
- * A `Getter<T>` can be used for optional chaining on arbitrary union types
- * (see toGetter() for detailed information).
+ * Like {@link OptionalLens}, a `Getter<T>` can be used for optional chaining on arbitrary union types.
+ * In contrast to {@link OptionalLens}, the initial `Getter<T>` must be obtained from a value of type `T`.
+ * You can thus use it as kind of ad-hoc lens for a one-time access. In most cases however,
+ * using an {@link OptionalLens} is the better choice.
+ *
+ * See `toGetter` documentation for example usage.
  */
 export type Getter<T> = {
   get: () => T;
-  kind: typeof getterKind;
 } & (<K extends ToKeys<T>>(key: K) => Getter<PickReturn<T, K>>);
 
 /**
@@ -383,21 +486,17 @@ export type Getter<T> = {
  */
 export type ToGetterValue<T> = T extends Getter<infer V> ? V : never;
 
-/**
- * Typeguard to check, if a value is a `Getter<any>`
- */
-export const isGetter = (value: any): value is Getter<any> => value && value.kind === getterKind;
-
 const _toGetter = <T>(g: () => T): Getter<T> => {
   const result = (<K extends ToKeys<T>>(key: K): Getter<PickReturn<T, K>> =>
     _toGetter(() => pick(g(), key))) as Getter<T>;
   result.get = () => g();
-  result.kind = getterKind;
   return result;
 };
 
 /**
- * Wraps the given value of type T in a `Getter<T>`
+ * Wraps the given value of type T in a `Getter<T>`.
+ * A `Getter<T>` can be used like a one-time ad-hoc version of an {@link OptionalLens}.
+ * In most cases however, using an {@link OptionalLens} is the better choice.
  *
  * Given the following type and values:
  * ```ts
@@ -431,12 +530,3 @@ const _toGetter = <T>(g: () => T): Getter<T> => {
  * ```
  */
 export const toGetter = <T>(value: T): Getter<T> => _toGetter<T>(() => value);
-// export const toGetter = <T>(value: T): Getter<T> => {
-//   const result = (<K extends ToKeys<T>>(key: K): Getter<PickReturn<T, K>> => {
-//     const picked = pick(value, key);
-//     return toGetter(picked);
-//   }) as Getter<T>;
-//   result.get = () => value;
-//   result.kind = getterKind;
-//   return result;
-// };
