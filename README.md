@@ -3,7 +3,7 @@
 **Reactive state and effects management**
 
 :warning: This documentation is work in progress for the upcoming 3.0.0 version.
-There is however NO good reason to use 2.x over 3.0.0-rc41, so please start with the rc-version (3.0.0 will be the first version I'm going to advertise publicly, so it's more like a 1.0 in reality.).
+There is however NO good reason to use 2.x over 3.0.0-rc42, so please start with the rc-version (3.0.0 will be the first version I'm going to advertise publicly, so it's more like a 1.0 in reality.).
 2.x is deprecated and will NOT be maintained in any way.
 
 It's mainly documentation that needs improvement prior to the final 3.0.0 realease.
@@ -11,7 +11,7 @@ It is however possible that I will introduce minor breaking changes until 3.0.0 
 
 ## Installation
 
-**`npm install --save @rx-signals/store@3.0.0-rc41`**
+**`npm install --save @rx-signals/store@3.0.0-rc42`**
 
 ## Dependencies
 

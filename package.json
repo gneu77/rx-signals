@@ -1,6 +1,6 @@
 {
   "name": "@rx-signals/store",
-  "version": "3.0.0-rc41",
+  "version": "3.0.0-rc42",
   "description": "Reactive state- and effects-management with behaviors and event streams",
   "author": "Gerd Neudert",
   "license": "MIT",
