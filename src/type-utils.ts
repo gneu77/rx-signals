@@ -411,16 +411,29 @@ export type OptionalLens<T, P> = {
   k: <K extends ToKeys<P>>(key: K) => OptionalLens<T, PickReturn<P, K>>;
 };
 
+const optionalLensKind = '$OptionalLens$';
+type KindedOptionalLens<T, P> = OptionalLens<T, P> & {
+  kind: typeof optionalLensKind;
+};
+
+/**
+ * Typeguard to check, if the given value is an {@link OptionalLens}
+ */
+export const isOptionalLens = <T, P>(
+  value: OptionalLens<T, P> | any,
+): value is OptionalLens<T, P> => value?.kind === optionalLensKind;
+
 const _toLens = <T, P, K extends ToKeys<P>>(
   get: (value: T) => P,
   key: K,
-): OptionalLens<T, PickReturn<P, K>> => {
+): KindedOptionalLens<T, PickReturn<P, K>> => {
   const newGet = (v: T): PickReturn<P, K> => pick(get(v), key);
   return {
+    kind: optionalLensKind,
     get: newGet,
     k: <NK extends ToKeys<PickReturn<P, K>>>(
       k: NK,
-    ): OptionalLens<T, PickReturn<PickReturn<P, K>, NK>> =>
+    ): KindedOptionalLens<T, PickReturn<PickReturn<P, K>, NK>> =>
       _toLens<T, PickReturn<P, K>, NK>(newGet, k),
   };
 };
@@ -470,6 +483,68 @@ export const getLens = <T>(): OptionalLens<T, T> => {
       _toLens<T, T, K>(get, key),
   };
 };
+
+/**
+ * Get a concrete `OptionalLens<T, P>` from an `OptionalLens<any, any>` (or never, if L is no `OptionalLens<any, any>`)
+ */
+export type ToLensType<L> = [L] extends [OptionalLens<infer T, infer P>]
+  ? OptionalLens<T, P>
+  : never;
+
+/**
+ * Get a concrete `T` from an `OptionalLens<T, any>` (or never, if L is no `OptionalLens<any, any>`)
+ */
+export type ToLensInputType<L> = [L] extends [OptionalLens<infer T, any>] ? T : never;
+
+/**
+ * Get a concrete `T` from an `OptionalLens<any, T>` (or never, if L is no `OptionalLens<any, any>`)
+ */
+export type ToLensOutputType<L> = [L] extends [OptionalLens<any, infer T>] ? T : never;
+
+/**
+ * Get `T`, if `VL` is an `OptionalLens<T, any>`, else get `OptionalLens<VL, any>`
+ */
+export type ValueOrLens<VL> = [VL] extends [OptionalLens<any, any>]
+  ? ToLensInputType<VL>
+  : OptionalLens<VL, any>;
+
+/**
+ * Get return type of `OptionalLens<T, PX>::get(T)`, if `X` is an `OptionalLens<any, any>`,
+ * else get the return type of `OptionalLens<T, PY>::get(T)`, if `Y` is an `OptionalLens<any, any>`,
+ * else never.
+ */
+export type FromLensReturn<X, Y> = [X] extends [OptionalLens<any, any>]
+  ? ToLensOutputType<X> | undefined
+  : [Y] extends [OptionalLens<any, any>]
+  ? ToLensOutputType<Y> | undefined
+  : never;
+
+/**
+ * Utility function to apply an `OptionalLens<T, P>` to a `T`
+ */
+export const fromValueAndLens =
+  <T>(value: T) =>
+  <L extends OptionalLens<T, any>>(lens: L): ToLensOutputType<L> | undefined =>
+    lens.get(value);
+
+/**
+ * Utility function to apply a `T` to an `OptionalLens<T, P>`
+ */
+export const fromLensAndValue =
+  <L extends OptionalLens<any, any>>(lens: L) =>
+  <T extends ToLensInputType<L>>(value: T): ToLensOutputType<L> | undefined =>
+    lens.get(value);
+
+/**
+ * If the first argument is an `OptionalLens`, this function behaves like `fromLensAndValue`,
+ * else it behaves like `fromValueAndLens`
+ */
+export const fromLens =
+  <X>(valueOrLens1: X) =>
+  <Y extends ValueOrLens<X>>(valueOrLens2: Y): FromLensReturn<X, Y> =>
+    isOptionalLens(valueOrLens1)
+      ? valueOrLens1.get(valueOrLens2)
+      : (<OptionalLens<X, any>>valueOrLens2).get(valueOrLens1);
 
 /**
  * Return type of the toGetter function.

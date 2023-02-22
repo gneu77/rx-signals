@@ -1,4 +1,10 @@
-import { getLens, toGetter } from './../src/type-utils';
+import {
+  fromLens,
+  fromLensAndValue,
+  fromValueAndLens,
+  getLens,
+  toGetter,
+} from './../src/type-utils';
 
 describe('type utiles', () => {
   describe('optional property access', () => {
@@ -222,6 +228,59 @@ describe('type utiles', () => {
         expect(lens1.get(t4)).toBe(2);
         expect(lens2.get(t4)).toBe(3);
         expect(lens3.get(t4)).toBe(undefined);
+      });
+
+      describe('fromValueAndLens', () => {
+        it('should get correct b.c[n]', () => {
+          const base = getLens<Test>().k('b').k('c');
+          const lens1 = base.k(1);
+          const lens2 = base.k(2);
+          const lens3 = base.k(3);
+          expect(fromValueAndLens(t1)(lens1)).toBe(undefined);
+          expect(fromValueAndLens(t2)(lens1)).toBe(undefined);
+          expect(fromValueAndLens(t3)(lens1)).toBe(undefined);
+          expect(fromValueAndLens(t4)(lens1)).toBe(2);
+          expect(fromValueAndLens(t4)(lens2)).toBe(3);
+          expect(fromValueAndLens(t4)(lens3)).toBe(undefined);
+        });
+      });
+
+      describe('fromLensAndValue', () => {
+        it('should get correct b.c[n]', () => {
+          const base = getLens<Test>().k('b').k('c');
+          const lens1 = base.k(1);
+          const lens2 = base.k(2);
+          const lens3 = base.k(3);
+          expect(fromLensAndValue(lens1)(t1)).toBe(undefined);
+          expect(fromLensAndValue(lens1)(t2)).toBe(undefined);
+          expect(fromLensAndValue(lens1)(t3)).toBe(undefined);
+          expect(fromLensAndValue(lens1)(t4)).toBe(2);
+          expect(fromLensAndValue(lens2)(t4)).toBe(3);
+          expect(fromLensAndValue(lens3)(t4)).toBe(undefined);
+        });
+      });
+
+      describe('fromLens', () => {
+        it('should get correct b.c[n]', () => {
+          const base = getLens<Test>().k('b').k('c');
+          const lens1 = base.k(1);
+          const lens2 = base.k(2);
+          const lens3 = base.k(3);
+
+          expect(fromLens(lens1)(t1)).toBe(undefined);
+          expect(fromLens(lens1)(t2)).toBe(undefined);
+          expect(fromLens(lens1)(t3)).toBe(undefined);
+          expect(fromLens(lens1)(t4)).toBe(2);
+          expect(fromLens(lens2)(t4)).toBe(3);
+          expect(fromLens(lens3)(t4)).toBe(undefined);
+
+          expect(fromLens(t1)(lens1)).toBe(undefined);
+          expect(fromLens(t2)(lens1)).toBe(undefined);
+          expect(fromLens(t3)(lens1)).toBe(undefined);
+          expect(fromLens(t4)(lens1)).toBe(2);
+          expect(fromLens(t4)(lens2)).toBe(3);
+          expect(fromLens(t4)(lens3)).toBe(undefined);
+        });
       });
 
       describe('union of two different records', () => {
