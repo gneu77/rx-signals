@@ -18,7 +18,7 @@ import {
   toEffectError,
 } from './effect-result';
 import { Signals, SignalsFactory } from './signals-factory';
-import { Effect, Store } from './store';
+import { Effect, SafeEffectResult, Store, UnhandledEffectError } from './store';
 import {
   DerivedId,
   EffectId,
@@ -32,14 +32,6 @@ import {
   isNoValueType,
   isNotNoValueType,
 } from './store-utils';
-
-export type UnhandledEffectError = {
-  unhandledError: unknown;
-};
-
-export type SafeEffectResult<Result, Error> =
-  | EffectResult<Result, Error>
-  | EffectError<UnhandledEffectError>;
 
 /**
  * Value-type for the combined derived behavior produced by {@link EffectSignals}.

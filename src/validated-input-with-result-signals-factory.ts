@@ -4,11 +4,10 @@ import {
   EffectCompletedResultEvent,
   EffectOutputSignals,
   EffectResultEvent,
-  SafeEffectResult,
   getEffectSignalsFactory,
 } from './effect-signals-factory';
 import { SignalsFactory } from './signals-factory';
-import { Store } from './store';
+import { SafeEffectResult, Store } from './store';
 import {
   BehaviorId,
   DerivedId,

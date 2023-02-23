@@ -3,6 +3,7 @@ import { delay, map, switchMap } from 'rxjs/operators';
 import { Effect, Store } from '../src/store';
 import { NO_VALUE } from '../src/store-utils';
 import { expectSequence } from '../src/test-utils/test-utils';
+import { isNotEffectError } from './../src/effect-result';
 import {
   EntityEditEffects,
   EntityEditInput,
@@ -120,7 +121,7 @@ describe('EntityEditSignalsFactory', () => {
               result: NO_VALUE,
             },
             entity: defaultEntity,
-            validation: null,
+            validation: NO_VALUE,
             loading: false,
             disabled: true,
             changed: false,
@@ -156,7 +157,7 @@ describe('EntityEditSignalsFactory', () => {
               result: NO_VALUE,
             },
             entity: defaultEntity,
-            validation: null,
+            validation: NO_VALUE,
             loading: false,
             disabled: true,
             changed: false,
@@ -182,7 +183,7 @@ describe('EntityEditSignalsFactory', () => {
               result: NO_VALUE,
             },
             entity: expectedEntity,
-            validation: null,
+            validation: NO_VALUE,
             loading: false,
             disabled: true,
             changed: true,
@@ -211,7 +212,7 @@ describe('EntityEditSignalsFactory', () => {
       const validationEffect: Effect<
         ModelWithDefault<MyEntity>,
         ModelValidationResult<MyEntity>
-      > = (input: ModelWithDefault<MyEntity>, _, prevInput, prevResult) =>
+      > = (input: ModelWithDefault<MyEntity>, { previousInput, previousResult }) =>
         of<ModelValidationResult<MyEntity>>(
           input.model.d.length < 1 ? { d: 'min size 1' } : null,
         ).pipe(
@@ -220,8 +221,8 @@ describe('EntityEditSignalsFactory', () => {
             v =>
               (validationLens.get(v) ?? null) !== null // is 'b' already validated as being missing?
                 ? of(v) // 'b' is missing, so validation is finished (it cannot have unique violation)
-                : modelLens.get(prevInput) === input.model.b // is current 'b' the same as in the previous input?
-                ? of(patchModelValidationResult(v, { b: validationLens.get(prevResult) })) // it's the same, so we can take it's previous validation result
+                : modelLens.get(previousInput) === input.model.b && isNotEffectError(previousResult) // is current 'b' the same as in the previous input?
+                ? of(patchModelValidationResult(v, { b: validationLens.get(previousResult) })) // it's the same, so we can take it's previous validation result
                 : of(
                     // it's not the same, so "we have to call our backend to validate uniqueness"
                     patchModelValidationResult(v, {
@@ -265,7 +266,7 @@ describe('EntityEditSignalsFactory', () => {
               result: NO_VALUE,
             },
             entity: defaultEntity,
-            validation: null,
+            validation: NO_VALUE,
             loading: false,
             disabled: true,
             changed: false,
@@ -291,7 +292,7 @@ describe('EntityEditSignalsFactory', () => {
               result: NO_VALUE,
             },
             entity: defaultEntity,
-            validation: null,
+            validation: NO_VALUE,
             loading: true,
             disabled: true,
             changed: false,
@@ -465,7 +466,7 @@ describe('EntityEditSignalsFactory', () => {
               result: NO_VALUE,
             },
             entity: { id: 3, b: 'loaded', d: [3] },
-            validation: null,
+            validation: NO_VALUE,
             loading: false,
             disabled: true,
             changed: false,

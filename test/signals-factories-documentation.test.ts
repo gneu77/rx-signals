@@ -234,11 +234,11 @@ describe('signals factories documentation', () => {
         counterFactory
           .compose(counterFactory)
           .compose(sumFactory)
-          .extendSetup((store, input, output) => {
+          .extendSetup(({ store, input, output }) => {
             store.connect(output.conflicts1.counter, input.inputA);
           })
           .connectObservable(
-            (store, output) => store.getBehavior(output.conflicts2.counter),
+            ({ store, output }) => store.getBehavior(output.conflicts2.counter),
             'inputB',
             false,
           )
@@ -394,7 +394,7 @@ describe('signals factories documentation', () => {
       )
         .compose(sortingSignalsFactory)
         .compose(pagingSignalsFactory)
-        .extendSetup((store, input) => {
+        .extendSetup(({ store, input }) => {
           store.addEventSource(
             input.setPage,
             merge(
@@ -414,10 +414,14 @@ describe('signals factories documentation', () => {
     const getQueryWithResultFactory = <FilterType, ResultType>() =>
       getFilteredSortedPagedQuerySignalsFactory<FilterType>()
         .compose(
-          getEffectSignalsFactory<[FilterType, SortParameter, PagingParameter], ResultType>(),
+          getEffectSignalsFactory<
+            [FilterType, SortParameter, PagingParameter],
+            ResultType,
+            never
+          >(),
         )
         .connectObservable(
-          (store, output) =>
+          ({ store, output }) =>
             combineLatest([
               store.getBehavior(output.model),
               store.getBehavior(output.sorting),
@@ -435,8 +439,11 @@ describe('signals factories documentation', () => {
 
     it('should create the factory', async () => {
       type MyFilter = { firstName: string; lastName: string };
-      const effectMock: Effect<[MyFilter, SortParameter, PagingParameter], string[]> = input =>
-        of([`${input[0].firstName} ${input[0].lastName}`]);
+      const effectMock: Effect<
+        [MyFilter, SortParameter, PagingParameter],
+        string[],
+        never
+      > = input => of([`${input[0].firstName} ${input[0].lastName}`]);
       const mySignals = getQueryWithResultFactory<MyFilter, string[]>().build({
         defaultFilter: {
           firstName: '',

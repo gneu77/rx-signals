@@ -187,7 +187,7 @@ describe('SignalsFactory', () => {
       const myEvent = getEventId<number>();
       // const myEvent2 = getEventId<number | null>();
       const signals = baseFactory
-        .connectObservable(st => st.getEventStream(myEvent), 'inputC', false) // no problem, because number is assignable to number | null
+        .connectObservable(({ store }) => store.getEventStream(myEvent), 'inputC', false) // no problem, because number is assignable to number | null
         // .connectObservable(st => st.getEventStream(myEvent2), 'inputB', false) // compiler must error that null is not assignable to number
         // .connectObservable(st => st.getEventStream(myEvent), 'inputD', false) // compiler must error that number is not assignable to string
         .build({});

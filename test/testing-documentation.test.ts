@@ -49,9 +49,9 @@ describe('testing documentation', () => {
     .renameOutputId('counter', 'from')
     .compose(counterFactory)
     .renameOutputId('counter', 'to')
-    .compose(getEffectSignalsFactory<RandomRange, number>())
+    .compose(getEffectSignalsFactory<RandomRange, number, never>())
     .connectObservable(
-      (store, output) =>
+      ({ store, output }) =>
         combineLatest([store.getBehavior(output.from), store.getBehavior(output.to)]),
       'input',
       false,

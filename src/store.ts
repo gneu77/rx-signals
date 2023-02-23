@@ -70,6 +70,17 @@ export type LifecycleHandle = {
   end: () => void;
 };
 
+/** universal type used for unhandled errors from effects */
+export type UnhandledEffectError = {
+  unhandledError: unknown;
+};
+
+/**
+ * The usual `EffectResult` extended by `EffectError<UnhandledEffectError>`,
+ * to provide a type that also for effect consumers that handle unhandled effect errors
+ */
+export type SafeEffectResult<Result, Error> = EffectResult<Result, Error | UnhandledEffectError>;
+
 /**
  * The `Effect<Input>` type specifies a potentially impure function that takes an input and a {@link Store} as arguments
  * and returns an effectful result as `Observable<Result>`.
@@ -98,8 +109,8 @@ export type Effect<Input, Result, Error = unknown> = (
     /** the input of the previous function invocation, or NO_VALUE */
     previousInput: Input | NoValueType;
 
-    /** the result of the previous function invocation, or NO_VALUE (error-type unknown, cause it could be an unhandled error not related to Error) */
-    previousResult: EffectResult<Result, Error | unknown> | NoValueType;
+    /** `SafeEffectResult` instead of `EffectResult`, to give consumers the option to provide unhandled errors */
+    previousResult: SafeEffectResult<Result, Error> | NoValueType;
   },
 ) => Observable<EffectResult<Result, Error>>;
 

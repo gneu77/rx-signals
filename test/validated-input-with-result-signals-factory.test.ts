@@ -28,16 +28,16 @@ describe('validated input with result signals factory', () => {
   const inputStateId = getStateId<InputModel>();
   const inputSubject = new Subject<InputModel>();
 
-  const validationEffectId = getEffectId<InputModel, ValidationResult>();
-  const validationEffect: Effect<InputModel, ValidationResult> = (input: InputModel) => {
+  const validationEffectId = getEffectId<InputModel, ValidationResult, string>();
+  const validationEffect: Effect<InputModel, ValidationResult, string> = (input: InputModel) => {
     if (input.searchString === 'throw') {
       throw 'unhandled';
     }
     return of(input.searchString === 'invalid' ? 'nope' : null).pipe(delay(10));
   };
 
-  const resultEffectId = getEffectId<InputModel, ResultModel>();
-  const resultEffect: Effect<InputModel, ResultModel> = (input: InputModel) => {
+  const resultEffectId = getEffectId<InputModel, ResultModel, string>();
+  const resultEffect: Effect<InputModel, ResultModel, string> = (input: InputModel) => {
     if (input.searchString === 'throw') {
       throw 'unhandled';
     }
@@ -63,17 +63,27 @@ describe('validated input with result signals factory', () => {
   });
 
   describe('default options', () => {
-    let factory: ValidatedInputWithResultFactory<InputModel, ValidationResult, ResultModel>;
-    let observable: Observable<ValidatedInputWithResult<InputModel, ValidationResult, ResultModel>>;
+    let factory: ValidatedInputWithResultFactory<
+      InputModel,
+      ValidationResult,
+      ResultModel,
+      string,
+      string
+    >;
+    let observable: Observable<
+      ValidatedInputWithResult<InputModel, ValidationResult, ResultModel, string, string>
+    >;
 
     beforeEach(() => {
       factory = getValidatedInputWithResultSignalsFactory<
         InputModel,
         ValidationResult,
-        ResultModel
+        ResultModel,
+        string,
+        string
       >()
-        .extendSetup((store, inIds) => {
-          store.connect(inputStateId, inIds.input);
+        .extendSetup(({ store, input }) => {
+          store.connect(inputStateId, input.input);
         })
         .useExistingEffect('validation', () => validationEffectId, true)
         .useExistingEffect('result', () => resultEffectId, true);
@@ -240,20 +250,30 @@ describe('validated input with result signals factory', () => {
   });
 
   describe('with trigger event', () => {
-    let factory: ValidatedInputWithResultFactory<InputModel, ValidationResult, ResultModel>;
-    let observable: Observable<ValidatedInputWithResult<InputModel, ValidationResult, ResultModel>>;
+    let factory: ValidatedInputWithResultFactory<
+      InputModel,
+      ValidationResult,
+      ResultModel,
+      string,
+      string
+    >;
+    let observable: Observable<
+      ValidatedInputWithResult<InputModel, ValidationResult, ResultModel, string, string>
+    >;
     let signals: Signals<
       ValidatedInputWithResultInput<InputModel>,
-      ValidatedInputWithResultOutput<InputModel, ValidationResult, ResultModel>
+      ValidatedInputWithResultOutput<InputModel, ValidationResult, ResultModel, string, string>
     >;
 
     beforeEach(() => {
       factory = getValidatedInputWithResultSignalsFactory<
         InputModel,
         ValidationResult,
-        ResultModel
+        ResultModel,
+        string,
+        string
       >()
-        .extendSetup((store, inIds) => store.connect(inputStateId, inIds.input))
+        .extendSetup(({ store, input }) => store.connect(inputStateId, input.input))
         .useExistingEffect('validation', () => validationEffectId, true)
         .useExistingEffect('result', () => resultEffectId, true);
       signals = factory.build({
@@ -604,16 +624,26 @@ describe('validated input with result signals factory', () => {
   });
 
   describe('with initial result', () => {
-    let factory: ValidatedInputWithResultFactory<InputModel, ValidationResult, ResultModel>;
-    let observable: Observable<ValidatedInputWithResult<InputModel, ValidationResult, ResultModel>>;
+    let factory: ValidatedInputWithResultFactory<
+      InputModel,
+      ValidationResult,
+      ResultModel,
+      string,
+      string
+    >;
+    let observable: Observable<
+      ValidatedInputWithResult<InputModel, ValidationResult, ResultModel, string, string>
+    >;
 
     beforeEach(() => {
       factory = getValidatedInputWithResultSignalsFactory<
         InputModel,
         ValidationResult,
-        ResultModel
+        ResultModel,
+        string,
+        string
       >()
-        .extendSetup((store, inIds) => store.connect(inputStateId, inIds.input))
+        .extendSetup(({ store, input }) => store.connect(inputStateId, input.input))
         .useExistingEffect('validation', () => validationEffectId, true)
         .useExistingEffect('result', () => resultEffectId, true);
       const signals = factory.build({
@@ -736,16 +766,26 @@ describe('validated input with result signals factory', () => {
   });
 
   describe('with custom result input equals', () => {
-    let factory: ValidatedInputWithResultFactory<InputModel, ValidationResult, ResultModel>;
-    let observable: Observable<ValidatedInputWithResult<InputModel, ValidationResult, ResultModel>>;
+    let factory: ValidatedInputWithResultFactory<
+      InputModel,
+      ValidationResult,
+      ResultModel,
+      string,
+      string
+    >;
+    let observable: Observable<
+      ValidatedInputWithResult<InputModel, ValidationResult, ResultModel, string, string>
+    >;
 
     beforeEach(() => {
       factory = getValidatedInputWithResultSignalsFactory<
         InputModel,
         ValidationResult,
-        ResultModel
+        ResultModel,
+        string,
+        string
       >()
-        .extendSetup((store, inIds) => store.connect(inputStateId, inIds.input))
+        .extendSetup(({ store, input }) => store.connect(inputStateId, input.input))
         .useExistingEffect('validation', () => validationEffectId, true)
         .useExistingEffect('result', () => resultEffectId, true);
       const signals = factory.build({
