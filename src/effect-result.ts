@@ -25,6 +25,11 @@ export const toEffectError = <E>(error: E): EffectError<E> => ({
 export type ToEffectErrorType<T> = T extends EffectError<infer E> ? E : never;
 
 /**
+ * Get the concrete success-type of an {@link EffectResult}
+ */
+export type ToEffectSuccessType<T> = T extends EffectResult<infer I, any> ? I : never;
+
+/**
  * Typeguard to check if {@link EffectError}
  */
 export const isEffectError = <T>(value: any | EffectError<T>): value is EffectError<T> =>

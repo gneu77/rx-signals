@@ -197,7 +197,7 @@ describe('EntityEditSignalsFactory', () => {
     describe('with effects', () => {
       const validationLens = getLens<ModelValidationResult<MyEntity>>().k('b');
       const modelLens = getLens<NoValueType | ModelWithDefault<MyEntity>>().k('model').k('b');
-      const loadEffect: Effect<number | null, MyEntity> = (id: number | null) => {
+      const loadEffect: Effect<number | null, MyEntity, string> = (id: number | null) => {
         return of(
           id === null
             ? defaultEntity
@@ -211,7 +211,8 @@ describe('EntityEditSignalsFactory', () => {
 
       const validationEffect: Effect<
         ModelWithDefault<MyEntity>,
-        ModelValidationResult<MyEntity>
+        ModelValidationResult<MyEntity>,
+        string
       > = (input: ModelWithDefault<MyEntity>, { previousInput, previousResult }) =>
         of<ModelValidationResult<MyEntity>>(
           input.model.d.length < 1 ? { d: 'min size 1' } : null,
@@ -232,7 +233,7 @@ describe('EntityEditSignalsFactory', () => {
           ),
         );
 
-      const saveEffect: Effect<MyEntity, number> = (input: MyEntity) => {
+      const saveEffect: Effect<MyEntity, number, string> = (input: MyEntity) => {
         return of(input.id).pipe(delay(10));
       };
 

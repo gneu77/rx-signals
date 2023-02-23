@@ -74,9 +74,9 @@ export type EntityEditModel<
   LoadInput = number,
   SaveOutput = LoadInput,
   ValidationFailedType = string,
-  LoadError = unknown,
-  ValidationError = unknown,
-  SaveError = unknown,
+  LoadError = string,
+  ValidationError = string,
+  SaveError = string,
 > = {
   /**
    * The {@link CombinedEffectResult} for the load effect
@@ -153,9 +153,9 @@ export type EntityEditOutput<
   LoadInput = number,
   SaveOutput = LoadInput,
   ValidationFailedType = string,
-  LoadError = unknown,
-  ValidationError = unknown,
-  SaveError = unknown,
+  LoadError = string,
+  ValidationError = string,
+  SaveError = string,
 > = {
   /** {@link EffectOutputSignals} for the load effect */
   load: EffectOutputSignals<LoadInput | null, Entity, LoadError>;
@@ -217,9 +217,9 @@ export type EntityEditEffects<
   LoadInput = number,
   SaveOutput = LoadInput,
   ValidationFailedType = string,
-  LoadError = unknown,
-  ValidationError = unknown,
-  SaveError = unknown,
+  LoadError = string,
+  ValidationError = string,
+  SaveError = string,
 > = {
   /** effect that takes an entity-id or null and returns a corresponding entity (which sets the default model) */
   load: EffectId<LoadInput | null, Entity, LoadError>;
@@ -251,9 +251,9 @@ export type EntityEditFactory<
   LoadInput = number,
   SaveOutput = LoadInput,
   ValidationFailedType = string,
-  LoadError = unknown,
-  ValidationError = unknown,
-  SaveError = unknown,
+  LoadError = string,
+  ValidationError = string,
+  SaveError = string,
 > = SignalsFactory<
   EntityEditInput<Entity, LoadInput>,
   EntityEditOutput<
@@ -297,9 +297,9 @@ export const getEntityEditSignalsFactory = <
   LoadInput = number,
   SaveOutput = LoadInput,
   ValidationFailedType = string,
-  LoadError = unknown,
-  ValidationError = unknown,
-  SaveError = unknown,
+  LoadError = string,
+  ValidationError = string,
+  SaveError = string,
 >(): EntityEditFactory<
   Entity,
   LoadInput,

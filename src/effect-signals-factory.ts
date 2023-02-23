@@ -183,6 +183,24 @@ export const isCompletedResultEvent = <Input, Result, Error>(
   value: EffectCompletedResultEvent<Input, Result, Error> | EffectResultEvent<Input, Result, Error>,
 ): value is EffectCompletedResultEvent<Input, Result, Error> => value.completed;
 
+export type EffectCompletedResultEventInSuccessState<Input, Result> = {
+  result: Result;
+  resultInput: Input;
+  completed: true;
+};
+export type EffectCompletedResultEventInErrorState<Input, Error> = {
+  result: ToEffectError<Error> | EffectError<UnhandledEffectError>;
+  resultInput: Input;
+  completed: true;
+};
+export const isCompletedResultEventInSuccessState = <Input, Result, Error>(
+  value: EffectCompletedResultEvent<Input, Result, Error>,
+): value is EffectCompletedResultEventInSuccessState<Input, Result> =>
+  isNotEffectError(value.result);
+export const isCompletedResultEventInErrorState = <Input, Result, Error>(
+  value: EffectCompletedResultEvent<Input, Result, Error>,
+): value is EffectCompletedResultEventInErrorState<Input, Error> => isEffectError(value.result);
+
 /**
  * Type specifying the input {@link EffectSignals} (the corresponding signal-sources are NOT added to the store
  * by the EffectSignals-setup, but by whoever uses the signals, e.g. by extendSetup or fmap or just using dispatch).
