@@ -177,6 +177,19 @@ export type ComposedFactory<
   Merged<EFF1, EFF2>
 >;
 
+export type SignalsFactoryArgs<
+  IN extends NameToSignalId,
+  OUT extends NameToSignalId,
+  CONFIG extends Configuration,
+  EFF extends NameToEffectId,
+> = {
+  store: Store;
+  input: IN;
+  output: OUT;
+  config: CONFIG;
+  effects: EFF;
+};
+
 /**
  * This type specifies the argument to the {@link SignalsFactory.extendSetup} method.
  *
@@ -190,7 +203,7 @@ export type ExtendSetup<
   OUT extends NameToSignalId,
   CONFIG extends Configuration,
   EFF extends NameToEffectId,
-> = (store: Store, input: IN, output: OUT, config: CONFIG, effects: EFF) => void;
+> = (args: SignalsFactoryArgs<IN, OUT, CONFIG, EFF>) => void;
 
 /**
  * Function mapping from CONFIG1 to CONFIG2
@@ -458,7 +471,7 @@ export class SignalsFactory<
         ...s,
         setup: (store: Store) => {
           s.setup(store);
-          extend(store, s.input, s.output, config, s.effects);
+          extend({ store, input: s.input, output: s.output, config, effects: s.effects });
         },
       };
     });
@@ -493,11 +506,13 @@ export class SignalsFactory<
   ): B extends true
     ? SignalsFactory<IN, OUT, CONFIG, EFF>
     : SignalsFactory<Omit<IN, KIN>, OUT, CONFIG, EFF> {
-    const fnew: SignalsFactory<IN, OUT, CONFIG, EFF> = this.extendSetup((store, input, output) => {
-      const fromId: SignalId<any> = output[outputName] as SignalId<any>;
-      const toId: SignalId<any> = input[inputName] as SignalId<any>;
-      store.connect(fromId, toId);
-    });
+    const fnew: SignalsFactory<IN, OUT, CONFIG, EFF> = this.extendSetup(
+      ({ store, input, output }) => {
+        const fromId: SignalId<any> = output[outputName] as SignalId<any>;
+        const toId: SignalId<any> = input[inputName] as SignalId<any>;
+        store.connect(fromId, toId);
+      },
+    );
     const result = (keepInputId ? fnew : fnew.removeInputId(inputName)) as B extends true
       ? SignalsFactory<IN, OUT, CONFIG, EFF>
       : SignalsFactory<Omit<IN, KIN>, OUT, CONFIG, EFF>;
@@ -521,7 +536,7 @@ export class SignalsFactory<
   ): B extends true
     ? SignalsFactory<IN, OUT, CONFIG, EFF>
     : SignalsFactory<Omit<IN, K>, OUT, CONFIG, EFF> {
-    const fnew: SignalsFactory<IN, OUT, CONFIG, EFF> = this.extendSetup((store, input) => {
+    const fnew: SignalsFactory<IN, OUT, CONFIG, EFF> = this.extendSetup(({ store, input }) => {
       const toId: SignalId<any> = input[inputName] as SignalId<any>;
       store.connect(fromId, toId);
     });
@@ -547,15 +562,15 @@ export class SignalsFactory<
     O extends Observable<S>,
     B extends boolean,
   >(
-    sourceGetter: (store: Store, output: OUT, config: CONFIG) => O,
+    sourceGetter: (args: SignalsFactoryArgs<IN, OUT, CONFIG, EFF>) => O,
     inputName: K,
     keepInputId: B,
   ): B extends true
     ? SignalsFactory<IN, OUT, CONFIG, EFF>
     : SignalsFactory<Omit<IN, K>, OUT, CONFIG, EFF> {
-    const fnew: SignalsFactory<IN, OUT, CONFIG, EFF> = this.extendSetup((st, ip, op, conf) => {
-      const toId: SignalId<any> = ip[inputName] as SignalId<any>;
-      st.connectObservable(sourceGetter(st, op, conf), toId);
+    const fnew: SignalsFactory<IN, OUT, CONFIG, EFF> = this.extendSetup(args => {
+      const toId: SignalId<any> = args.input[inputName] as SignalId<any>;
+      args.store.connectObservable(sourceGetter(args), toId);
     });
     const result = (keepInputId ? fnew : fnew.removeInputId(inputName)) as B extends true
       ? SignalsFactory<IN, OUT, CONFIG, EFF>
@@ -753,10 +768,7 @@ export class SignalsFactory<
     outputName: KOUT,
     mapper: (
       old: Observable<ToBehaviorIdValueType<OUT[KOUT]>>,
-      store: Store,
-      input: IN,
-      output: OUT,
-      config: CONFIG,
+      args: SignalsFactoryArgs<IN, OUT, CONFIG, EFF>,
     ) => Observable<TNEW>,
   ): SignalsFactory<IN, AddOrReplaceId<OUT, KOUT, DerivedId<TNEW>>, CONFIG, EFF> {
     return this.fmap<IN, AddOrReplaceId<OUT, KOUT, DerivedId<TNEW>>, CONFIG, EFF>(sb => config => {
@@ -768,7 +780,13 @@ export class SignalsFactory<
         setup: store => {
           store.addDerivedState(
             newId,
-            mapper(store.getBehavior(oldId), store, s.input, s.output, config),
+            mapper(store.getBehavior(oldId), {
+              store,
+              input: s.input,
+              output: s.output,
+              config,
+              effects: s.effects,
+            }),
           );
           s.setup(store);
         },
@@ -857,7 +875,7 @@ export class SignalsFactory<
   ): B extends true
     ? SignalsFactory<IN, OUT, CONFIG, EFF>
     : SignalsFactory<IN, OUT, CONFIG, Omit<EFF, K>> {
-    const result = this.extendSetup((store, _, _2, config, effects) => {
+    const result = this.extendSetup(({ store, config, effects }) => {
       store
         .getEffect(idGetter(config))
         .pipe(take(1))

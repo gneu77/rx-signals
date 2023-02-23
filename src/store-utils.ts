@@ -123,16 +123,18 @@ export type ToObservableValueType<O> = O extends Observable<infer T> ? T : never
 
 /**
  * The rx-signals `Store` uses this type to uniquely identify all of its result effects.
- * An `EffectId<InputType, ResultType>` does not make any use of the generic parameters itself,
+ * An `EffectId<InputType, ResultType, ErrorType>` does not make any use of the generic parameters itself,
  * but is given these parameters only as a trick to let Typescript infer and thus enforce the correct types.
  * Use the {@link getEffectId} function to generate a corresponding ID.
  *
  * @template InputType - specifies the type for the corresponding effects input
  * @template ResultType - specifies the type for the corresponding effects result
+ * @template ErrorType - specifies the type error-type for the effect. Use never for effects that cannot error.
  */
-export type EffectId<InputType, ResultType> = symbol & {
+export type EffectId<InputType, ResultType, ErrorType = unknown> = symbol & {
   _inputType: InputType;
   _resultType: ResultType;
+  _errorType: ErrorType;
 };
 
 let stateExtension = 1;
@@ -175,13 +177,18 @@ export const getEventId = <T>(nameExtension?: string): EventId<T> =>
  *
  * @template InputType - specifies the type for the corresponding effects input
  * @template ResultType - specifies the type for the corresponding effects result
+ * @template ErrorType - specifies the type error-type for the effect. Use `never` for effects that cannot error.
  * @param {string} nameExtension - an optional extension to the symbol name (so the string representation). Usually you should not need this.
  * @returns {EventId<T>}
  */
-export const getEffectId = <InputType, ResultType>(
+export const getEffectId = <InputType, ResultType, ErrorType = unknown>(
   nameExtension?: string,
-): EffectId<InputType, ResultType> =>
-  Symbol(`Effect_${(nameExtension ?? '') + effectExtension++}`) as EffectId<InputType, ResultType>;
+): EffectId<InputType, ResultType, ErrorType> =>
+  Symbol(`Effect_${(nameExtension ?? '') + effectExtension++}`) as EffectId<
+    InputType,
+    ResultType,
+    ErrorType
+  >;
 
 /**
  * Typeguard to check whether a given `SignalId` is a `StateId`.

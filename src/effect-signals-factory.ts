@@ -1,6 +1,5 @@
 import {
   Observable,
-  catchError,
   combineLatest,
   debounceTime,
   filter,
@@ -10,6 +9,14 @@ import {
   take,
   throwError,
 } from 'rxjs';
+import {
+  EffectError,
+  EffectResult,
+  ToEffectError,
+  isEffectError,
+  isNotEffectError,
+  toEffectError,
+} from './effect-result';
 import { Signals, SignalsFactory } from './signals-factory';
 import { Effect, Store } from './store';
 import {
@@ -26,13 +33,22 @@ import {
   isNotNoValueType,
 } from './store-utils';
 
+export type UnhandledEffectError = {
+  unhandledError: unknown;
+};
+
+export type SafeEffectResult<Result, Error> =
+  | EffectResult<Result, Error>
+  | EffectError<UnhandledEffectError>;
+
 /**
  * Value-type for the combined derived behavior produced by {@link EffectSignals}.
  *
  * @template Input - specifies the input type for the effect
  * @template Result - specifies the result type of the effect
+ * @template Error - specifies the error type of the effect
  */
-export type CombinedEffectResult<Input, Result> = {
+export type CombinedEffectResult<Input, Result, Error> = {
   /**
    * The current input (which might differ from the resultInput),
    * or `NO_VALUE`, if no input was received yet
@@ -40,25 +56,21 @@ export type CombinedEffectResult<Input, Result> = {
   currentInput: Input | NoValueType;
 
   /**
-   * The current result,
+   * The current effect-result,
    * or `NO_VALUE` if no result was received yet,
    * or the effect produced an error
    */
-  result: Result | NoValueType;
+  result: SafeEffectResult<Result, Error> | NoValueType;
 
   /**
-   * The input that produced the current result,
+   * The input that produced the current effect-result,
    * or `NO_VALUE`, if initial result or no result received yet */
   resultInput: Input | NoValueType;
 
   /**
-   * In case the effect led to an error (`result === NO_VALUE` in that case), else undefined */
-  resultError?: any;
-
-  /**
    * Indicates whether the effect is currently running.
    * In case of a factory without trigger, this will be true whenever one or multiple
-   * of the following conditions is met:
+   * of the following conditions are met:
    * `currentInput !== resultInput`,
    * or an invalidation event has been sent,
    * or the effect has sent a result, but has not yet completed.
@@ -72,28 +84,24 @@ export type CombinedEffectResult<Input, Result> = {
  * Type representing a {@link CombinedEffectResult} in it's error state (non-pending)
  *
  * @template Input - specifies the input type for the effect
+ * @template Error - specifies the error type of the effect
  */
-export type CombinedEffectResultInErrorState<Input> = {
+export type CombinedEffectResultInErrorState<Input, Error> = {
   currentInput: Input;
-  result: NoValueType;
+  result: ToEffectError<Error> | EffectError<UnhandledEffectError>;
   resultInput: Input;
-  resultError: any;
   resultPending: false;
 };
 
 /**
  * Typeguard to check if a {@link CombinedEffectResult} is a {@link CombinedEffectResultInErrorState}
  */
-export const isCombinedEffectResultInErrorState = <Input, Result>(
-  cer: CombinedEffectResult<Input, Result>,
-): cer is CombinedEffectResultInErrorState<Input> =>
-  !!cer.resultError &&
-  !cer.resultPending &&
-  isNoValueType(cer.result) &&
-  isNotNoValueType(cer.resultInput);
+export const isCombinedEffectResultInErrorState = <Input, Result, Error>(
+  cer: CombinedEffectResult<Input, Result, Error>,
+): cer is CombinedEffectResultInErrorState<Input, Error> => isEffectError(cer.result);
 
 /**
- * Type representing a {@link CombinedEffectResult} in it's success state (non-pending)
+ * Type representing a {@link CombinedEffectResult} in it's success state (pending or non-pending)
  *
  * @template Input - specifies the input type for the effect
  * @template Result - specifies the result type of the effect
@@ -102,74 +110,86 @@ export type CombinedEffectResultInSuccessState<Input, Result> = {
   currentInput: Input | NoValueType;
   result: Result;
   resultInput: Input | NoValueType;
-  resultPending: false;
+  resultPending: boolean;
 };
 
 /**
  * Typeguard to check if a {@link CombinedEffectResult} is a {@link CombinedEffectResultInSuccessState}
  */
-export const isCombinedEffectResultInSuccessState = <Input, Result>(
-  cer: CombinedEffectResult<Input, Result>,
-): cer is CombinedEffectResultInSuccessState<Input, Result> =>
-  !cer.resultError && !cer.resultPending && isNotNoValueType(cer.result);
+export const isCombinedEffectResultInSuccessState = <Input, Result, Error>(
+  cer: CombinedEffectResult<Input, Result, Error>,
+): cer is CombinedEffectResultInSuccessState<Input, Result> => isNotEffectError(cer.result);
 
 /**
- * Value-type for error events produced by an `Effect<Input, any>` (unhandled effect errors).
- *
- * @template Input - specifies the input type for the effect
- */
-export type EffectError<Input> = {
-  /** the unhandled error thrown by an effect */
-  error: any;
-
-  /** the effect input that lead to the error */
-  errorInput: Input;
-};
-
-/**
- * Value-type for success events produced by {@link EffectSignals}.
- * In case the effect completes after one result, two success events will
- * be dispatched, one with completed false and one with completed true.
- * This is to handle cases where the effect might send multiple results
- * before completing. Thus, if an effect never completes, all success event
- * will have completed false.
+ * Type representing a {@link CombinedEffectResult} in it's success state (non-pending, hece completed effect)
  *
  * @template Input - specifies the input type for the effect
  * @template Result - specifies the result type of the effect
  */
-export type EffectSuccess<Input, Result> = {
-  /** the effect result */
+export type CombinedEffectResultInCompletedSuccessState<Input, Result> = {
+  currentInput: Input | NoValueType;
   result: Result;
+  resultInput: Input | NoValueType;
+  resultPending: false;
+};
+
+/**
+ * Typeguard to check if a {@link CombinedEffectResult} is a {@link CombinedEffectResultInCompletedSuccessState}
+ */
+export const isCombinedEffectResultInCompletedSuccessState = <Input, Result, Error>(
+  cer: CombinedEffectResult<Input, Result, Error>,
+): cer is CombinedEffectResultInCompletedSuccessState<Input, Result> =>
+  isNotEffectError(cer.result) && !cer.resultPending;
+
+/**
+ * Value-type for result events produced by {@link EffectSignals}.
+ * In case the effect completes after one result, two reult events will
+ * be dispatched, one with completed false and one with completed true.
+ * This is to handle cases where the effect might send multiple results
+ * before completing. Thus, if an effect never completes, all result events
+ * will have completed false.
+ *
+ * @template Input - specifies the input type for the effect
+ * @template Result - specifies the result type of the effect
+ * @template Error - specifies the error type of the effect
+ */
+export type EffectResultEvent<Input, Result, Error> = {
+  /** the effect result */
+  result: SafeEffectResult<Result, Error>;
 
   /** the effect input that lead to the result */
   resultInput: Input;
 
   /** the input of the previous completed result, or `NO_VALUE` */
-  previousInput: Input | NoValueType;
+  // previousInput: Input | NoValueType;
 
   /** the previous completed result, or `NO_VALUE` */
-  previousResult: Result | NoValueType;
+  // previousResult: SafeEffectResult<Result, Error> | NoValueType;
 
   /** has the effect for the given resultInput completed */
   completed: boolean;
 };
 
 /**
- * Value-type for completed success events produced by {@link EffectSignals}.
- * In contrast to {@link EffectSuccess} events with this type are only dispatched,
+ * Value-type for completed result events produced by {@link EffectSignals}.
+ * In contrast to {@link EffectResultEvent}, events with this type are only dispatched,
  * if the effect has completed, hence it will never be fired for effects that never complete.
  *
  * @template Input - specifies the input type for the effect
  * @template Result - specifies the result type of the effect
+ * @template Error - specifies the error type of the effect
  */
-export type EffectCompletedSuccess<Input, Result> = Omit<
-  EffectSuccess<Input, Result>,
+export type EffectCompletedResultEvent<Input, Result, Error> = Omit<
+  EffectResultEvent<Input, Result, Error>,
   'completed'
 > & { completed: true };
 
-const isCompletedSuccess = <Input, Result>(
-  value: EffectCompletedSuccess<Input, Result> | EffectSuccess<Input, Result>,
-): value is EffectCompletedSuccess<Input, Result> => value.completed;
+/**
+ * Typeguard to check if a {@link EffectResultEvent} is a {@link EffectCompletedResultEvent}
+ */
+export const isCompletedResultEvent = <Input, Result, Error>(
+  value: EffectCompletedResultEvent<Input, Result, Error> | EffectResultEvent<Input, Result, Error>,
+): value is EffectCompletedResultEvent<Input, Result, Error> => value.completed;
 
 /**
  * Type specifying the input {@link EffectSignals} (the corresponding signal-sources are NOT added to the store
@@ -195,30 +215,22 @@ export type EffectInputSignals<Input> = {
 
 /**
  * Type specifying the output {@link EffectSignals} (signals produced by `EffectSignals`).
- * The {@link EffectSignalsFactory} takes care that subscribing error- or success-events keeps
- * the effect itself lazy (hence only subscribing the combined behavior will subscribe the effect itself).
+ * The {@link EffectSignalsFactory} takes care that subscribing the result-events keeps
+ * the effect itself lazy (hence only subscribing the combined behavior will subscribe the effect itself)!
  *
  * @template Input - specifies the input type for the effect
  * @template Result - specifies the result type of the effect
+ * @template Error - specifies the error type of the effect
  */
-export type EffectOutputSignals<Input, Result> = {
+export type EffectOutputSignals<Input, Result, Error> = {
   /** Produced combined effect result behavior */
-  combined: DerivedId<CombinedEffectResult<Input, Result>>;
-
-  /** Convenience behavior derived from combined-behavior, representing only completed success states */
-  result: DerivedId<CombinedEffectResultInSuccessState<Input, Result>>;
-
-  /** Convenience behavior derived from combined-behavior, representing only pending state */
-  pending: DerivedId<boolean>;
-
-  /** Produced error events */
-  errors: EventId<EffectError<Input>>;
+  combined: DerivedId<CombinedEffectResult<Input, Result, Error>>;
 
   /** Produced success events */
-  successes: EventId<EffectSuccess<Input, Result>>;
+  results: EventId<EffectResultEvent<Input, Result, Error>>;
 
   /** Produced success events */
-  completedSuccesses: EventId<EffectCompletedSuccess<Input, Result>>;
+  completedResults: EventId<EffectCompletedResultEvent<Input, Result, Error>>;
 };
 
 /**
@@ -227,34 +239,35 @@ export type EffectOutputSignals<Input, Result> = {
  *
  * @template Input - specifies the input type for the effect
  * @template Result - specifies the result type of the effect
+ * @template Error - specifies the error type of the effect
  */
-export type EffectFactoryEffects<Input, Result> = {
-  id: EffectId<Input, Result>;
+export type EffectFactoryEffects<Input, Result, Error> = {
+  id: EffectId<Input, Result, Error>;
 };
 
 /**
  * This type specifies generic effect signals. `EffectSignals` generically handle side-effects (hence, are an abstraction over side-effects).
  * They fulfill the following requirements:
  * ```markdown
- * 1.) The produced CombinedEffectResult<Input, Result> behavior must be lazy, hence, as long as it is not subscribed,
- *     no effect will be triggered.
- * 2.) Unhandled effect errors are caught and dispatched as EffectError<Input>. A subscription of the corresponding
- *     errors event stream will NOT subscribe the result behavior (see requirement 1).
- * 3.) In addition to the result behavior, also an event-stream for EffectSuccess<Input, Result> is provided. This is important
- *     in cases where an effect success should be used to trigger something else (e.g. close a popup), but you cannot use the result
- *     behavior, because it would mean to always subscribe the result. In contrast, subscription of the success event stream will NOT
- *     subscribe the result behavior. (the same holds true for the completedSuccesses event-stream)
+ * 1.) The produced CombinedEffectResult<Input, Result, Error> behavior must be lazy, hence, as long as it is not subscribed,
+ *     no effect will be triggered (so subscribing just results, or completedResults will not trigger the effect).
+ * 2.) Unhandled effect errors are caught and will lead to an EffectError<UnhandledEffectError>.
+ * 3.) In addition to the combined-behavior, also event-streams for EffectResultEvent and EffectCompletedResultEvent are provided. This is important
+ *     in cases where e.g. an effect success should be used to trigger something else (e.g. close a popup), but you cannot use the result
+ *     behavior, because it would mean to always subscribe the result. In contrast, subscription of the an rsult-event-stream will NOT
+ *     subscribe the effect.
  * ```
  *
  * See the documentation for {@link EffectConfiguration} for further configuration of `EffectSignals`.
  *
  * @template Input - specifies the input type for the effect
  * @template Result - specifies the result type of the effect
+ * @template Error - specifies the error type of the effect
  */
-export type EffectSignals<Input, Result> = Signals<
+export type EffectSignals<Input, Result, Error> = Signals<
   EffectInputSignals<Input>,
-  EffectOutputSignals<Input, Result>,
-  EffectFactoryEffects<Input, Result>
+  EffectOutputSignals<Input, Result, Error>,
+  EffectFactoryEffects<Input, Result, Error>
 >;
 
 /**
@@ -262,8 +275,9 @@ export type EffectSignals<Input, Result> = Signals<
  *
  * @template Input - specifies the input type for the effect
  * @template Result - specifies the result type of the effect
+ * @template Error - specifies the error type of the effect
  */
-export type EffectConfiguration<Input, Result> = {
+export type EffectConfiguration<Input, Result, Error> = {
   /** Function used to determine whether a new input equals the previous one. Defaults to strict equals (`a === b`) */
   effectInputEquals?: (a: Input, b: Input) => boolean;
 
@@ -277,7 +291,7 @@ export type EffectConfiguration<Input, Result> = {
   effectDebounceTime?: number;
 
   /** Function to wrap the effect defined by effectId with a custom `Effect` */
-  wrappedEffectGetter?: (effect: Effect<Input, Result>) => Effect<Input, Result>;
+  wrappedEffectGetter?: (effect: Effect<Input, Result, Error>) => Effect<Input, Result, Error>;
 
   /** Specifies whether the input behavior should be subscribed eagerly (defaults to false) */
   eagerInputSubscription?: boolean;
@@ -291,11 +305,12 @@ export type EffectConfiguration<Input, Result> = {
  *
  * @template Input - specifies the input type for the effect
  * @template Result - specifies the result type of the effect
- * @param {EffectConfiguration<Input, Result>} config - the configuration for the `EffectSignals`
+ * @template Error - specifies the error type of the effect
+ * @param {EffectConfiguration<Input, Result, Error>} config - the configuration for the `EffectSignals`
  */
-export type EffectSignalsBuild = <Input, Result>(
-  config: EffectConfiguration<Input, Result>,
-) => EffectSignals<Input, Result>;
+export type EffectSignalsBuild = <Input, Result, Error>(
+  config: EffectConfiguration<Input, Result, Error>,
+) => EffectSignals<Input, Result, Error>;
 
 const getInputSignalIds = <Input>(nameExtension?: string): EffectInputSignals<Input> => ({
   input: getDerivedId<Input>(`${nameExtension ?? ''}_input`),
@@ -303,41 +318,37 @@ const getInputSignalIds = <Input>(nameExtension?: string): EffectInputSignals<In
   trigger: getEventId<undefined>(`${nameExtension ?? ''}_trigger`),
 });
 
-const getOutputSignalIds = <Input, Result>(
+const getOutputSignalIds = <Input, Result, Error>(
   nameExtension?: string,
-): EffectOutputSignals<Input, Result> => ({
-  combined: getDerivedId<CombinedEffectResult<Input, Result>>(`${nameExtension ?? ''}_combined`),
-  result: getDerivedId<CombinedEffectResultInSuccessState<Input, Result>>(
-    `${nameExtension ?? ''}_result`,
+): EffectOutputSignals<Input, Result, Error> => ({
+  combined: getDerivedId<CombinedEffectResult<Input, Result, Error>>(
+    `${nameExtension ?? ''}_combined`,
   ),
-  pending: getDerivedId<boolean>(`${nameExtension ?? ''}_pending`),
-  errors: getEventId<EffectError<Input>>(`${nameExtension ?? ''}_errors`),
-  successes: getEventId<EffectSuccess<Input, Result>>(`${nameExtension ?? ''}_successes`),
-  completedSuccesses: getEventId<EffectCompletedSuccess<Input, Result>>(
-    `${nameExtension ?? ''}_completedSuccesses`,
+  results: getEventId<EffectResultEvent<Input, Result, Error>>(`${nameExtension ?? ''}_results`),
+  completedResults: getEventId<EffectCompletedResultEvent<Input, Result, Error>>(
+    `${nameExtension ?? ''}_completedResults`,
   ),
 });
 
-const NO_VALUE_TRIGGERED_INPUT = '$INTERNAL_NV_TI$';
+const NO_VALUE_TRIGGERED_INPUT = '$RXS_INTERNAL_NV_TI$';
 type NoValueTriggeredInput = typeof NO_VALUE_TRIGGERED_INPUT;
 
-type InternalEffectResult<RT> = {
-  result: RT;
+type InternalEffectResult<RT, Error> = {
+  result: SafeEffectResult<RT, Error>;
   completed: boolean;
 };
 
-type InternalResultType<Input, Result> = {
-  result: Result | NoValueType;
+type InternalResultType<Input, R> = {
+  result: R | NoValueType;
   resultInput: Input | NoValueType;
-  resultError?: any;
   resultToken: object | null;
 };
 
 const getIsNewInput =
-  <Input, Result>(effectInputEquals: (a: Input, b: Input) => boolean) =>
+  <Input, Result, Error>(effectInputEquals: (a: Input, b: Input) => boolean) =>
   ([input, resultState, token]: [
     Input,
-    InternalResultType<Input, InternalEffectResult<Result>>,
+    InternalResultType<Input, InternalEffectResult<Result, Error>>,
     object | null,
     Input | NoValueTriggeredInput,
   ]): boolean =>
@@ -345,24 +356,26 @@ const getIsNewInput =
     isNoValueType(resultState.resultInput) ||
     !effectInputEquals(input, resultState.resultInput);
 
-const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
-  config: EffectConfiguration<IT, RT>,
-): EffectSignals<IT, RT> => {
-  const effectId = getEffectId<IT, RT>();
+const getEffectBuilder: EffectSignalsBuild = <IT, RT, ER>(
+  config: EffectConfiguration<IT, RT, ER>,
+): EffectSignals<IT, RT, ER> => {
+  const effectId = getEffectId<IT, RT, ER>();
   const wrappedResultEffect = (
     input: IT,
-    store: Store,
-    previousInput: IT | NoValueType,
-    previousResult: RT | NoValueType,
+    args: {
+      store: Store;
+      previousInput: IT | NoValueType;
+      previousResult: SafeEffectResult<RT, ER> | NoValueType;
+    },
   ) =>
-    store.getEffect(effectId).pipe(
+    args.store.getEffect(effectId).pipe(
       take(1),
       switchMap(effect => {
         try {
           const wrappedEffect = config.wrappedEffectGetter
             ? config.wrappedEffectGetter(effect)
             : effect;
-          return wrappedEffect(input, store, previousInput, previousResult);
+          return wrappedEffect(input, args);
         } catch (error) {
           return throwError(() => error);
         }
@@ -370,18 +383,15 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
     );
   const internalResultEffect = (
     input: IT,
-    store: Store,
-    previousInput: IT | NoValueType,
-    previousResult: RT | NoValueType,
-  ): Observable<InternalEffectResult<RT>> =>
-    new Observable<InternalEffectResult<RT>>(subscriber => {
-      let currentResult: RT | NoValueType = NO_VALUE;
-      const subscription = wrappedResultEffect(
-        input,
-        store,
-        previousInput,
-        previousResult,
-      ).subscribe({
+    args: {
+      store: Store;
+      previousInput: IT | NoValueType;
+      previousResult: SafeEffectResult<RT, ER> | NoValueType;
+    },
+  ): Observable<InternalEffectResult<RT, ER>> =>
+    new Observable<InternalEffectResult<RT, ER>>(subscriber => {
+      let currentResult: EffectResult<RT, ER> | NoValueType = NO_VALUE;
+      const subscription = wrappedResultEffect(input, args).subscribe({
         next: result => {
           currentResult = result;
           subscriber.next({
@@ -400,7 +410,13 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
           currentResult = NO_VALUE;
         },
         error: e => {
-          subscriber.error(e);
+          subscriber.next({
+            result: toEffectError<UnhandledEffectError>({
+              unhandledError: e,
+            }),
+            completed: true,
+          });
+          subscriber.complete();
           currentResult = NO_VALUE;
         },
       });
@@ -411,10 +427,10 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
     });
 
   const effectInputEquals = config.effectInputEquals ?? ((a, b) => a === b);
-  const isNewInput = getIsNewInput<IT, RT>(effectInputEquals);
+  const isNewInput = getIsNewInput<IT, RT, ER>(effectInputEquals);
 
   const inIds = getInputSignalIds<IT>(config.nameExtension);
-  const outIds = getOutputSignalIds<IT, RT>(config.nameExtension);
+  const outIds = getOutputSignalIds<IT, RT, ER>(config.nameExtension);
   const setup = (store: Store) => {
     const invalidateTokenBehavior = getStateId<object | null>();
     store.addState(invalidateTokenBehavior, null);
@@ -425,8 +441,8 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
       store.connect(inIds.input, internalInput);
     }
 
-    const resultEvent = getEventId<InternalResultType<IT, InternalEffectResult<RT>>>();
-    const resultBehavior = getDerivedId<InternalResultType<IT, InternalEffectResult<RT>>>();
+    const resultEvent = getEventId<InternalResultType<IT, InternalEffectResult<RT, ER>>>();
+    const resultBehavior = getDerivedId<InternalResultType<IT, InternalEffectResult<RT, ER>>>();
     const initialResult = config.initialResultGetter ? config.initialResultGetter() : NO_VALUE;
     store.addDerivedState(resultBehavior, store.getEventStream(resultEvent), {
       result: isNotNoValueType(initialResult)
@@ -445,8 +461,8 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
     );
 
     store.addEventSource(
-      outIds.completedSuccesses,
-      store.getEventStream(outIds.successes).pipe(filter(isCompletedSuccess)),
+      outIds.completedResults,
+      store.getEventStream(outIds.results).pipe(filter(isCompletedResultEvent)),
     );
 
     // It is important to setup the combined observable as behavior,
@@ -455,7 +471,7 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
       getDerivedId<
         [
           IT,
-          InternalResultType<IT, InternalEffectResult<RT>>,
+          InternalResultType<IT, InternalEffectResult<RT, ER>>,
           object | null,
           IT | NoValueTriggeredInput,
         ]
@@ -476,17 +492,16 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
         ? combined
         : combined.pipe(debounceTime(config.effectDebounceTime));
 
-    store.add4TypedEventSource(
+    store.add3TypedEventSource(
       resultEvent,
       triggeredInputEvent,
-      outIds.errors,
-      outIds.successes,
+      outIds.results,
       eventSourceInput.pipe(
         filter(isNewInput),
         switchMap(
           ([input, resultState, token, triggeredInput]: [
             IT,
-            InternalResultType<IT, InternalEffectResult<RT>>,
+            InternalResultType<IT, InternalEffectResult<RT, ER>>,
             object | null,
             IT | NoValueTriggeredInput,
           ]) =>
@@ -497,13 +512,14 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
                     event: input,
                   })),
                 )
-              : internalResultEffect(
-                  input,
+              : internalResultEffect(input, {
                   store,
-                  resultState.resultInput,
-                  isNotNoValueType(resultState.result) ? resultState.result.result : NO_VALUE,
-                ).pipe(
-                  switchMap((result: InternalEffectResult<RT>) =>
+                  previousInput: resultState.resultInput,
+                  previousResult: isNotNoValueType(resultState.result)
+                    ? resultState.result.result
+                    : NO_VALUE,
+                }).pipe(
+                  switchMap((result: InternalEffectResult<RT, ER>) =>
                     of(
                       {
                         type: resultEvent,
@@ -515,36 +531,16 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
                         },
                       },
                       {
-                        type: outIds.successes,
+                        type: outIds.results,
                         event: {
-                          // EffectSuccess<IT, RT>
+                          // EffectResultEvent<IT, RT, ER>
                           result: result.result,
                           resultInput: input,
-                          previousInput: resultState.resultInput,
-                          previousResult: isNotNoValueType(resultState.result)
-                            ? resultState.result.result
-                            : NO_VALUE,
+                          // previousInput: resultState.resultInput,
+                          // previousResult: isNotNoValueType(resultState.result)
+                          //   ? resultState.result.result
+                          //   : NO_VALUE,
                           completed: result.completed,
-                        },
-                      },
-                    ),
-                  ),
-                  catchError(error =>
-                    of(
-                      {
-                        type: outIds.errors,
-                        event: {
-                          error,
-                          errorInput: input,
-                        },
-                      },
-                      {
-                        type: resultEvent,
-                        event: {
-                          result: NO_VALUE,
-                          resultInput: input,
-                          resultError: error,
-                          resultToken: token,
                         },
                       },
                     ),
@@ -558,7 +554,7 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
     const getIsPending = config.withTrigger
       ? ([input, resultState, token, triggeredInput]: [
           IT,
-          InternalResultType<IT, InternalEffectResult<RT>>,
+          InternalResultType<IT, InternalEffectResult<RT, ER>>,
           object | null,
           IT | NoValueTriggeredInput,
         ]) =>
@@ -569,7 +565,7 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
             (isNotNoValueType(resultState.result) && !resultState.result.completed))
       : ([input, resultState, token]: [
           IT,
-          InternalResultType<IT, InternalEffectResult<RT>>,
+          InternalResultType<IT, InternalEffectResult<RT, ER>>,
           object | null,
           IT | NoValueTriggeredInput,
         ]) =>
@@ -593,9 +589,7 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
                 currentInput: input,
                 result: isNotNoValueType(resultState.result) ? resultState.result.result : NO_VALUE,
                 resultInput: resultState.resultInput,
-                resultError: resultState.resultError,
                 resultPending: false,
-                ...(resultState.resultError ? { resultError: resultState.resultError } : {}),
               },
         ),
       ),
@@ -607,16 +601,6 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
             resultPending: false,
           }
         : NO_VALUE,
-    );
-
-    store.addDerivedState(
-      outIds.result,
-      store.getBehavior(outIds.combined).pipe(filter(isCombinedEffectResultInSuccessState)),
-    );
-
-    store.addDerivedState(
-      outIds.pending,
-      store.getBehavior(outIds.combined).pipe(map(c => c.resultPending)),
     );
   };
   return {
@@ -634,12 +618,13 @@ const getEffectBuilder: EffectSignalsBuild = <IT, RT>(
  *
  * @template Input - specifies the input type for the effect
  * @template Result - specifies the result type of the effect
+ * @template Error - specifies the error type of the effect
  */
-export type EffectSignalsFactory<Input, Result> = SignalsFactory<
+export type EffectSignalsFactory<Input, Result, Error> = SignalsFactory<
   EffectInputSignals<Input>,
-  EffectOutputSignals<Input, Result>,
-  EffectConfiguration<Input, Result>,
-  EffectFactoryEffects<Input, Result>
+  EffectOutputSignals<Input, Result, Error>,
+  EffectConfiguration<Input, Result, Error>,
+  EffectFactoryEffects<Input, Result, Error>
 >;
 
 /**
@@ -647,12 +632,17 @@ export type EffectSignalsFactory<Input, Result> = SignalsFactory<
  *
  * @template Input - specifies the input type for the effect
  * @template Result - specifies the result type of the effect
+ * @template Error - specifies the error type of the effect
  * @returns {EffectSignalsFactory<Input, Result>}
  */
-export const getEffectSignalsFactory = <Input, Result>(): EffectSignalsFactory<Input, Result> =>
+export const getEffectSignalsFactory = <Input, Result, Error>(): EffectSignalsFactory<
+  Input,
+  Result,
+  Error
+> =>
   new SignalsFactory<
     EffectInputSignals<Input>,
-    EffectOutputSignals<Input, Result>,
-    EffectConfiguration<Input, Result>,
-    EffectFactoryEffects<Input, Result>
+    EffectOutputSignals<Input, Result, Error>,
+    EffectConfiguration<Input, Result, Error>,
+    EffectFactoryEffects<Input, Result, Error>
   >(getEffectBuilder);

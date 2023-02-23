@@ -1,11 +1,10 @@
 import { Observable, combineLatest, distinctUntilChanged, filter, map, startWith } from 'rxjs';
 import {
   CombinedEffectResult,
-  CombinedEffectResultInSuccessState,
-  EffectCompletedSuccess,
-  EffectError,
+  EffectCompletedResultEvent,
   EffectOutputSignals,
-  EffectSuccess,
+  EffectResultEvent,
+  SafeEffectResult,
   getEffectSignalsFactory,
 } from './effect-signals-factory';
 import { SignalsFactory } from './signals-factory';
@@ -18,6 +17,8 @@ import {
   NO_VALUE,
   NoValueType,
   getDerivedId,
+  isNoValueType,
+  isNotNoValueType,
 } from './store-utils';
 import { Merged } from './type-utils';
 
@@ -27,8 +28,16 @@ import { Merged } from './type-utils';
  * @template Input - specifies the input type for both, the validation-effect and the result-effect
  * @template ValidationResult - specifies the result-type of the validation-effect
  * @template Result - specifies the result-type of the result-effect
+ * @template ValidationError - specifies the error type of the validation-effect
+ * @template ResultError - specifies the error type of the result-effect
  */
-export type ValidatedInputWithResult<Input, ValidationResult, Result> = {
+export type ValidatedInputWithResult<
+  Input,
+  ValidationResult,
+  Result,
+  ValidationError,
+  ResultError,
+> = {
   /** current input (which might differ from the resultInput) */
   currentInput: Input | NoValueType;
 
@@ -39,7 +48,7 @@ export type ValidatedInputWithResult<Input, ValidationResult, Result> = {
   validatedInput: Input | NoValueType;
 
   /** the current validationResult (or NO_VALUE, if no validation-result was received yet) */
-  validationResult: ValidationResult | NoValueType;
+  validationResult: SafeEffectResult<ValidationResult, ValidationError> | NoValueType;
 
   /** only true if validationResult represents a valid state AND validationPending is false */
   isValid: boolean;
@@ -50,11 +59,8 @@ export type ValidatedInputWithResult<Input, ValidationResult, Result> = {
   /** the input that produced the current result (or NoValueType, if result is NO_VALUE) */
   resultInput: Input | NoValueType;
 
-  /* In case the resultInput led to an error (result === NO_VALUE in that case) */
-  resultError?: any;
-
   /** the current result (or NO_VALUE, if no result was received yet) */
-  result: Result | NoValueType;
+  result: SafeEffectResult<Result, ResultError> | NoValueType;
 };
 
 /**
@@ -70,22 +76,32 @@ export type ValidatedInputWithResultInput<Input> = {
 /**
  * The analog to {@link EffectOutputSignals}, just for {@link ValidatedInputWithResultFactory}.
  */
-export type ValidatedInputWithResultOutput<Input, ValidationResult, Result> = {
-  combined: DerivedId<ValidatedInputWithResult<Input, ValidationResult, Result>>;
-  result: DerivedId<CombinedEffectResultInSuccessState<Input, Result>>;
-  validationErrors: EventId<EffectError<Input>>;
-  validationSuccesses: EventId<EffectSuccess<Input, ValidationResult>>;
-  validationCompletedSuccesses: EventId<EffectCompletedSuccess<Input, ValidationResult>>;
-  resultErrors: EventId<EffectError<Input>>;
-  resultSuccesses: EventId<EffectSuccess<Input, Result>>;
-  resultCompletedSuccesses: EventId<EffectCompletedSuccess<Input, Result>>;
+export type ValidatedInputWithResultOutput<
+  Input,
+  ValidationResult,
+  Result,
+  ValidationError,
+  ResultError,
+> = {
+  combined: DerivedId<
+    ValidatedInputWithResult<Input, ValidationResult, Result, ValidationError, ResultError>
+  >;
+  validationResults: EventId<EffectResultEvent<Input, ValidationResult, ValidationError>>;
+  validationCompletedResults: EventId<
+    EffectCompletedResultEvent<Input, ValidationResult, ValidationError>
+  >;
+  results: EventId<EffectResultEvent<Input, Result, ResultError>>;
+  completedResults: EventId<EffectCompletedResultEvent<Input, Result, ResultError>>;
 };
 
 /**
  * The analog to {@link EffectConfiguration}, just for {@link ValidatedInputWithResultFactory}.
  */
-export type ValidatedInputWithResultConfig<Input, ValidationResult, Result> = {
-  isValidationResultValid?: (validationResult: ValidationResult) => boolean;
+export type ValidatedInputWithResultConfig<Input, ValidationResult, Result, ValidationError> = {
+  /** whether the a validation result represents a valid state, defaults to `isNotEffectError(validationResult) && (validationResult ?? null) === null` */
+  isValidationResultValid?: (
+    validationResult: SafeEffectResult<ValidationResult, ValidationError>,
+  ) => boolean;
   validationEffectDebounceTime?: number;
   resultEffectDebounceTime?: number;
   initialResultGetter?: () => Result;
@@ -98,9 +114,15 @@ export type ValidatedInputWithResultConfig<Input, ValidationResult, Result> = {
 /**
  * The analog to {@link EffectFactoryEffects}, just for {@link ValidatedInputWithResultFactory}.
  */
-export type ValidatedInputWithResultEffects<Input, ValidationResult, Result> = {
-  validation: EffectId<Input, ValidationResult>;
-  result: EffectId<Input, Result>;
+export type ValidatedInputWithResultEffects<
+  Input,
+  ValidationResult,
+  Result,
+  ValidationError,
+  ResultError,
+> = {
+  validation: EffectId<Input, ValidationResult, ValidationError>;
+  result: EffectId<Input, Result, ResultError>;
 };
 
 /**
@@ -108,32 +130,40 @@ export type ValidatedInputWithResultEffects<Input, ValidationResult, Result> = {
  * scenarios where you need to validate a certain input and run a result-effect only if the validation
  * has passed successfully.
  */
-export type ValidatedInputWithResultFactory<Input, ValidationResult, Result> = SignalsFactory<
+export type ValidatedInputWithResultFactory<
+  Input,
+  ValidationResult,
+  Result,
+  ValidationError,
+  ResultError,
+> = SignalsFactory<
   ValidatedInputWithResultInput<Input>,
-  ValidatedInputWithResultOutput<Input, ValidationResult, Result>,
-  ValidatedInputWithResultConfig<Input, ValidationResult, Result>,
-  ValidatedInputWithResultEffects<Input, ValidationResult, Result>
+  ValidatedInputWithResultOutput<Input, ValidationResult, Result, ValidationError, ResultError>,
+  ValidatedInputWithResultConfig<Input, ValidationResult, Result, ValidationError>,
+  ValidatedInputWithResultEffects<Input, ValidationResult, Result, ValidationError, ResultError>
 >;
 
-type ResultInputGetterInput<Input, ValidationResult> = {
+type ResultInputGetterInput<Input, ValidationResult, ValidationError> = {
   currentInput: Input;
   resultInput: Input;
-  result: ValidationResult;
+  result: SafeEffectResult<ValidationResult, ValidationError>;
   resultPending: boolean;
 };
 
-const isResultInputGetterInput = <Input, ValidationResult>(
-  c: CombinedEffectResult<Input, ValidationResult>, // from the validation effect
-): c is ResultInputGetterInput<Input, ValidationResult> =>
+const isResultInputGetterInput = <Input, ValidationResult, ValidationError>(
+  c: CombinedEffectResult<Input, ValidationResult, ValidationError>,
+): c is ResultInputGetterInput<Input, ValidationResult, ValidationError> =>
   !c.resultPending &&
-  c.resultInput !== NO_VALUE &&
-  c.result !== NO_VALUE &&
+  isNotNoValueType(c.resultInput) &&
+  isNotNoValueType(c.result) &&
   c.currentInput === c.resultInput;
 
-const resultInputGetter = <Input, ValidationResult>(
+const resultInputGetter = <Input, ValidationResult, ValidationError>(
   store: Store,
-  validationBehaviorId: BehaviorId<CombinedEffectResult<Input, ValidationResult>>,
-  isValidationResultValid: (validationResult: ValidationResult) => boolean,
+  validationBehaviorId: BehaviorId<CombinedEffectResult<Input, ValidationResult, ValidationError>>,
+  isValidationResultValid: (
+    validationResult: SafeEffectResult<ValidationResult, ValidationError>,
+  ) => boolean,
 ): Observable<Input> =>
   store.getBehavior(validationBehaviorId).pipe(
     filter(isResultInputGetterInput),
@@ -142,26 +172,38 @@ const resultInputGetter = <Input, ValidationResult>(
     distinctUntilChanged(),
   );
 
-const mapBehaviors = <Input, ValidationResult, Result>(
-  [v, r]: [CombinedEffectResult<Input, ValidationResult>, CombinedEffectResult<Input, Result>],
-  isValidationResultValid: (validationResult: ValidationResult) => boolean,
+const mapBehaviors = <Input, ValidationResult, Result, ValidationError, ResultError>(
+  [v, r]: [
+    CombinedEffectResult<Input, ValidationResult, ValidationError>,
+    CombinedEffectResult<Input, Result, ResultError>,
+  ],
+  isValidationResultValid: (
+    validationResult: SafeEffectResult<ValidationResult, ValidationError>,
+  ) => boolean,
 ) => ({
   currentInput: v.currentInput,
   validationPending: v.resultPending,
   validatedInput: v.resultInput,
   validationResult: v.result,
-  isValid: !v.resultPending && v.result !== NO_VALUE ? isValidationResultValid(v.result) : false,
+  isValid:
+    !v.resultPending && isNotNoValueType(v.result) ? isValidationResultValid(v.result) : false,
   resultPending: r.resultPending,
   resultInput: r.resultInput,
-  ...(r.resultError ? { resultError: r.resultError } : {}),
   result: r.result,
 });
 
-const setupCombinedBehavior = <Input, ValidationResult, Result>(
+const setupCombinedBehavior = <Input, ValidationResult, Result, ValidationError, ResultError>(
   store: Store,
-  outIds: Merged<EffectOutputSignals<Input, ValidationResult>, EffectOutputSignals<Input, Result>>,
-  id: DerivedId<ValidatedInputWithResult<Input, ValidationResult, Result>>,
-  isValidationResultValid: (validationResult: ValidationResult) => boolean,
+  outIds: Merged<
+    EffectOutputSignals<Input, ValidationResult, ValidationError>,
+    EffectOutputSignals<Input, Result, ResultError>
+  >,
+  id: DerivedId<
+    ValidatedInputWithResult<Input, ValidationResult, Result, ValidationError, ResultError>
+  >,
+  isValidationResultValid: (
+    validationResult: SafeEffectResult<ValidationResult, ValidationError>,
+  ) => boolean,
   initialResultGetter?: () => Result,
 ) => {
   store.addDerivedState(
@@ -181,7 +223,7 @@ const setupCombinedBehavior = <Input, ValidationResult, Result>(
         ([v, r]) =>
           v.resultPending ||
           r.currentInput === v.resultInput ||
-          v.result === NO_VALUE ||
+          isNoValueType(v.result) ||
           !isValidationResultValid(v.result),
       ),
       map(pair => mapBehaviors(pair, isValidationResultValid)),
@@ -192,7 +234,6 @@ const setupCombinedBehavior = <Input, ValidationResult, Result>(
           a.result === b.result &&
           a.resultInput === b.resultInput &&
           a.resultPending === b.resultPending &&
-          a.resultError === b.resultError &&
           a.validatedInput === b.validatedInput &&
           a.validationPending === b.validationPending &&
           a.validationResult === b.validationResult,
@@ -208,46 +249,58 @@ export const getValidatedInputWithResultSignalsFactory = <
   Input,
   ValidationResult,
   Result,
->(): ValidatedInputWithResultFactory<Input, ValidationResult, Result> =>
-  getEffectSignalsFactory<Input, ValidationResult>()
+  ValidationError,
+  ResultError,
+>(): ValidatedInputWithResultFactory<
+  Input,
+  ValidationResult,
+  Result,
+  ValidationError,
+  ResultError
+> =>
+  getEffectSignalsFactory<Input, ValidationResult, ValidationError>()
     .renameEffectId('id', 'validation')
-    .compose(getEffectSignalsFactory<Input, Result>())
+    .compose(getEffectSignalsFactory<Input, Result, ResultError>())
     .renameEffectId('id', 'result')
-    .mapConfig((config: ValidatedInputWithResultConfig<Input, ValidationResult, Result>) => ({
-      c1: {
-        effectDebounceTime: config.validationEffectDebounceTime,
-        eagerInputSubscription: config.eagerInputSubscription,
-        nameExtension: `${config.nameExtension ?? ''}_validation`,
-      },
-      c2: {
-        initialResultGetter: config.initialResultGetter,
-        withTrigger: config.withResultTrigger,
-        effectInputEquals: config.resultEffectInputEquals,
-        effectDebounceTime: config.resultEffectDebounceTime,
-        nameExtension: `${config.nameExtension ?? ''}_result`,
-      },
-    }))
-    .extendSetup((store, inIds, outIds, config) => {
+    .mapConfig(
+      (
+        config: ValidatedInputWithResultConfig<Input, ValidationResult, Result, ValidationError>,
+      ) => ({
+        c1: {
+          effectDebounceTime: config.validationEffectDebounceTime,
+          eagerInputSubscription: config.eagerInputSubscription,
+          nameExtension: `${config.nameExtension ?? ''}_validation`,
+        },
+        c2: {
+          initialResultGetter: config.initialResultGetter,
+          withTrigger: config.withResultTrigger,
+          effectInputEquals: config.resultEffectInputEquals,
+          effectDebounceTime: config.resultEffectDebounceTime,
+          nameExtension: `${config.nameExtension ?? ''}_result`,
+        },
+      }),
+    )
+    .extendSetup(({ store, input, output, config }) => {
       store.connectObservable(
         resultInputGetter(
           store,
-          outIds.conflicts1.combined,
+          output.conflicts1.combined,
           config.isValidationResultValid ?? (validationResult => validationResult === null),
         ),
-        inIds.conflicts2.input,
+        input.conflicts2.input,
       );
     })
     .addOutputId('combined', config =>
-      getDerivedId<ValidatedInputWithResult<Input, ValidationResult, Result>>(
-        `${config.nameExtension ?? ''}_combined`,
-      ),
+      getDerivedId<
+        ValidatedInputWithResult<Input, ValidationResult, Result, ValidationError, ResultError>
+      >(`${config.nameExtension ?? ''}_combined`),
     )
-    .extendSetup((store, _, output, config) => {
+    .extendSetup(({ store, output, config }) => {
       setupCombinedBehavior(
         store,
         output,
         output.combined,
-        config.isValidationResultValid ?? (validationResult => validationResult === null),
+        config.isValidationResultValid ?? (validationResult => (validationResult ?? null) === null),
         config.initialResultGetter,
       );
     })
@@ -259,11 +312,8 @@ export const getValidatedInputWithResultSignalsFactory = <
     }))
     .mapOutput(output => ({
       combined: output.combined,
-      result: output.conflicts2.result,
-      validationErrors: output.conflicts1.errors,
-      validationSuccesses: output.conflicts1.successes,
-      validationCompletedSuccesses: output.conflicts1.completedSuccesses,
-      resultErrors: output.conflicts2.errors,
-      resultSuccesses: output.conflicts2.successes,
-      resultCompletedSuccesses: output.conflicts2.completedSuccesses,
+      validationResults: output.conflicts1.results,
+      validationCompletedResults: output.conflicts1.completedResults,
+      results: output.conflicts2.results,
+      completedResults: output.conflicts2.completedResults,
     }));

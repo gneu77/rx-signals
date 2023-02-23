@@ -17,6 +17,7 @@ import {
 } from 'rxjs';
 import { ControlledSubject } from './controlled-subject';
 import { DelayedEventQueue } from './delayed-event-queue';
+import { EffectResult } from './effect-result';
 import { SourceObservable } from './source-observable';
 import {
   BehaviorId,
@@ -75,27 +76,32 @@ export type LifecycleHandle = {
  * It is the low-level abstraction used by rx-signals for side-effect isolation.
  * The high-level abstraction {@link EffectSignalsFactory} takes an `EffectId` as configuration to access
  * the corresponding `Effect`.
- * The store argument can be used to access additional input from the store (thus, the `Effect` itself could also
- * be pure and just use something impure that was put into the store, e.g. another `Effect`).
- * The previousInput argument can be used e.g. to decide whether the effect must perform
+ * The args can be used to access additional input from the store (thus, the `Effect` itself could also
+ * be pure and just use something impure that was put into the store, e.g. another `Effect`),
+ * as well as the previousInput and previousResult.
+ * The previousInput can be used e.g. to decide whether the effect must perform
  * a computation/query/etc., or if maybe the previousResult can be returned directly.
+ * If the effect cannot error, use `never` as `Error` type. In that case, `EffectResult<Result, Error>` will equal `Result`.
  *
  * @template Input - specifies the input type for the effect
  * @template Result - specifies the result type for the effect
+ * @template Error - specifies the error type for the effect. Specify never, if the effect cannot error.
  */
-export type Effect<Input, Result> = (
+export type Effect<Input, Result, Error = unknown> = (
   /** the effect input */
   input: Input,
 
-  /** the Store instance that will be passed to the function (e.g. to inject some other Effect) */
-  store: Store,
+  args: {
+    /** the Store instance that will be passed to the function (e.g. to inject some other Effect) */
+    store: Store;
 
-  /** the input of the previous function invocation, or NO_VALUE */
-  previousInput: Input | NoValueType,
+    /** the input of the previous function invocation, or NO_VALUE */
+    previousInput: Input | NoValueType;
 
-  /** the result of the previous function invocation, or NO_VALUE */
-  previousResult: Result | NoValueType,
-) => Observable<Result>;
+    /** the result of the previous function invocation, or NO_VALUE (error-type unknown, cause it could be an unhandled error not related to Error) */
+    previousResult: EffectResult<Result, Error | unknown> | NoValueType;
+  },
+) => Observable<EffectResult<Result, Error>>;
 
 /**
  * ToEffectType is a utility type to get the corresponding Effect type
@@ -103,7 +109,9 @@ export type Effect<Input, Result> = (
  *
  * @template ID - a concrete EffectId type
  */
-export type ToEffectType<ID> = ID extends EffectId<infer I, infer O> ? Effect<I, O> : never;
+export type ToEffectType<ID> = ID extends EffectId<infer I, infer O, infer E>
+  ? Effect<I, O, E>
+  : never;
 
 /**
  * The rx-signals Store provides RxJs-Observables for RP (reactive programming) - BehaviorStreams
@@ -936,7 +944,7 @@ export class Store {
    * @param {ToEffectType<ID>} effect - the `Effect` function
    * @returns {void}
    */
-  addEffect<ID extends EffectId<any, any>>(id: ID, effect: ToEffectType<ID>): void {
+  addEffect<ID extends EffectId<any, any, any>>(id: ID, effect: ToEffectType<ID>): void {
     this.addState(id as unknown as StateId<ToEffectType<ID>>, () => effect);
   }
 
@@ -949,14 +957,14 @@ export class Store {
    * effect will be received from the parent. As soon, as a corresponding effect is added to the child,
    * subscribers will receive the effect from the child.
    *
-   * @param {EffectId<InputType, ResultType>} id - the unique identifier for the effect
-   * @returns {Observable<Effect<InputType, ResultType>>} - the effect observable
+   * @param {EffectId<InputType, ResultType, ErrorType>} id - the unique identifier for the effect
+   * @returns {Observable<Effect<InputType, ResultType, ErrorType>>} - the effect observable
    */
-  getEffect<InputType, ResultType>(
-    id: EffectId<InputType, ResultType>,
-  ): Observable<Effect<InputType, ResultType>> {
-    return this.getBehavior<Effect<InputType, ResultType>>(
-      id as unknown as BehaviorId<Effect<InputType, ResultType>>,
+  getEffect<InputType, ResultType, ErrorType>(
+    id: EffectId<InputType, ResultType, ErrorType>,
+  ): Observable<Effect<InputType, ResultType, ErrorType>> {
+    return this.getBehavior<Effect<InputType, ResultType, ErrorType>>(
+      id as unknown as BehaviorId<Effect<InputType, ResultType, ErrorType>>,
     );
   }
 
