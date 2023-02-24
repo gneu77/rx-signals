@@ -1,5 +1,6 @@
 import { Subject, distinctUntilChanged, filter, of, startWith } from 'rxjs';
 import { delay, map, switchMap } from 'rxjs/operators';
+import { getLens } from '../src/optional-lens';
 import { Effect, Store } from '../src/store';
 import { NO_VALUE } from '../src/store-utils';
 import { expectSequence } from '../src/test-utils/test-utils';
@@ -13,7 +14,7 @@ import {
 } from './../src/entity-edit-signals-factory';
 import { ModelWithDefault } from './../src/model-signals-factory';
 import { NoValueType } from './../src/store-utils';
-import { ModelValidationResult, getLens, patchModelValidationResult } from './../src/type-utils';
+import { ModelValidationResult, patchModelValidationResult } from './../src/type-utils';
 
 type MyEntity = {
   id: number;

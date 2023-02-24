@@ -2,6 +2,7 @@ export * from './effect-result';
 export * from './effect-signals-factory';
 export * from './entity-edit-signals-factory';
 export * from './model-signals-factory';
+export * from './optional-lens';
 export * from './signals-factory';
 export * from './store';
 export * from './store-utils';

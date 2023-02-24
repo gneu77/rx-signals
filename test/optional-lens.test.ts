@@ -4,9 +4,9 @@ import {
   fromValueAndLens,
   getLens,
   toGetter,
-} from './../src/type-utils';
+} from './../src/optional-lens';
 
-describe('type utiles', () => {
+describe('lenses and getter', () => {
   describe('optional property access', () => {
     type Test =
       | number
@@ -404,6 +404,108 @@ describe('type utiles', () => {
           expect(lens.get(t33)).toEqual(2);
         });
       });
+
+      describe('lens composition', () => {
+        type LT1 = null | { a: number; b: string; c: { c1: true; c2: { x: null | number } } };
+        type LT2 = { a: boolean; c: { c1: false; c2: { y: number } } };
+        type LT3 = LT1 | LT2;
+
+        const t1: LT1 = { a: 42, b: 'bLT1', c: { c1: true, c2: { x: null } } } as LT1;
+        const t2: LT2 = { a: false, c: { c1: false, c2: { y: 7 } } } as LT2;
+
+        it('should work with individual lenses', () => {
+          const lens1 = getLens<LT1>();
+          const lens2 = getLens<LT2>();
+          const lens3 = getLens<LT3>();
+
+          expect(lens1.k('c').k('c2').k('x').get(t1)).toBe(null); // inferred as number | null | undefined
+          // expect(lens1.k('c').k('c2').k('x').get(t2)).toBe(undefined); // must not compile!
+          expect(lens3.k('c').k('c2').k('x').get(t2)).toBe(undefined); // inferred as number | null | undefined
+
+          expect(lens2.k('c').k('c2').k('y').get(t2)).toBe(7); // inferred as number | undefined
+          // expect(lens2.k('c').k('c2').k('y').get(t1)).toBe(undefined); // must not compile!
+          expect(lens3.k('c').k('c2').k('y').get(t1)).toBe(undefined); // inferred as number | undefined
+        });
+
+        it('should compose lens3 from lens1 and lens2', () => {
+          const lens1 = getLens<LT1>();
+          const lens2 = getLens<LT2>();
+          const lens3 = lens1.compose(lens2);
+
+          expect(lens3.k('c').k('c2').k('x').get(t1)).toBe(null); // inferred as number | null | undefined
+          expect(lens3.k('c').k('c2').k('x').get(t2)).toBe(undefined); // inferred as number | null | undefined
+
+          expect(lens3.k('c').k('c2').k('y').get(t2)).toBe(7); // inferred as number | undefined
+          expect(lens3.k('c').k('c2').k('y').get(t1)).toBe(undefined); // inferred as number | undefined
+
+          expect(lens3.k('b').get(t1)).toBe('bLT1'); // inferred as string | undefined
+          expect(lens3.k('b').get(t2)).toBe(undefined); // inferred as string | undefined
+        });
+
+        it('should compose lens3 from lens1 and lens2.k("c")', () => {
+          const lens1 = getLens<LT1>();
+          const lens2 = getLens<LT2>();
+          const lens3 = lens1.compose(lens2.k('c'));
+
+          expect(lens3.k('c').k('c2').k('x').get(t1)).toBe(null); // inferred as number | null | undefined
+          expect(lens3.k('c').k('c2').k('x').get(t2)).toBe(undefined); // inferred as number | null | undefined
+          // expect(lens3.k('c2').k('x').get(t1)).toBe(undefined); // must not compile!
+          expect(lens3.k('c2').k('y').get(t1)).toBe(undefined); // inferred as number | undefined
+          expect(lens3.k('c2').k('y').get(t2)).toBe(undefined); // inferred as number | undefined
+        });
+
+        it('should compose lens3 from lens1 and lens of child of LT2', () => {
+          const lens1 = getLens<LT1>();
+          const lens2 = getLens<{ c1: false; c2: { y: number } }>();
+          const lens3 = lens1.compose(lens2);
+
+          expect(lens3.k('c').k('c2').k('x').get(t1)).toBe(null); // inferred as number | null | undefined
+          // expect(lens3.k('c').k('c2').k('x').get(t2)).toBe(undefined); // must not compile!
+          expect(lens3.k('c2').k('y').get(t1)).toBe(undefined); // inferred as number | undefined
+          expect(lens3.k('c2').k('y').get(t2.c)).toBe(7); // inferred as number | undefined
+        });
+      });
+    });
+  });
+
+  describe('lens doc-strings', () => {
+    type TestChild = boolean | { x: number | Array<number> };
+    type Test =
+      | number
+      | {
+          a: string | Array<boolean | TestChild>;
+        };
+
+    const t1: Test = 42;
+    const t2: Test = { a: 'Test3' };
+    const t3: Test = { a: [true, { x: 7 }, { x: [1, 2, 3] }] };
+    const t4: TestChild = { x: 7 };
+
+    it('should work as mentioned in the doc-strings', () => {
+      const lensA = getLens<Test>().k('a');
+      const a1 = lensA.get(t1); // => undefined (inferred as undefined | string | Array<boolean | TestChild>)
+      const a2 = lensA.get(t2); // => 'Test3' (inferred as undefined | string | Array<boolean | TestChild>)
+      const a3 = lensA.get(t3); // => [true, { x: 7 }, { x: [1, 2, 3] }] (inferred as undefined | string | Array<boolean | TestChild>)
+
+      expect(a1).toBe(undefined);
+      expect(a2).toBe('Test3');
+      expect(a3).toEqual([true, { x: 7 }, { x: [1, 2, 3] }]);
+
+      const lensA2X1 = lensA.k(2).k('x').k(1);
+      const n1 = lensA2X1.get(t1); // => undefined (inferred as number | undefined)
+      const n2 = lensA2X1.get(t2); // => undefined (inferred as number | undefined)
+      const n3 = lensA2X1.get(t3); // => 2 (inferred as number | undefined)
+
+      expect(n1).toBe(undefined);
+      expect(n2).toBe(undefined);
+      expect(n3).toBe(2);
+
+      const lensB = getLens<Test>().compose(getLens<TestChild>());
+      const t3a = lensB.k('a').get(t3); // [true, { x: 7 }, { x: [1, 2, 3] }] (inferred as undefined | string | Array<boolean | TestChild>)
+      const t4x = lensB.k('x').get(t4); // 7 (inferred as undefined | number | Array<number>)
+
+      expect(t3a).toEqual([true, { x: 7 }, { x: [1, 2, 3] }]);
+      expect(t4x).toBe(7);
     });
   });
 });
